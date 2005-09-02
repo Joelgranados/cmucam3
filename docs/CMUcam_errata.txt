@@ -1,0 +1,3 @@
+1) Global Variable Copy
+
+If global variables are given a value when declared, startup.s does not copy these values at startup.  Temporarily you can just set them in the code.  Eventually startup.s and/or the linker file should be fixed to copy the data segment correctly.
