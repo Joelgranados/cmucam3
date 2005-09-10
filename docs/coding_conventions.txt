@@ -1,9 +1,9 @@
-CMUcam3 Coding Conenvtions
+CMUcam3 Coding Conventions
 
 1) private functions shall start with _
 2) prefix cc3_ or _cc3_ before any cmucam related functions or data types
 3) defines and constants will have CC3_ prefixed
-4) all lower case seperated by _ for functions
+4) all lower case separated by _ for functions
 5) try to avoid abrv.
 6) all types end with _t
 7) byte order is little endian
