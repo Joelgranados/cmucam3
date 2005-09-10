@@ -1,0 +1,31 @@
+CMUcam3 Coding Conenvtions
+
+1) private functions shall start with _
+2) prefix cc3_ or _cc3_ before any cmucam related functions or data types
+3) defines and constants will have CC3_ prefixed
+4) all lower case seperated by _ for functions
+5) try to avoid abrv.
+6) all types end with _t
+7) byte order is little endian
+8) Use C99 types #include <stdint.h>
+	int8_t		
+	int16_t
+	int32_t		// signed int
+	int64_t
+
+	uint8_t		// as a "BYTE" value	
+	uint16_t
+	uint32_t	// unsigned int
+	uint64_t
+	
+	float		// at the mercy of the compiler no hardware support
+	double		// at the mercy of the compiler no hardware support
+	
+	void*		// instead of char* 
+	char		// for text characters
+
+9) use the following gnu INDENT options:
+	indent -br -brs -nut -npsl -i4 source_name.c
+10) indent each level 4 more spaces than previous 
+11) Don't put else on same line of if
+	if (condition) foo (); else bar ();	/* Yuck! */
