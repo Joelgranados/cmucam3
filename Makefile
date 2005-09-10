@@ -15,7 +15,7 @@ CFG_INC=
 //CFG_LIB=-L "/cygdrive/c/Program Files/gnuarm/lib/gcc/arm-elf/3.4.3/" -L "/cygdrive/c/Program Files/gnuarm/arm-elf/lib/" -lm -lc -lgcc 
 CFG_LIB=-L "/cygdrive/c/Program Files/GNUARM/lib/gcc/arm-elf/4.0.0/" -L "/cygdrive/c/Program Files/gnuarm/arm-elf/lib/" -lm -lc -lgcc 
 CFG_OBJ=
-COMMON_OBJ=$(OUTDIR)/startup.o  $(OUTDIR)/main.o $(OUTDIR)/cmucam.o  $(OUTDIR)/serial.o $(OUTDIR)/libc.o $(OUTDIR)/LPC2100.o $(OUTDIR)/interrupt.o
+COMMON_OBJ=$(OUTDIR)/startup.o  $(OUTDIR)/main.o $(OUTDIR)/cc3.o  $(OUTDIR)/serial.o $(OUTDIR)/libc.o $(OUTDIR)/LPC2100.o $(OUTDIR)/interrupt.o
 OBJ=$(COMMON_OBJ) $(CFG_OBJ)
 
 OBJCPY=arm-elf-objcopy -g -v -O ihex "$(OUTDIR)/cmucam3.elf" "$(OUTDIR)/cmucam3.hex"

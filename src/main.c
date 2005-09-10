@@ -1,5 +1,5 @@
 #include "LPC2100.h"
-#include "cmucam.h"
+#include "cc3.h"
 #include "libc.h"
 #include "serial.h"
 #include "interrupt.h"

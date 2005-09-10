@@ -1,5 +1,5 @@
 #include "LPC2100.h"
-#include "cmucam.h"
+#include "cc3.h"
 
 void
 disable_ext_interrupt ()
