@@ -19,7 +19,7 @@ COMMON_OBJ=$(OUTDIR)/startup.o  $(OUTDIR)/main.o $(OUTDIR)/cc3.o  $(OUTDIR)/seri
 OBJ=$(COMMON_OBJ) $(CFG_OBJ)
 
 OBJCPY=arm-elf-objcopy -g -v -O ihex "$(OUTDIR)/cmucam3.elf" "$(OUTDIR)/cmucam3.hex"
-COMPILE_SX=arm-elf-gcc -O3 -dAP -save-temps -c -g -o "$(OUTDIR)/$(*F).o" $(CFG_INC) $<
+COMPILE_SX=arm-elf-gcc -O3 -std=gnu99 -Wall -dAP -save-temps -c -g -o "$(OUTDIR)/$(*F).o" $(CFG_INC) $<
 COMPILE=arm-elf-gcc -c -o "$(OUTDIR)/$(*F).obj" $(CFG_INC) "$<"
 LINK=arm-elf-ld  -g -o "$(OUTDIR)/cmucam3.elf" $(OBJ) $(CFG_LIB) -T ./arm.ln 
 

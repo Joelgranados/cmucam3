@@ -4,6 +4,7 @@
 #include "serial.h"
 #include "interrupt.h"
 #include <math.h>
+#include <stdbool.h>
 
 //#define IMG_X 160     
 //#define IMG_Y 240     
@@ -19,6 +20,18 @@ char frame_done = 1;
 //unsigned char img[IMG_Y][IMG_X][3];   // Store like this for best pointer stride
 int read_command ();
 
+enum cc3_channel_t{
+   CC3_RED=0,
+   CC3_GREEN=1,
+   CC3_BLUE=2,
+   CC3_GREEN2=3,
+   CC3_Y=0,
+   CC3_CR=1,
+   CC3_CB=2,
+   CC3_Y2=3,
+   CC3_ALL
+};
+
 
 int
 main ()
@@ -28,7 +41,8 @@ main ()
   system_setup ();
   camera_setup ();
   uart0_setup ();
-
+  i=sin(.45);
+  printf( "%d",i );
   REG (GPIO_IOSET) = LED;
   disable_ext_interrupt ();
   printf ("CMUcam3 v2 Starting up...\r");
