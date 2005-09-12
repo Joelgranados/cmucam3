@@ -8,7 +8,7 @@ ifeq ($(strip $(HALDIR)),)
 endif
 
 LIBS=
-CFLAGS=-I$(HALDIR) -I$(HALDIR)/../common -O2 -mcpu=arm7tdmi -Wextra -Wall -ffreestanding -std=gnu99 -g -fdata-sections -ffunction-sections
+CFLAGS=-I$(HALDIR) -I$(HALDIR)/../common -O2 -mcpu=arm7tdmi -Wextra -Wall -ffreestanding -std=gnu99 -g -fdata-sections -ffunction-sections -Werror-implicit-function-declaration
 LDFLAGS=-nostartfiles -lc -lm -lc -lgcc -T$(HALDIR)/arm.ln -Wl,--gc-sections
 
 

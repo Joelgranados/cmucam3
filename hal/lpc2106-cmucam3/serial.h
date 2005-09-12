@@ -38,5 +38,6 @@ int uart1_getc();
 int uart1_getc_nb();     // return -1 if no char avail
 
 
+void uart0_write (char *str);
 
 #endif

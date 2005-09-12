@@ -1,5 +1,8 @@
+#include <stdbool.h>
+
 #include "LPC2100.h"
 #include "serial.h"
+#include "cc3.h"
 
 /*
  * get_buffer()
@@ -20,7 +23,7 @@ char uart0_putc(const char c)
 {
   while ((REG(UART0_LSR) & LSR_THR_EMPTY) == 0);
   REG(UART0_THR) = c;
-
+  
   return c;
 }
 
@@ -128,6 +131,8 @@ uart0_setup (void)
   REG (UART1_IER) = 0;
   REG (UART1_FCR) = 0;
   REG (UART1_LCR) = 0x03;	// Turn off even parity 
+
+  //uart0_write("uart0 initalized\n");
 }
 
 /*
@@ -235,9 +240,9 @@ InitializeUART0_Int (void)
 }
 
 
-void
-uart_send (unsigned char *data, int length)
+void uart0_write (char *str)
 {
-
-
+  while (*str != '\0') {
+    uart0_putc(*str++);
+  }
 }

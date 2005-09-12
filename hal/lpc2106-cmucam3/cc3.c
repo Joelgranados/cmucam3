@@ -34,7 +34,7 @@ void camera_reset ()
 
 }
 
-int camera_set_reg (int reg, int val)
+int _cc3_camera_set_reg (int reg, int val)
 {
     unsigned int data[3];
     int to;

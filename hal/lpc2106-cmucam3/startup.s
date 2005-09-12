@@ -1,118 +1,199 @@
-/******************************************************************************
-       Module: startup.s
-  Description: Device controller - Startup Code for Flash example
-Version         Date                Initials    Description
-PFARM v1.0.0    19-FEB-2003         ASH         Initial
-PFARM v1.0.8     9-JUL-2003         ASH         Initialise data and interrupts
-                                                correctly
-******************************************************************************/
-.arm
-.text
-.global     _int_vectors
-.func       _int_vectors
+/* 
+ crt0.S for LPC2xxx
+ - based on examples from R O Software
+ - based on examples from newlib-lpc
+ - based on an example from Anglia Designs
 
-/******************************************************************************
-*          Exception vector table - common to all ARM-based systems           *
-******************************************************************************* 
-* Common to all ARM-based systems. See ARM Architecture Reference Manual,     *
-* Programmer's Model section for details. Table entries just jump to handlers *
-* (using full 32-bit addressing).                                             *
-******************************************************************************/
+ collected and modified by Martin Thomas
+*/
 
-_int_vectors:   
-    
-    ldr     pc, do_reset_addr
-    ldr     pc, do_undefined_instruction_addr
-    ldr     pc, do_software_interrupt_addr
-    ldr     pc, do_prefetch_abort_addr
-    ldr     pc, do_data_abort_addr
-    .long   0xB8A06F60                        /* ARM-reserved vector */
-    ldr     pc, do_irq_addr
-    ldr     pc, do_fiq_addr
+        .global _etext                  @ -> .data initial values in ROM
+        .global _data                   @ -> .data area in RAM
+        .global _edata                  @ end of .data area
+        .global __bss_start             @ -> .bss area in RAM
+        .global __bss_end__             @ end of .bss area
+        .global _stack                  @ top of stack
 
+@ Stack Sizes
+        .set  UND_STACK_SIZE, 0x00000004
+        .set  ABT_STACK_SIZE, 0x00000004
+        .set  FIQ_STACK_SIZE, 0x00000100
+        .set  IRQ_STACK_SIZE, 0X00000200
+        .set  SVC_STACK_SIZE, 0x00000800
+
+@ Standard definitions of Mode bits and Interrupt (I & F) flags in PSRs
+        .set  MODE_USR, 0x10            @ User Mode
+        .set  MODE_FIQ, 0x11            @ FIQ Mode
+        .set  MODE_IRQ, 0x12            @ IRQ Mode
+        .set  MODE_SVC, 0x13            @ Supervisor Mode
+        .set  MODE_ABT, 0x17            @ Abort Mode
+        .set  MODE_UND, 0x1B            @ Undefined Mode
+        .set  MODE_SYS, 0x1F            @ System Mode
+
+        .equ  I_BIT, 0x80               @ when I bit is set, IRQ is disabled
+        .equ  F_BIT, 0x40               @ when F bit is set, FIQ is disabled
+
+        .text
+	.arm
+	.section .init, "ax"
+
+        .code 32
+        .align 2
+
+        .global _boot
+        .func   _boot
+_boot:
+
+@ Runtime Interrupt Vectors
+@ -------------------------
+Vectors:
+        b     _start                    @ reset - _start
+        ldr   pc,_undf                  @ undefined - _undf
+        ldr   pc,_swi                   @ SWI - _swi
+        ldr   pc,_pabt                  @ program abort - _pabt
+        ldr   pc,_dabt                  @ data abort - _dabt
+        nop                             @ reserved
+        ldr   pc,_irq                   @ IRQ
+        ldr   pc,_fiq                   @ FIQ - _fiq
+
+@ Use this group for development
+_undf:  .word __undf                    @ undefined
+_swi:   .word __swi                     @ SWI
+_pabt:  .word __pabt                    @ program abort
+_dabt:  .word __dabt                    @ data abort
+_irq:   .word __irq                     @ IRQ
+_fiq:   .word __fiq                     @ FIQ
+
+__undf: b     .                         @ undefined
+__swi:  b     .                         @ SWI
+__pabt: b     .                         @ program abort
+__dabt: b     .                         @ data abort
+__irq:  stmfd   sp!, { lr }               /* save return address on stack */
+	mrs     lr, spsr                  /* use lr to save spsr_irq */
+	stmfd   sp!, { r0-r3, r12, lr }   /* save work regs & spsr on stack */
+	bl      interrupt		      /* go handle the interrupt */
+	ldmfd   sp!, { r0-r3, r12, lr }   /* restore regs from stack */
+	msr     spsr_cxsf, lr             /* put back spsr_irq */
+	ldmfd   sp!, { lr }               /* put back lr_irq */
+	subs    pc, lr, #0x4              /* return, restoring CPSR from SPSR */    
+__fiq:  b     .                         @ FIQ
+        .size _boot, . - _boot
+        .endfunc
+
+
+@ Setup the operating mode & stack.
+@ ---------------------------------
+        .global _start, start, _mainCRTStartup
+        .func   _start
+
+_start:
+start:
+_mainCRTStartup:
+
+@ Initialize Interrupt System
+@ - Set stack location for each mode
+@ - Leave in System Mode with Interrupts Disabled
+@ -----------------------------------------------
+        ldr   r0,=_stack
+        msr   CPSR_c,#MODE_UND|I_BIT|F_BIT @ Undefined Instruction Mode
+        mov   sp,r0
+        sub   r0,r0,#UND_STACK_SIZE
+        msr   CPSR_c,#MODE_ABT|I_BIT|F_BIT @ Abort Mode
+        mov   sp,r0
+        sub   r0,r0,#ABT_STACK_SIZE
+        msr   CPSR_c,#MODE_FIQ|I_BIT|F_BIT @ FIQ Mode
+        mov   sp,r0
+        sub   r0,r0,#FIQ_STACK_SIZE
+        msr   CPSR_c,#MODE_IRQ|I_BIT|F_BIT @ IRQ Mode
+        mov   sp,r0
+        sub   r0,r0,#IRQ_STACK_SIZE
+        msr   CPSR_c,#MODE_SVC|I_BIT|F_BIT @ Supervisor Mode
+        mov   sp,r0
+        sub   r0,r0,#SVC_STACK_SIZE
+        msr   CPSR_c,#MODE_SYS|I_BIT|F_BIT @ System Mode
+        mov   sp,r0
+
+@ Clear .bss
+@ ----------
+        mov   r0,#0                     @ get a zero
+        ldr   r1,=__bss_start           @ -> bss start
+        ldr   r2,=__bss_end__           @ -> bss end
+2:      cmp   r1,r2                     @ check if data to clear
+        strlo r0,[r1],#4                @ clear 4 bytes
+        blo   2b                        @ loop until done
+
+@ Copy initialized data to its execution address in RAM
+@ -----------------------------------------------------
+        ldr   r1,=_etext                @ -> ROM data start
+        ldr   r2,=_data                 @ -> data start
+        ldr   r3,=_edata                @ -> end of data
+1:      cmp   r2,r3                     @ check if data to move
+        ldrlo r0,[r1],#4                @ copy it
+        strlo r0,[r2],#4
+        blo   1b                        @ loop until done
 	
-do_reset_addr:                  .long   do_reset
-do_undefined_instruction_addr:  .long   do_undefined_instruction
-do_software_interrupt_addr:     .long   do_software_interrupt
-do_prefetch_abort_addr:         .long   do_prefetch_abort
-do_data_abort_addr:             .long   do_data_abort
-do_fiq_addr:                    .long   do_fiq
-do_irq_addr:                    .long   do_irq
+/*
+   Call C++ constructors (for objects in "global scope")
+   ctor loop added by Martin Thomas 4/2005 
+   based on a Anglia Design example-application for ST ARM
+*/
 
-/******************************************************************************
-*                         Interrupt exceptions                                *
-******************************************************************************/
-do_irq:
-    stmfd   sp!, { lr }               /* save return address on stack */
-    mrs     lr, spsr                  /* use lr to save spsr_irq */
-    stmfd   sp!, { r0-r3, r12, lr }   /* save work regs & spsr on stack */
-    bl      interrupt		      /* go handle the interrupt */
-    ldmfd   sp!, { r0-r3, r12, lr }   /* restore regs from stack */
-    msr     spsr_cxsf, lr             /* put back spsr_irq */
-    ldmfd   sp!, { lr }               /* put back lr_irq */
-    subs    pc, lr, #0x4              /* return, restoring CPSR from SPSR */    
-    
-    
-/******************************************************************************
-*                         Yet to be implemented exceptions                    *
-*******************************************************************************
-* Just fall through to reset exception handler for now                        *                                     *
-******************************************************************************/                                                                            
-do_undefined_instruction:
-do_software_interrupt:
-do_prefetch_abort:
-do_data_abort:
-do_fiq:
+		LDR 	r0, =__ctors_start__
+		LDR 	r1, =__ctors_end__
+ctor_loop:
+		CMP 	r0, r1
+		BEQ 	ctor_end
+		LDR 	r2, [r0], #4
+		STMFD 	sp!, {r0-r1}
+		MOV 	lr, pc
+		MOV 	pc, r2
+		LDMFD 	sp!, {r0-r1}
+		B 		ctor_loop
+ctor_end:
 
-/******************************************************************************
-*                            System reset handler                             *
-******************************************************************************/
-do_reset:
+@ Call main program: main(0)
+@ --------------------------
+        mov   r0,#0                     @ no arguments (argc = 0)
+        mov   r1,r0
+        mov   r2,r0
+        mov   fp,r0                     @ null frame pointer
+        mov   r7,r0                     @ null frame pointer for thumb
+        ldr   r10,=main
+        mov   lr,pc
 
-    /*Set stack pointers for all modes used (supervisor, IRQ and FIQ)*/
-    msr     cpsr_c, #0xd3       /* ensure we're in supervisor mode */
-    ldr     sp, =__stack_svc    /* set supervisor mode stack pointer */
+/* Enter the C code, use BX instruction so as to never return */
+/* use BLX (?) main if you want to use c++ destructors below */
 
-    msr     cpsr_c, #0xd2       /* enter IRQ mode, with interrupts disabled */
-    ldr     sp, =__stack_irq    /* set IRQ mode stack pointer */
+        bx    r10                       @ enter main()
 
-    msr     cpsr_c, #0xd1       /* enter FIQ mode, with interrupts disabled */
-    ldr     sp, =__stack_fiq    /* set FIQ mode stack pointer */
+/* "global object"-dtors are never called and it should not be 
+   needed since there is no OS to exit to. */
+/* Call destructors */
+#		LDR		r0, =__dtors_start__
+#		LDR		r1, =__dtors_end__
+dtor_loop:
+#		CMP		r0, r1
+#		BEQ		dtor_end
+#		LDR		r2, [r0], #4
+#		STMFD	sp!, {r0-r1}
+#		MOV		lr, pc
+#		MOV		pc, r2
+#		LDMFD	sp!, {r0-r1}
+#		B		dtor_loop
+dtor_end:
+   
+        .size   _start, . - _start
+        .endfunc
 
-    /* Clear uninitialized data section (bss) */
-    ldr     r4, =__start_bss      /* First address     */ 
-    ldr     r5, =__end_bss       /* Last  address      */
-    mov     r6, #0x0                                
-                                               
-loop_zero:  
-    str     r6, [r4]                                
-    add     r4, r4, #0x4                            
-    cmp     r4, r5                                  
-    blt     loop_zero
+        .global _reset, reset, exit, abort
+        .func   _reset
+_reset:
+reset:
+exit:
+abort:
+	b .
 
-/* Copy initialized data sections from ROM into RAM 
-    ldr     r4, =_fdata      /* destination address       
-    ldr     r5, =_edata      /* Last  address      
-    ldr     r6, =_etext      /* source address      
-    cmp     r4, r5                                  
-    beq     skip_initialize
+        .size _reset, . - _reset
+        .endfunc
 
-loop_initialise:
-    ldr     r3, [r6]
-    str     r3, [r4]                                
-    add     r4, r4, #0x4
-    add     r6, r6, #0x4
-    cmp     r4, r5                                  
-    blt     loop_initialise
-    
-skip_initialize:*/
-
-    /* Enable interrupts, enter supervisor mode and branch to start of 'C' code */
-    msr     cpsr_c, #0x13       /* I=0 F=0 T=0 MODE=supervisor */
-    bl      main
-
-/******************************************************************************
-*                        End of startup and interrupt code                    *
-******************************************************************************/
-.size   _int_vectors,.-_int_vectors;
-.endfunc
+        .end

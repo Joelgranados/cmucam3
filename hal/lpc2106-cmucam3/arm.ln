@@ -1,160 +1,145 @@
+/***********************************************************************/
+/*                                                                     */
+/*  ROM.ld:  Linker Script File                                        */
+/*                                                                     */
+/***********************************************************************/
+ENTRY(_boot)
+STACK_SIZE = 0x400;
 
-/*
- * Link command file for building RAM-based programs to run on the 
- * Philips LPC2100 processor
- */
-
-/* memory definition: we're using all of the available RAM and nothing else */
-ENTRY(_int_vectors)
+/* Memory Definitions */
+/* lpc2129 mt */
 MEMORY
 {
-  flash (rx)    : ORIGIN = 0x00000000, LENGTH = 128K
-  ram   (rx)    : ORIGIN = 0x40000000, LENGTH = 64K
+  ROM (rx) : ORIGIN = 0x00000000, LENGTH = 0x00020000
+  RAM (rw) : ORIGIN = 0x40000000, LENGTH = 0x00010000
 }
 
-/* section definition */
-
+/* Section Definitions */
 SECTIONS
 {
-	/* first section is .text, which is used for code */
+  /* first section is .text which is used for code */
+   .text :
+  {
+	KEEP(*(.init))             /* Startup code from .init-section */
+	*(.text .text.*)           /* remaining code */
+	*(.gnu.linkonce.t.*)
+	*(.glue_7)
+	*(.glue_7t)
+	*(.gcc_except_table)
+	*(.rodata)                 /* read-only data (constants) */
+	*(.rodata*)
+	*(.gnu.linkonce.r.*)
+  } > ROM
+  
+  /***** old: 
+  .text :
+  {
+    *crt0.o (.text)            
+    *(.text)                   
+    *(.rodata)                 
+    *(.rodata*)
+    *(.glue_7)
+    *(.glue_7t)
+  } > ROM 
+  *****/
 
-	.text :
+  . = ALIGN(4);
+  
+	/* .ctors .dtors are used for c++ constructors/destructors */
+	/* added by Martin Thomas 4/2005 based on Anglia Design example */
+	.ctors :
 	{
-		/* define symbol name _ftext for start of code */
-
-		_ftext = ABSOLUTE(.);
-
-		
-
-		*(.text .text.*)
-
-		/* debugger stuff ? */
-
-		*(.glue_7t) *(.glue_7)
-
-		/* define symbol name _ecode for end of code */
-
-		_ecode = ABSOLUTE(.);
+		PROVIDE(__ctors_start__ = .);
+		KEEP(*(SORT(.ctors.*)))
+		KEEP(*(.ctors))
+		PROVIDE(__ctors_end__ = .);
+	} >ROM
 	
-		/* next is read-only data */
-
-		. = ALIGN(0x10);
-
-		*(.rodata)
-		*(.rodata*)
-		*(.rdata)
-
-		. = ALIGN(0x10);
-
-		/* define symbol name _text for end of code and read-only data */
-
-		_etext = ABSOLUTE(.);
-
-	} > flash
-
-	/* next section is .data, which is for initialised data */
-
-	.data : AT (_etext)
+	.dtors :
 	{
-		/* define symbol name _data for start of initialised data */
-
-		_fdata = ABSOLUTE(.);
-
-		/* include all initialised data */
-
-		*(.data.*)
+		PROVIDE(__dtors_start__ = .); 
+		KEEP(*(SORT(.dtors.*)))
+		KEEP(*(.dtors))
+		PROVIDE(__dtors_end__ = .);
+	} >ROM
+  
+    . = ALIGN(4);
+	/* mthomas - end */
    
-		. = ALIGN(8);
+  _etext = . ;
+  PROVIDE (etext = .);
 
-		/* define symbol name _data for end of initialised data */
+  /* .data section which is used for initialized data */
+  .data : AT (_etext)
+  {
+    _data = .;
+    *(.data)
+	*(.data.*)
+	*(.gnu.linkonce.d*)
+	SORT(CONSTRUCTORS) /* mt 4/2005 */
+	. = ALIGN(4);
+	*(.fastrun)
+  } > RAM
+ 
+  . = ALIGN(4);
+  _edata = . ;
+  PROVIDE (edata = .);
 
-		_edata  = ABSOLUTE(.);
+  /* .bss section which is used for uninitialized data */
+  .bss (NOLOAD) :
+  {
+    __bss_start = . ;
+    __bss_start__ = . ;
+    *(.bss)
+	*(.gnu.linkonce.b*)
+    *(COMMON)
+    . = ALIGN(4);
+  } > RAM
 
-	} > ram
+  . = ALIGN(4);
+  __bss_end__ = . ;
+  PROVIDE (__bss_end = .);
 
-	/* next section is .bss, which is uninitialised data */
+  .stack ALIGN(256) :
+  {
+    . += STACK_SIZE;
+    PROVIDE (_stack = .);
+  } > RAM
 
-	.bss (NOLOAD) : 
-	{
-        __start_bss = . ;
+  _end = . ;
+  PROVIDE (end = .);
 
-		/* include all uninitialised writable data */
-
-		*(.bss .bss.*)
-
-		/* include ramaining uninitialised data */
-
-		*(COMMON)
-
-	} > ram
-
-        __end_bss = . ;
-
-        .stack :
-        {	
-		/* required allignment for stacks */
-
-		. =  ALIGN(16) ;
-
-		/* allocate room for supervisor stack */
-
-		. += 0x800 ;
-
-	        __stack_svc = . ;
-
-
-		/* allocate room for interrupt stack */
-
-		. += 0x200 ;
-
-        	__stack_irq = . ;
-	
-		/* allocate room for fast interrupt stack */
-
-		. += 0x100 ;
-
-	        __stack_fiq = . ;
-	} > ram
-
-
-
-
-	/* define symbol name _end */
-	_end = . ;
-
-
-	/* special section for discarding unwanted input */
-
-	/DISCARD/ : 
-	{
-		*(.reginfo)
-	}
-
-	/* define some extra symbols, but only if they're required */
-
-	PROVIDE(etext = _etext);
-	PROVIDE (edata = .);
-	PROVIDE (end = _end);
-
-    /*
-	 * Debug sections.  
-     * These should never be loadable, but they must have
-     * zero addresses for the debuggers to work correctly.  
-     */
-
-	.gptab.data	0 ( INFO ) : { *(.gptab.data)		}
-	.gptab.bss	0 ( INFO ) : { *(.gptab.bss)		}
-	.gptab.sdata	0 ( INFO ) : { *(.gptab.sdata) 	}
-	.gptab.sbss	0 ( INFO ) : { *(.gptab.sbss) 		}
-	.stab		0 ( INFO ) : { *(.stab)				}
-	.stabstr	0 ( INFO ) : { *(.stabstr)			}
-	.comment	0 ( INFO ) : { *(.comment)			}
-	.line		0 ( INFO ) : { *(.line)				}
-	.debug		0 ( INFO ) : { *(.debug)			}
-	.debug_sfnames	0 ( INFO ) : { *(.debug_sfnames)	}
-	.debug_srcinfo	0 ( INFO ) : { *(.debug_srcinfo)	}
-	.debug_macinfo	0 ( INFO ) : { *(.debug_macinfo)	}
-	.debug_pubnames	0 ( INFO ) : { *(.debug_pubnames)	}
-	.debug_aranges	0 ( INFO ) : { *(.debug_aranges)	}
-	.mdebug		0 ( INFO ) : { *(.mdebug)			}
+  /* Stabs debugging sections.  */
+  .stab          0 : { *(.stab) }
+  .stabstr       0 : { *(.stabstr) }
+  .stab.excl     0 : { *(.stab.excl) }
+  .stab.exclstr  0 : { *(.stab.exclstr) }
+  .stab.index    0 : { *(.stab.index) }
+  .stab.indexstr 0 : { *(.stab.indexstr) }
+  .comment       0 : { *(.comment) }
+  /* DWARF debug sections.
+     Symbols in the DWARF debugging sections are relative to the beginning
+     of the section so we begin them at 0.  */
+  /* DWARF 1 */
+  .debug          0 : { *(.debug) }
+  .line           0 : { *(.line) }
+  /* GNU DWARF 1 extensions */
+  .debug_srcinfo  0 : { *(.debug_srcinfo) }
+  .debug_sfnames  0 : { *(.debug_sfnames) }
+  /* DWARF 1.1 and DWARF 2 */
+  .debug_aranges  0 : { *(.debug_aranges) }
+  .debug_pubnames 0 : { *(.debug_pubnames) }
+  /* DWARF 2 */
+  .debug_info     0 : { *(.debug_info .gnu.linkonce.wi.*) }
+  .debug_abbrev   0 : { *(.debug_abbrev) }
+  .debug_line     0 : { *(.debug_line) }
+  .debug_frame    0 : { *(.debug_frame) }
+  .debug_str      0 : { *(.debug_str) }
+  .debug_loc      0 : { *(.debug_loc) }
+  .debug_macinfo  0 : { *(.debug_macinfo) }
+  /* SGI/MIPS DWARF 2 extensions */
+  .debug_weaknames 0 : { *(.debug_weaknames) }
+  .debug_funcnames 0 : { *(.debug_funcnames) }
+  .debug_typenames 0 : { *(.debug_typenames) }
+  .debug_varnames  0 : { *(.debug_varnames) }
 }
