@@ -41,20 +41,28 @@ main ()
   unsigned int i = 0;
   int val;
   system_setup ();
-  camera_setup ();
   uart0_setup ();
-  i=sin(.45);
-  printf( "%d",i );
+  uart0_write ("CMUcam3 v2 Starting up...\r\n");
   REG (GPIO_IOSET) = LED;
+  uart0_write ("LED is on\r\n");
+
+  uart0_write ("camera_setup\r\n");
+  camera_setup ();
+
+  uart0_write ("disable_ext_interrupt\r\n");
   disable_ext_interrupt ();
-  printf ("CMUcam3 v2 Starting up...\r");
 
-  camera_set_reg (0x14, 0x20);	// set low resolutiun
-  //camera_set_reg (0x14, 0x00);        // sets high resolutiun
-  camera_set_reg (0x13, 0x21);	// 
-  camera_set_reg (0x12, 0x2C);	// color mode RGB White balance
-  camera_set_reg (0x11, 0x00);
+  uart0_write ("camera set reg\r\n");
+  _cc3_camera_set_reg (0x14, 0x20);	// set low resolutiun
+  //_cc3_camera_set_reg (0x14, 0x00);        // sets high resolutiun
+  uart0_write ("camera set reg\r\n");
+  _cc3_camera_set_reg (0x13, 0x21);	// 
+  uart0_write ("camera set reg\r\n");
+  _cc3_camera_set_reg (0x12, 0x2C);	// color mode RGB White balance
+  uart0_write ("camera set reg\r\n");
+  _cc3_camera_set_reg (0x11, 0x00);
 
+  uart0_write ("main loop begin\r\n");
   while (1)
     {
       printf (":");
