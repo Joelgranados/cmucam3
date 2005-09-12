@@ -24,7 +24,9 @@ SECTIONS
 
 		_ftext = ABSOLUTE(.);
 
-		*(.text)
+		
+
+		*(.text .text.*)
 
 		/* debugger stuff ? */
 
@@ -39,7 +41,7 @@ SECTIONS
 		. = ALIGN(0x10);
 
 		*(.rodata)
-		*(.rodata.str1.4)
+		*(.rodata*)
 		*(.rdata)
 
 		. = ALIGN(0x10);
@@ -60,7 +62,7 @@ SECTIONS
 
 		/* include all initialised data */
 
-		*(.data)
+		*(.data.*)
    
 		. = ALIGN(8);
 
@@ -78,7 +80,7 @@ SECTIONS
 
 		/* include all uninitialised writable data */
 
-		*(.bss)
+		*(.bss .bss.*)
 
 		/* include ramaining uninitialised data */
 

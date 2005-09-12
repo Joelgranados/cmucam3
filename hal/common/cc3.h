@@ -1,3 +1,5 @@
+/* XXX: this file must be changed to not include lpc2106 stuff (it's in hal/common) */
+
 #ifndef CC3_H
 #define CC3_H
 
