@@ -1,0 +1,160 @@
+
+/*
+ * Link command file for building RAM-based programs to run on the 
+ * Philips LPC2100 processor
+ */
+
+/* memory definition: we're using all of the available RAM and nothing else */
+
+MEMORY
+{
+  flash (rx)    : ORIGIN = 0x00000000, LENGTH = 128K
+  ram   (rx)    : ORIGIN = 0x40000000, LENGTH = 64K
+}
+
+/* section definition */
+
+SECTIONS
+{
+	/* first section is .text, which is used for code */
+
+	.text :
+	{
+		/* define symbol name _ftext for start of code */
+
+		_ftext = ABSOLUTE(.);
+
+		/* first object is the boot exception vector table */
+                
+                bin/startup.o (.text)
+
+                /* next all the remaining code */
+
+		*(.text)
+
+		/* debugger stuff ? */
+
+		*(.glue_7t) *(.glue_7)
+
+		/* define symbol name _ecode for end of code */
+
+		_ecode = ABSOLUTE(.);
+	
+		/* next is read-only data */
+
+		. = ALIGN(0x10);
+
+		*(.rodata)
+		*(.rodata.str1.4)
+		*(.rdata)
+
+		. = ALIGN(0x10);
+
+		/* define symbol name _text for end of code and read-only data */
+
+		_etext = ABSOLUTE(.);
+
+	} > flash
+
+	/* next section is .data, which is for initialised data */
+
+	.data : AT (_etext)
+	{
+		/* define symbol name _data for start of initialised data */
+
+		_fdata = ABSOLUTE(.);
+
+		/* include all initialised data */
+
+		*(.data)
+   
+		. = ALIGN(8);
+
+		/* define symbol name _data for end of initialised data */
+
+		_edata  = ABSOLUTE(.);
+
+	} > flash
+
+	/* next section is .bss, which is uninitialised data */
+
+	.bss : 
+	{
+        __start_bss = . ;
+
+		/* include all uninitialised writable data */
+
+		*(.bss)
+
+		/* include ramaining uninitialised data */
+
+		*(COMMON)
+
+        __end_bss = . ;
+
+	/* define symbol name _end, heap start address */
+	_end = . ;
+	
+		/* allocate room for stack and heap */
+		. += 0x2000;
+		
+		/* required allignment for stacks */
+
+		. =  ALIGN(16) ;
+
+		/* allocate room for supervisor stack */
+
+		. += 0x800 ;
+
+        __stack_svc = . ;
+
+		/* allocate room for interrupt stack */
+
+		. += 0x200 ;
+
+        __stack_irq = . ;
+
+		/* allocate room for fast interrupt stack */
+
+		. += 0x100 ;
+
+        __stack_fiq = . ;
+
+	} > ram
+
+
+	/* special section for discarding unwanted input */
+
+	/DISCARD/ : 
+	{
+		*(.reginfo)
+	}
+
+	/* define some extra symbols, but only if they're required */
+
+	PROVIDE(etext = _etext);
+	PROVIDE (edata = .);
+	PROVIDE (end = _end);
+
+    /*
+	 * Debug sections.  
+     * These should never be loadable, but they must have
+     * zero addresses for the debuggers to work correctly.  
+     */
+
+	.gptab.data	0 ( INFO ) : { *(.gptab.data)		}
+	.gptab.bss	0 ( INFO ) : { *(.gptab.bss)		}
+	.gptab.sdata	0 ( INFO ) : { *(.gptab.sdata) 	}
+	.gptab.sbss	0 ( INFO ) : { *(.gptab.sbss) 		}
+	.stab		0 ( INFO ) : { *(.stab)				}
+	.stabstr	0 ( INFO ) : { *(.stabstr)			}
+	.comment	0 ( INFO ) : { *(.comment)			}
+	.line		0 ( INFO ) : { *(.line)				}
+	.debug		0 ( INFO ) : { *(.debug)			}
+	.debug_sfnames	0 ( INFO ) : { *(.debug_sfnames)	}
+	.debug_srcinfo	0 ( INFO ) : { *(.debug_srcinfo)	}
+	.debug_macinfo	0 ( INFO ) : { *(.debug_macinfo)	}
+	.debug_pubnames	0 ( INFO ) : { *(.debug_pubnames)	}
+	.debug_aranges	0 ( INFO ) : { *(.debug_aranges)	}
+	.mdebug		0 ( INFO ) : { *(.mdebug)			}
+}

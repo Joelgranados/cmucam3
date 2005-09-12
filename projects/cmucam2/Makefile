@@ -18,9 +18,10 @@ OBJS=main.o
 all: cmucam2.hex
 
 cmucam2.hex: cmucam2
+	$(OBJS-COPY
 
 cmucam2: $(OBJS) $(HALDIR)/$(HALLIB)
-
+	$(CC) -o $@ $(LDFLAGS) $(OBJS) $(HALDIR)/$(HALLIB)
 
 clean:
 	$(RM) *.elf *.a *.o cmucam2 *.hex
