@@ -1,4 +1,4 @@
-SUBDIRS=hal projects
+SUBDIRS=cmucam2
 
 # Build rules
 all:

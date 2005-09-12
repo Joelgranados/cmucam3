@@ -1,4 +1,4 @@
-SUBDIRS=hal projects
+SUBDIRS=lpc2106-cmucam3 virtual-cam
 
 # Build rules
 all:
