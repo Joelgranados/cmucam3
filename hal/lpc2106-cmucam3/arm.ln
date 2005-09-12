@@ -5,7 +5,7 @@
  */
 
 /* memory definition: we're using all of the available RAM and nothing else */
-
+ENTRY(_int_vectors)
 MEMORY
 {
   flash (rx)    : ORIGIN = 0x00000000, LENGTH = 128K
@@ -23,12 +23,6 @@ SECTIONS
 		/* define symbol name _ftext for start of code */
 
 		_ftext = ABSOLUTE(.);
-
-		/* first object is the boot exception vector table */
-                
-                bin/startup.o (.text)
-
-                /* next all the remaining code */
 
 		*(.text)
 
@@ -74,11 +68,11 @@ SECTIONS
 
 		_edata  = ABSOLUTE(.);
 
-	} > flash
+	} > ram
 
 	/* next section is .bss, which is uninitialised data */
 
-	.bss : 
+	.bss (NOLOAD) : 
 	{
         __start_bss = . ;
 
@@ -90,14 +84,12 @@ SECTIONS
 
 		*(COMMON)
 
+	} > ram
+
         __end_bss = . ;
 
-	/* define symbol name _end, heap start address */
-	_end = . ;
-	
-		/* allocate room for stack and heap */
-		. += 0x2000;
-		
+        .stack :
+        {	
 		/* required allignment for stacks */
 
 		. =  ALIGN(16) ;
@@ -106,21 +98,27 @@ SECTIONS
 
 		. += 0x800 ;
 
-        __stack_svc = . ;
+	        __stack_svc = . ;
+
 
 		/* allocate room for interrupt stack */
 
 		. += 0x200 ;
 
-        __stack_irq = . ;
-
+        	__stack_irq = . ;
+	
 		/* allocate room for fast interrupt stack */
 
 		. += 0x100 ;
 
-        __stack_fiq = . ;
-
+	        __stack_fiq = . ;
 	} > ram
+
+
+
+
+	/* define symbol name _end */
+	_end = . ;
 
 
 	/* special section for discarding unwanted input */

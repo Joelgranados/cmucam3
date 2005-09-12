@@ -8,7 +8,7 @@ ifeq ($(strip $(HALDIR)),)
 endif
 
 LIBS=
-CFLAGS=-I$(HALDIR) -I$(HALDIR)/../common -O2 -mcpu=arm7tdmi -mthumb-interwork -Wextra -Wall -ffreestanding -std=gnu99 -g
+CFLAGS=-I$(HALDIR) -I$(HALDIR)/../common -O2 -mcpu=arm7tdmi -Wextra -Wall -ffreestanding -std=gnu99 -g
 LDFLAGS=-nostartfiles -lc -lm -lc -lgcc -T$(HALDIR)/arm.ln
 
 

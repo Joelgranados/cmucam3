@@ -12,16 +12,16 @@ include $(HALDIR)/defs.mk
 
 OBJS=main.o
 
-
 # targets
 
 all: cmucam2.hex
 
 cmucam2.hex: cmucam2
-	$(OBJS-COPY
+	$(OBJCOPY) -O ihex $< $@
 
 cmucam2: $(OBJS) $(HALDIR)/$(HALLIB)
-	$(CC) -o $@ $(LDFLAGS) $(OBJS) $(HALDIR)/$(HALLIB)
+	$(CC) -o $@ $(OBJS) -L$(HALDIR) \
+	-Wl,-whole-archive -lhal-$(hal) -Wl,-no-whole-archive $(LDFLAGS)
 
 clean:
 	$(RM) *.elf *.a *.o cmucam2 *.hex

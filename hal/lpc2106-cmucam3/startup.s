@@ -30,6 +30,7 @@ _int_vectors:
     ldr     pc, do_irq_addr
     ldr     pc, do_fiq_addr
 
+	
 do_reset_addr:                  .long   do_reset
 do_undefined_instruction_addr:  .long   do_undefined_instruction
 do_software_interrupt_addr:     .long   do_software_interrupt

@@ -3,15 +3,13 @@
 
 #include "LPC2100.h"
 
-void printf (const char *format, ...);
 /************************************************ UART ****************************/
 typedef unsigned int _4BYTE;
 typedef unsigned short _2BYTE;
 typedef unsigned char _BYTE;
 unsigned char ucGlobalTemp;
 void uart0_setup (void);
-void WriteStringUART0 (char *str);
-int getc_status, getc_status1;
+
 // LPC21000 misc uart0 definitions
 #define UART0_PCB_PINSEL_CFG     (_4BYTE)0x00000005
 #define UART1_PCB_PINSEL_CFG     (_4BYTE)0x00050005
@@ -29,11 +27,16 @@ int getc_status, getc_status1;
 #define LSR_THR_EMPTY           (_4BYTE)0x00000020
 #define LSR_RBR_EMPTY           (_4BYTE)0x00000001
 
-// macro to write a character to UART0
-#define putc(value) {while((REG(UART0_LSR) & LSR_THR_EMPTY) == 0); REG(UART0_THR) = value;}
-#define putc1(value) {while((REG(UART1_LSR) & LSR_THR_EMPTY) == 0); REG(UART1_THR) = value;}
 
-char getc_nb ();
-char getc ();
+char uart0_putc(const char c);
+char uart1_putc(const char c);
+
+int uart0_getc();
+int uart0_getc_nb();     // return -1 if no char avail
+
+int uart1_getc();
+int uart1_getc_nb();     // return -1 if no char avail
+
+
 
 #endif

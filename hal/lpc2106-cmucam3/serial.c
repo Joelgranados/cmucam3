@@ -1,15 +1,5 @@
 #include "LPC2100.h"
 #include "serial.h"
-#include "libc.h"
-
-void
-printf (const char *format, ...)
-{
-  void *args = (void *) &format + sizeof (format);
-  char text[200];
-  sprintf_args (text, format, args);
-  WriteStringUART0 (text);
-}
 
 /*
  * get_buffer()
@@ -26,77 +16,85 @@ get_buffer (char *buffer, int maxlen)
   return REG (UART0_RBR);
 }
 
+char uart0_putc(const char c)
+{
+  while ((REG(UART0_LSR) & LSR_THR_EMPTY) == 0);
+  REG(UART0_THR) = c;
+
+  return c;
+}
+
+char uart1_putc(const char c)
+{
+  while((REG(UART1_LSR) & LSR_THR_EMPTY) == 0);
+  REG(UART1_THR) = c;
+
+  return c;
+}
+
 
 /*
- * getc()
+ * uart0_getc()
  *
  * This is a blocking function that uses the ARM's hardware UART0 to read serial characters
  *
  */
-char
-getc ()
+int uart0_getc()
 {
   while ((REG (UART0_LSR) & LSR_RBR_EMPTY) == 0);
   return REG (UART0_RBR);
 }
 
 /*
- * getc_nb()
+ * uart0_getc_nb()
  *
  * This is a non-blocking function that check the ARM's hardware UART0 for data.
- * If there is data, the data is returned and getc_status is set to 1.
- * On no data, 0 is returned and getc_status is set to 0.
- * Use getc_status as a global flag to detect new data, not a 0 value returned.
+ * If there is data, the data is returned.
+ * On no data, -1 is returned.
  *
  */
-char
-getc_nb ()
+int uart0_getc_nb()
 {
-  if ((REG (UART0_LSR) & LSR_RBR_EMPTY) == 0)
-    {
-      getc_status = 0;
-      return 0;
-    }
-  else
-    {
-      getc_status = 1;
-      return REG (UART0_RBR);
-    }
+  if ((REG (UART0_LSR) & LSR_RBR_EMPTY) == 0) {
+    return -1;
+  }
+  else {
+    return REG (UART0_RBR);
+  }
 }
 
+
 /*
- * getc1()
+ * uart1_getc()
  *
- * Same as getc, only for UART1 instead of 0
+ * This is a blocking function that uses the ARM's hardware UART1 to read serial characters
  *
  */
-char
-getc1 ()
+int uart1_getc()
 {
   while ((REG (UART1_LSR) & LSR_RBR_EMPTY) == 0);
   return REG (UART1_RBR);
 }
 
 /*
- * getc_nb1()
+ * uart1_getc_nb()
  *
- * Same as getc_nb, except for UART1 instead of 0
+ * This is a non-blocking function that check the ARM's hardware UART1 for data.
+ * If there is data, the data is returned.
+ * On no data, -1 is returned.
  *
  */
-char
-getc_nb1 ()
+int uart1_getc_nb()
 {
-  if ((REG (UART1_LSR) & LSR_RBR_EMPTY) == 0)
-    {
-      getc_status1 = 0;
-      return 0;
-    }
-  else
-    {
-      getc_status1 = 1;
-      return REG (UART1_RBR);
-    }
+  if ((REG (UART1_LSR) & LSR_RBR_EMPTY) == 0) {
+    return -1;
+  }
+  else {
+    return REG (UART1_RBR);
+  }
 }
+
+
 
 void
 uart0_setup (void)
@@ -185,25 +183,8 @@ InitializeUARTs (void)
   REG (UART1_IER) = 0;
   REG (UART1_FCR) = 0;
   REG (UART1_LCR) = 0x03;	// Turn off even parity 
-  getc_status = 0;
-  getc_status1 = 0;
 }
 
-
-/*
- * WriteStringUART0
- *
- * This is a simple function that outputs a constant string over UART0
- *
- */
-void
-WriteStringUART0 (char *str)
-{
-  int i;
-  i = 0;
-  while (str[i] != 0)
-    putc (str[i++]);
-}
 
 
 

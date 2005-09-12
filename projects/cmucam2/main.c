@@ -1,6 +1,8 @@
+#include <stdio.h>
+#include <string.h>
+
 #include "LPC2100.h"
 #include "cc3.h"
-#include "libc.h"
 #include "serial.h"
 #include "interrupt.h"
 #include <math.h>
@@ -98,7 +100,7 @@ read_command ()
   c = 0;
   while (c != '\r' && c != ' ')
     {
-      c = getc ();
+      c = getchar ();
       str[i] = c;
       if (i < STR_MAX - 1)
 	i++;

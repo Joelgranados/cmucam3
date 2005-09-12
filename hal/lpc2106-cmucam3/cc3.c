@@ -1,7 +1,8 @@
+#include <stdio.h>
+
 #include "cc3.h"
 #include "LPC2100.h"
 #include "serial.h"
-#include "libc.h"
 #include "interrupt.h"
 
 unsigned long red_pixel, green_pixel, green_pixel2, blue_pixel;
@@ -55,19 +56,19 @@ void image_send_direct (int size_x, int size_y)
     int x, y;
     fifo_load_frame ();
 
-    putc (1);
-    putc (size_x);
-    putc (size_y);
+    putchar (1);
+    putchar (size_x);
+    putchar (size_y);
     for (y = 0; y < size_y; y++) {
-        putc (2);
+        putchar (2);
         for (x = 0; x < size_x; x++) {
             fifo_read_pixel ();
-            putc (red_pixel);
-            putc (green_pixel);
-            putc (blue_pixel);
+            putchar (red_pixel);
+            putchar (green_pixel);
+            putchar (blue_pixel);
         }
     }
-    putc (3);
+    putchar (3);
 }
 
 void image_fifo_to_mem (unsigned char *img, int size_x, int size_y)
@@ -91,18 +92,18 @@ void image_send_uart (unsigned char *img, int size_x, int size_y)
 {
     int y, x;
 
-    putc (1);                   // start of frame
+    putchar (1);                   // start of frame
     for (y = 0; y < size_y; y++) {
-        putc (2);               // indicates a new row
+        putchar (2);               // indicates a new row
         for (x = 0; x < size_x; x++) {
             int index;
             index = (size_x * y * 3) + (x * 3);
-            putc (img[index]);  // Sends Red value
-            putc (img[index + 1]);      // Sends Green Value
-            putc (img[index + 2]);      // Sends Blue Value
+            putchar (img[index]);  // Sends Red value
+            putchar (img[index + 1]);      // Sends Green Value
+            putchar (img[index + 2]);      // Sends Blue Value
         }
     }
-    putc (3);                   // end of frame
+    putchar (3);                   // end of frame
 
 }
 
@@ -161,7 +162,7 @@ void fifo_load_frame ()
         while (REG (GPIO_IOPIN) & CAM_HREF);
     }
 
-    putc ('E');
+    putchar ('E');
     // delay();
     // REG(GPIO_IOCLR)=BUF_WEE; //BUF_WEE=0
 }
