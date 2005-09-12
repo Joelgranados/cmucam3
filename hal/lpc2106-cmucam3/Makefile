@@ -1,6 +1,6 @@
 include defs.mk
 
-OBJS=interrupt.o cc3.o LPC2100.o serial.o syscalls.o startup.o
+OBJS=interrupt.o cc3.o LPC2100.o syscalls.o startup.o uart.o
 
 
 all: $(HALLIB)

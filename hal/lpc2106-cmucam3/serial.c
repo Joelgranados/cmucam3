@@ -89,6 +89,12 @@ uart0_setup (void)
 {
   int i, xflag;
   uint32_t xdata;
+
+  // disable all UART0 interrupts
+  REG (UART0_IER) = 0;
+  REG (UART0_IIR) = 0;
+  REG (UART0_LSR) = 0;
+
   // enable access to divisor latch regs
   REG (UART0_LCR) = LCR_ENABLE_LATCH_ACCESS;
   // set divisor for desired baud
@@ -98,8 +104,7 @@ uart0_setup (void)
   // disable access to divisor latch regs (enable access to xmit/rcv fifos
   // and int enable regs)
   REG (UART0_LCR) = LCR_DISABLE_LATCH_ACCESS;
-  // disable all UART0 interrupts
-  REG (UART0_IER) = 0;
+
   // setup fifo control reg - trigger level 0 (1 byte fifos), no dma
   // disable fifos (450 mode)
   REG (UART0_FCR) = 0;
@@ -109,6 +114,7 @@ uart0_setup (void)
   REG (UART0_LCR) = 0x03;	// Turn off even parity 
 
 
+  /*
   REG (UART1_LCR) = LCR_ENABLE_LATCH_ACCESS;
   REG (UART1_DLM) = 0;
   REG (UART1_DLL) = BAUD_9600;
@@ -116,8 +122,9 @@ uart0_setup (void)
   REG (UART1_IER) = 0;
   REG (UART1_FCR) = 0;
   REG (UART1_LCR) = 0x03;	// Turn off even parity 
+  */
 
-  //uart0_write("uart0 initalized\n");
+  uart0_write("uart0 initalized\n");
 }
 
 /*

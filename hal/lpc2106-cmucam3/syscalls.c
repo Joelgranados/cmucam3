@@ -12,6 +12,8 @@ extern int errno;
 int _write (int file, char *ptr, int len)
 {
   int i = 0;
+  uart0_write("in _write\r\n");
+
 
   for (i = 0; i < len; i++) {
     uart0_putc(*ptr++);
@@ -30,9 +32,15 @@ int _write (int file, char *ptr, int len)
 int _read (int file, char *ptr, int len)
 {
   int i = 0;
+  char c;
+ 
+  uart0_write("in _read\r\n");
 
+  
   for (i = 0; i < len; i++) {
-    *ptr++ = uart0_getc();
+    c = uart0_getc();
+    uart0_putc(c);
+    *ptr++ = c;
   }
 
   /*
@@ -50,16 +58,22 @@ int _read (int file, char *ptr, int len)
 
 int _close(int file)
 {
+  uart0_write("in _close\r\n");
+  uart0_write(" returning\r\n");
   return 0;
 }
 
 _off_t _lseek(int file, _off_t ptr, int dir) {
+  uart0_write("in _lseek\r\n");
+  uart0_write(" returning\r\n");
   return 0;
 }
 
 int _fstat(int file, struct stat *st)
 {
+  uart0_write("in _fstat\r\n");
   st->st_mode = S_IFCHR;	
+  uart0_write(" returning\r\n");
   return 0;
 }
 
@@ -73,6 +87,7 @@ static void *heap_ptr;		/* Points to current end of the heap.	*/
 
 void *_sbrk(int nbytes) {
   char *base;		/*  errno should be set to  ENOMEM on error	*/
+  uart0_write("in _sbrk\r\n");
   
   if (!heap_ptr) {	/*  Initialize if first time through.		*/
     heap_ptr = end;
@@ -88,6 +103,7 @@ void *_sbrk(int nbytes) {
   heap_ptr += nbytes;	/*  Increase heap.				*/
   
 
+  uart0_write(" returning\r\n");
   return base;		/*  Return pointer to start of new heap area.	*/
 }
 
@@ -95,6 +111,8 @@ void *_sbrk(int nbytes) {
 
 int isatty (int fd)
 {
+  uart0_write("in isatty\r\n");
+  uart0_write(" returning\r\n");
   return 1;
   fd = fd;
 }
