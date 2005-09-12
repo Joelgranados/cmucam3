@@ -4,21 +4,6 @@
 #include "serial.h"
 #include "cc3.h"
 
-/*
- * get_buffer()
- *
- * This is a blocking function that uses the ARM's hardware UART0 to read serial characters
- * the characters are written to buffer, at most maxlen characters are read
- * the number of characters is returned
- *
- */
-int
-get_buffer (char *buffer, int maxlen)
-{
-  while ((REG (UART0_LSR) & LSR_RBR_EMPTY) == 0);
-  return REG (UART0_RBR);
-}
-
 char uart0_putc(const char c)
 {
   while ((REG(UART0_LSR) & LSR_THR_EMPTY) == 0);
@@ -103,7 +88,7 @@ void
 uart0_setup (void)
 {
   int i, xflag;
-  _4BYTE xdata;
+  uint32_t xdata;
   // enable access to divisor latch regs
   REG (UART0_LCR) = LCR_ENABLE_LATCH_ACCESS;
   // set divisor for desired baud

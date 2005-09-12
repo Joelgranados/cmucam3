@@ -4,9 +4,12 @@
 #include "serial.h"
 
 #include <errno.h>
+#undef errno
+extern int errno;
 
 
-int _write_r (struct _reent *r, int file, char *ptr, int len)
+//int _write_r (struct _reent *r, int file, char *ptr, int len)
+int _write (int file, char *ptr, int len)
 {
   int i = 0;
 
@@ -24,7 +27,7 @@ int _write_r (struct _reent *r, int file, char *ptr, int len)
   return i;
 }
 
-int _read_r (struct _reent *r, int file, char *ptr, int len)
+int _read (int file, char *ptr, int len)
 {
   int i = 0;
 
@@ -45,16 +48,16 @@ int _read_r (struct _reent *r, int file, char *ptr, int len)
 }
 
 
-int _close_r(struct _reent *r, int file)
+int _close(int file)
 {
   return 0;
 }
 
-_off_t _lseek_r(struct _reent *r, int file, _off_t ptr, int dir) {
+_off_t _lseek(int file, _off_t ptr, int dir) {
   return 0;
 }
 
-int _fstat_r(struct _reent *r, int file, struct stat *st)
+int _fstat(int file, struct stat *st)
 {
   st->st_mode = S_IFCHR;	
   return 0;
@@ -68,7 +71,7 @@ extern void *end;               /*  end is set in the linker command 	*/
 static void *heap_ptr;		/* Points to current end of the heap.	*/
 
 
-void *_sbrk_r(struct _reent *r, int nbytes) {
+void *_sbrk(int nbytes) {
   char *base;		/*  errno should be set to  ENOMEM on error	*/
   
   if (!heap_ptr) {	/*  Initialize if first time through.		*/
@@ -78,7 +81,7 @@ void *_sbrk_r(struct _reent *r, int nbytes) {
   base = heap_ptr;	/*  Point to end of heap.			*/
 
   if (base + nbytes >= (char *) 0x40010000) {
-    r->_errno = ENOMEM;
+    errno = ENOMEM;
     return (void *) -1;
   }
 
@@ -86,4 +89,12 @@ void *_sbrk_r(struct _reent *r, int nbytes) {
   
 
   return base;		/*  Return pointer to start of new heap area.	*/
+}
+
+
+
+int isatty (int fd)
+{
+  return 1;
+  fd = fd;
 }
