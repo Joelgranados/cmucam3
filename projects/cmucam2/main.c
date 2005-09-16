@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "LPC2100.h"
@@ -38,53 +39,45 @@ enum cc3_channel_t{
 int
 main ()
 {
-  unsigned int i = 0;
   int val;
   system_setup ();
-  uart0_setup ();
-  uart0_write ("CMUcam3 v2 Starting up...\r\n");
   REG (GPIO_IOSET) = LED;
-  uart0_write ("LED is on\r\n");
 
-  uart0_write ("camera_setup\r\n");
-  camera_setup ();
-
-  uart0_write ("disable_ext_interrupt\r\n");
   disable_ext_interrupt ();
 
-  uart0_write ("camera set reg\r\n");
+  uart0_setup ();
+  //  uart1_setup ();
+  camera_setup ();
+
   _cc3_camera_set_reg (0x14, 0x20);	// set low resolutiun
   //_cc3_camera_set_reg (0x14, 0x00);        // sets high resolutiun
-  uart0_write ("camera set reg\r\n");
   _cc3_camera_set_reg (0x13, 0x21);	// 
-  uart0_write ("camera set reg\r\n");
   _cc3_camera_set_reg (0x12, 0x2C);	// color mode RGB White balance
-  uart0_write ("camera set reg\r\n");
   _cc3_camera_set_reg (0x11, 0x00);
 
-  uart0_write ("main loop begin\r\n");
+  printf ("CMUcam3 v2 Starting up...\r\n");
   while (1)
     {
       printf (":");
       val = read_command ();
       if (val == -1)
-	printf ("NCK\r");
+	printf ("NCK\r\n");
       else
 	{
-	  printf ("ACK\r");
+	  printf ("ACK\r\n");
 	  switch (val)
 	    {
 	    case ACK:
 	      break;
 	    case RESET:
-	      printf ("CMUcam2 v0.0 c6\r");
+	      printf ("CMUcam2 v0.0 c6\r\n");
 	      break;
 	    case SEND_RAW_IMAGE:
 	      image_send_direct (IMG_X, IMG_Y);
-	      printf ("done\r");
+	      printf ("done\r\n");
 	      break;
 	    default:
-	      printf ("PC load letter?\r");
+	      printf ("PC load letter?\r\n");
 	    }
 	}
       // fifo_load_frame ();
@@ -109,6 +102,7 @@ read_command ()
   while (c != '\r' && c != ' ')
     {
       c = getchar ();
+      putchar(c);
       str[i] = c;
       if (i < STR_MAX - 1)
 	i++;

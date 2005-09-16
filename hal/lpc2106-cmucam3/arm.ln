@@ -10,8 +10,8 @@ STACK_SIZE = 0x400;
 /* lpc2129 mt */
 MEMORY
 {
-  ROM (rx) : ORIGIN = 0x00000000, LENGTH = 0x00020000
-  RAM (rw) : ORIGIN = 0x40000000, LENGTH = 0x00010000
+  ROM (rx) : ORIGIN = 0x00000000, LENGTH = 120K
+  RAM (rw) : ORIGIN = 0x40000000, LENGTH = 64K
 }
 
 /* Section Definitions */

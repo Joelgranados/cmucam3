@@ -4,9 +4,18 @@
 #include "inttypes.h"
 #include "LPC2100.h"
 
+
+#define UART0IN_FILENO   0       // stdin
+#define UART0OUT_FILENO  1       // stdout
+#define UART1IN_FILENO   3       // ?
+#define UART1OUT_FILENO  2       // stderr
+
+
+
 /************************************************ UART ****************************/
 
 void uart0_setup (void);
+void uart1_setup (void);
 
 // LPC21000 misc uart0 definitions
 #define UART0_PCB_PINSEL_CFG     (uint32_t)0x00000005
@@ -37,5 +46,6 @@ int uart1_getc_nb();     // return -1 if no char avail
 
 
 void uart0_write (char *str);
+void uart0_write_hex (unsigned int i);
 
 #endif

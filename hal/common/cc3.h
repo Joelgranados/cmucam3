@@ -44,6 +44,7 @@ void set_cam_ddr_i2c_write ();
 void set_cam_ddr (volatile unsigned long val);
 unsigned int i2c_send (unsigned int num, unsigned int *buffer);
 
+/*
 // 1 = output 0 = input
 #define DEFAULT_PORT_DIR	0x002EBD89
 //#define DEFAULT_PORT_DIR	0x0 | BUF_WEE | CAM_RESET | BUF_WRST | BUF_RRST | BUF_RCK | BUF_RESET
@@ -69,8 +70,36 @@ unsigned int i2c_send (unsigned int num, unsigned int *buffer);
 #define BUF_RRST	0x1000
 #define BUF_RCK		0x800
 #define BUF_RESET	0x8
+*/
 
-#define LED		0x8000
+
+#define DEFAULT_PORT_DIR	0x0028BDF1 //0x00003971
+
+// I2C Config Constants
+#define I2C_PORT_DDR_IDLE	0x0008BDF1 
+#define I2C_PORT_DDR_READ_SDA	0x0068BDF1
+#define I2C_PORT_DDR_READ_SCL	0x00A8BDF1
+#define I2C_PORT_DDR_WRITE	0x00E8BDF1
+
+
+#define CAM_BUF_ENABLE 	0x8000	//0x10
+//#define CAM_ORDY	0x8000
+#define CAM_VSYNC	0x10000
+#define BUF_WEE		0x400 //0x40
+#define CAM_RESET	0x80
+#define CAM_HREF	0x100000 //0x400
+
+//#define CAM_SCL		0x4
+//#define CAM_SDA		0x8
+#define CAM_SCL		0x400000
+#define CAM_SDA		0x800000
+
+#define BUF_WRST	0x2000
+#define BUF_RRST	0x1000
+#define BUF_RCK		0x800
+#define BUF_RESET	0x80000
+
+#define LED		0x100
 
 
 #endif

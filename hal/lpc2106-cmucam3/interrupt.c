@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "LPC2100.h"
 #include "cc3.h"
 #include "serial.h"
@@ -26,10 +27,15 @@ enable_ext_interrupt ()
 void
 interrupt ()
 {
-  uart0_write("interrupt!\r\n");
-  
   REG (GPIO_IOCLR) = BUF_WEE;	//BUF_WEE=0
   // Before returning, wait for the external interrupt line to got high...
   //while (REG(SYSCON_EXTINT) & 1);
   disable_ext_interrupt ();
+}
+
+
+void segfault()
+{
+  uart0_write("segfault\r\n");
+  exit(-1);
 }

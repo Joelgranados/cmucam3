@@ -17,9 +17,9 @@
 @ Stack Sizes
         .set  UND_STACK_SIZE, 0x00000004
         .set  ABT_STACK_SIZE, 0x00000004
-        .set  FIQ_STACK_SIZE, 0x00000100
-        .set  IRQ_STACK_SIZE, 0X00000200
-        .set  SVC_STACK_SIZE, 0x00000800
+        .set  FIQ_STACK_SIZE, 0x00000004
+        .set  IRQ_STACK_SIZE, 0X00000080
+        .set  SVC_STACK_SIZE, 0x00000004
 
 @ Standard definitions of Mode bits and Interrupt (I & F) flags in PSRs
         .set  MODE_USR, 0x10            @ User Mode
@@ -59,15 +59,15 @@ Vectors:
 @ Use this group for development
 _undf:  .word __undf                    @ undefined
 _swi:   .word __swi                     @ SWI
-_pabt:  .word __pabt                    @ program abort
+_pabt:  .word __pabt                    @ prefetch abort
 _dabt:  .word __dabt                    @ data abort
 _irq:   .word __irq                     @ IRQ
 _fiq:   .word __fiq                     @ FIQ
 
 __undf: b     .                         @ undefined
 __swi:  b     .                         @ SWI
-__pabt: b     .                         @ program abort
-__dabt: b     .                         @ data abort
+__pabt: bl    segfault                  @ prefetch abort
+__dabt: bl    segfault                  @ data abort
 __irq:  stmfd   sp!, { lr }               /* save return address on stack */
 	mrs     lr, spsr                  /* use lr to save spsr_irq */
 	stmfd   sp!, { r0-r3, r12, lr }   /* save work regs & spsr on stack */

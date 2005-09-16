@@ -87,9 +87,6 @@ int uart1_getc_nb()
 void
 uart0_setup (void)
 {
-  int i, xflag;
-  uint32_t xdata;
-
   // disable all UART0 interrupts
   REG (UART0_IER) = 0;
   REG (UART0_IIR) = 0;
@@ -114,7 +111,11 @@ uart0_setup (void)
   REG (UART0_LCR) = 0x03;	// Turn off even parity 
 
 
-  /*
+  //uart0_write("uart0 initalized\n");
+}
+
+void uart1_setup()
+{
   REG (UART1_LCR) = LCR_ENABLE_LATCH_ACCESS;
   REG (UART1_DLM) = 0;
   REG (UART1_DLL) = BAUD_9600;
@@ -122,10 +123,9 @@ uart0_setup (void)
   REG (UART1_IER) = 0;
   REG (UART1_FCR) = 0;
   REG (UART1_LCR) = 0x03;	// Turn off even parity 
-  */
-
-  uart0_write("uart0 initalized\n");
 }
+
+
 
 /*
  * InitializeUART0
@@ -237,4 +237,28 @@ void uart0_write (char *str)
   while (*str != '\0') {
     uart0_putc(*str++);
   }
+}
+
+void uart0_write_hex (unsigned int i)
+{
+  char buffer[8];
+  int b = 7;
+  int tmp;
+
+  while (b >= 0) {
+    tmp = i % 16;
+    if (tmp < 10) {
+      buffer[b] = tmp + 0x30;
+    } else {
+      buffer[b] = tmp + 0x37;
+    }
+    i /= 16;
+    b--;
+  }
+
+  uart0_write("0x");
+  for (b = 0; b < 8; b++) {
+    uart0_putc(buffer[b]);
+  }
+  uart0_write("\r\n");
 }

@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <sys/stat.h>
-#include <sys/reent.h>
+#include <sys/unistd.h>
 #include "serial.h"
 
 #include <errno.h>
@@ -8,23 +8,33 @@
 extern int errno;
 
 
-//int _write_r (struct _reent *r, int file, char *ptr, int len)
 int _write (int file, char *ptr, int len)
 {
   int i = 0;
-  uart0_write("in _write\r\n");
 
+  char c;
 
-  for (i = 0; i < len; i++) {
-    uart0_putc(*ptr++);
-  }
+  //uart_0write("in _write\r\n");
 
-  /*  if (file == 1) {
-  } else if (file == 3) {
+  if (file == UART0OUT_FILENO) {
     for (i = 0; i < len; i++) {
-      uart1_putc(*ptr++);
+      //uart_0write(" uart0\r\n");
+      c = *ptr++;
+      if (c == '\n') {
+	uart0_putc('\r');
+      }
+      uart0_putc(c);
     }
-    }*/
+  } else if (file == UART1OUT_FILENO) {
+    for (i = 0; i < len; i++) {
+      //uart_0write(" uart1\r\n");
+      c = *ptr++;
+      if (c == '\n') {
+	uart1_putc('\r');
+      }
+      uart1_putc(c);
+    }
+  }
 
   return i;
 }
@@ -32,25 +42,20 @@ int _write (int file, char *ptr, int len)
 int _read (int file, char *ptr, int len)
 {
   int i = 0;
-  char c;
  
-  uart0_write("in _read\r\n");
+  //uart0_write("in _read\r\n");
 
-  
-  for (i = 0; i < len; i++) {
-    c = uart0_getc();
-    uart0_putc(c);
-    *ptr++ = c;
-  }
-
-  /*
-  if (file == 0) {
-  } else if (file == 3) {
+  if (file == UART0IN_FILENO) {
+    //uart0_write(" uart0\r\n");
+    for (i = 0; i < len; i++) {
+      *ptr++ = uart0_getc();
+    }
+  } else if (file == UART1IN_FILENO) {
+    //uart0_write(" uart1\r\n");
     for (i = 0; i < len; i++) {
       *ptr++ = uart1_getc();
     }
   }
-  */
 
   return i;
 }
@@ -58,42 +63,68 @@ int _read (int file, char *ptr, int len)
 
 int _close(int file)
 {
-  uart0_write("in _close\r\n");
-  uart0_write(" returning\r\n");
+  //uart_0write("in _close\r\n");
+  //uart_0write(" returning\r\n");
   return 0;
 }
 
-_off_t _lseek(int file, _off_t ptr, int dir) {
-  uart0_write("in _lseek\r\n");
-  uart0_write(" returning\r\n");
+_off_t _lseek(int file, _off_t ptr, int dir)
+{
+  //uart_0write("in _lseek\r\n");
+  //uart_0write(" returning\r\n");
   return 0;
 }
 
 int _fstat(int file, struct stat *st)
 {
-  uart0_write("in _fstat\r\n");
+  //uart_0write("in _fstat\r\n");
   st->st_mode = S_IFCHR;	
-  uart0_write(" returning\r\n");
+  //uart_0write(" returning\r\n");
   return 0;
 }
 
 
-extern void *end;               /*  end is set in the linker command 	*/
+int isatty (int fd) 
+{
+  //uart_0write("in isatty\r\n");
+  //uart_0write(" returning\r\n");
+  return 1;
+}
+
+
+
+/* exciting memory management! */
+
+
+extern char end[];              /*  end is set in the linker command 	*/
 				/* file and is the end of statically 	*/
 				/* allocated data (thus start of heap).	*/
 
 static void *heap_ptr;		/* Points to current end of the heap.	*/
 
 
-void *_sbrk(int nbytes) {
+void *_sbrk(int nbytes) 
+{
   char *base;		/*  errno should be set to  ENOMEM on error	*/
-  uart0_write("in _sbrk\r\n");
+  //uart_0write("in _sbrk\r\n");
   
+  //uart_0write(" nbytes = ");
+  //uart_0write_hex((unsigned int) nbytes);
+
+  //uart_0write(" heap_ptr = ");
+  //uart_0write_hex((unsigned int) heap_ptr);
+
   if (!heap_ptr) {	/*  Initialize if first time through.		*/
     heap_ptr = end;
   }
 
+  //uart_0write(" heap_ptr = ");
+  //uart_0write_hex((unsigned int) heap_ptr);
+
   base = heap_ptr;	/*  Point to end of heap.			*/
+
+  //uart_0write(" base = ");
+  //uart_0write_hex((unsigned int) base);
 
   if (base + nbytes >= (char *) 0x40010000) {
     errno = ENOMEM;
@@ -102,17 +133,10 @@ void *_sbrk(int nbytes) {
 
   heap_ptr += nbytes;	/*  Increase heap.				*/
   
+  //uart_0write(" heap_ptr = ");
+  //uart_0write_hex((unsigned int) heap_ptr);
 
-  uart0_write(" returning\r\n");
+  //uart_0write(" returning\r\n");
   return base;		/*  Return pointer to start of new heap area.	*/
 }
 
-
-
-int isatty (int fd)
-{
-  uart0_write("in isatty\r\n");
-  uart0_write(" returning\r\n");
-  return 1;
-  fd = fd;
-}

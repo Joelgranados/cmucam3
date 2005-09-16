@@ -5,5 +5,6 @@ void enable_ext_interrupt ();
 void disable_ext_interrupt ();
 void interrupt ();
 
+void segfault ();
 
 #endif

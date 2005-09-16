@@ -1,4 +1,4 @@
-SUBDIRS=cmucam2
+SUBDIRS=cmucam2 surprise
 
 # Build rules
 all:
