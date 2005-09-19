@@ -9,10 +9,10 @@
 #include "interrupt.h" 
 
 
-/***************************************************************************************
+/*******************************************************************************
 *  Initial CMUcam3 (cc3) data types and functions.
 *
-***************************************************************************************/
+*******************************************************************************/
 
 
 
@@ -73,58 +73,48 @@ void cc3_pixbuf_load();
 void cc3_pixbuf_skip(uint32_t size);
 
 /**
- * cc3_pixbuf_read():
  * loads cc3_g_current_pixel from fifo
  */
 void cc3_pixbuf_read();                              
 /**
- * cc3_pixbuf_read3():
  * loads 3 bytes into cc3_g_current_pixel from fifo and skips second green. 
  */
 void cc3_pixbuf_read3();                            
 /**
- * cc3_pixbuf_rewind():
  * Rewinds the fifo 
  */
 void cc3_pixbuf_rewind();                            
 /**
- * cc3_pixbuf_read_rows():
  * Using the cc3_frame_t reads rows taking into account virtual window and subsampling. 
  */
 void cc3_pixbuf_read_rows( void* memory, uint32_t rows );
 /**
- * cc3_pixbuf_set_roi():
  * Sets the region of interest in cc3_frame_t for virtual windowing. 
  */
 int cc3_pixbuf_set_roi( uint16_t x0, uint16_t y0, uint16_t x1, uint16_t x2);
 /**
- * cc3_pixbuf_set_subsample():
  * Sets the subsampling step and mode in cc3_frame_t. 
  */
 int cc3_pixbuf_set_subsample( cc3_subsample_mode_t, uint8_t x_step, uint8_t y_step );
 
 /**
- * cc3_pixbuf_set_coi():
  * Sets the channel of interest 1 or all
  */
 int cc3_pixbuf_set_coi( cc3_channel_t chan );
 void cc3_set_led(bool);
 
 /**
- * cc3_camera_init():
  * 1) Enable Camera & FIFO Power
  * 2) Reset Camera
  * 3) call cc3_set functions for default state 
  */
 int cc3_camera_init();
 /**
- * cc3_camera_kill():
  * Turn camera power off 
  * Turn fifo power off (may "cause picture to evaporate")
  */
 void cc3_camera_kill();
 /**
- * cc3_set_resolution():
  * Sets the resolution, also updates cc3_g_current_frame width and height
  */
 int cc3_set_resolution( cc3_camera_resolution_t );  
