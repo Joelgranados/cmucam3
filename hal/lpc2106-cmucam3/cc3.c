@@ -47,33 +47,28 @@ void cc3_pixbuf_load()
  unsigned int x, i;
   //REG(GPIO_IOCLR)=CAM_IE;  
   //while(frame_done!=1);
-  printf( "1\r\n" );
   cc3_pixbuf_rewind(); 
-  printf( "2\r\n" );
   _cc3_pixbuf_write_rewind();
-  printf( "3\r\n" );
   while (!(REG (GPIO_IOPIN) & _CC3_CAM_VSYNC));	//while(CAM_VSYNC);
   while (REG (GPIO_IOPIN) & _CC3_CAM_VSYNC);	//while(!CAM_VSYNC);
 
   REG (GPIO_IOSET) = _CC3_BUF_WEE;
-  printf( "4\r\n" );
 
   // wait for vsync to finish
   while (!(REG (GPIO_IOPIN) & _CC3_CAM_VSYNC));	//while(CAM_VSYNC);
-  printf( "5\r\n" );
 
-  enable_ext_interrupt ();
+ // enable_ext_interrupt ();
 
-  printf( "6\r\n" );
   for (i = 0; i < 3; i++)
     {
       while (!(REG (GPIO_IOPIN) & _CC3_CAM_HREF));
       while (REG (GPIO_IOPIN) & _CC3_CAM_HREF);
     }
 
-  printf( "7\r\n" );
+  while (REG (GPIO_IOPIN) & _CC3_CAM_VSYNC);	
+  REG(GPIO_IOCLR)=_CC3_BUF_WEE;  
 //      delay();
-  //REG(GPIO_IOCLR)=BUF_WEE;  //BUF_WEE=0return 1;
+//  REG(GPIO_IOCLR)=_CC3_BUF_WEE;  //BUF_WEE=0return 1;
 }
 
 
