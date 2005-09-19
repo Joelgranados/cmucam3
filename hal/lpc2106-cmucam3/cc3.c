@@ -9,25 +9,6 @@
 #include <stdio.h>
 #include "serial.h"
 
-void image_send_direct (int size_x, int size_y)
-{
-    int x, y;
-    cc3_pixbuf_load ();
-    putchar (1);
-    putchar (size_x);
-    putchar (size_y);
-    for (y = 0; y < size_y; y++) {
-        putchar (2);
-        for (x = 0; x < size_x; x++) {
-            cc3_pixbuf_read ();
-            putchar (cc3_g_current_pixel.channel[CC3_RED]);
-            putchar (cc3_g_current_pixel.channel[CC3_GREEN]);
-            putchar (cc3_g_current_pixel.channel[CC3_BLUE]);
-        }
-    }
-    putchar (3);
-    fflush (stdout);
-}
 
 
 void cc3_io_init (int BAUDRATE)

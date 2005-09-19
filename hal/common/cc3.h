@@ -69,7 +69,6 @@ cc3_pixel_t cc3_g_current_pixel;   // global that gets updated with pixbuf calls
 cc3_frame_t cc3_g_current_frame;   // global that keeps clip, stride
 uint8_t cc3_g_camera_type;	    // FIXME
 
-void image_send_direct (int size_x, int size_y);
 void cc3_pixbuf_load();
 void cc3_pixbuf_skip(uint32_t size);
 
