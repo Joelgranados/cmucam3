@@ -1,105 +1,142 @@
-/* XXX: this file must be changed to not include lpc2106 stuff (it's in hal/common) */
-
 #ifndef CC3_H
 #define CC3_H
 
 #include "LPC2100.h"
+#include "cc3_pin_defines.h"
+#include "cc3_hal.h"
+#include "inttypes.h"
+#include <stdbool.h>
+#include "interrupt.h" 
 
 
-#define OV6620 0xC0
-#define OV7620 0x42
+/***************************************************************************************
+*  Initial CMUcam3 (cc3) data types and functions.
+*
+***************************************************************************************/
 
 
-// Move to the next byte in the FIFO 
-#define FIFO_READ_INC() REG(GPIO_IOSET)=BUF_RCK; REG(GPIO_IOCLR)=BUF_RCK
 
 
-int _cc3_camera_set_reg (int reg, int val);	// Set a camera register value on the Omnivision camera
-void camera_setup ();		// Set default values for the camera
-void camera_reset ();		// Toggle Reset Pin for the camera
-
-void fifo_reset ();		// FIFO hardware reset
-void fifo_load_frame ();	// Load a single Image from the Camera into the FIFO 
-void fifo_write_reset ();	// Reset the FIFO write pointer
-void fifo_read_reset ();	// Reset the FIFO read pointer
-void fifo_read_pixel ();	// Read a pixel from the FIFO in the xxx_pixel globals
-void fifo_skip_pixel ();	// Fast Forward over a pixel (4 bytes) in the FIFO
-
-void image_send_uart (unsigned char *img, int size_x, int size_y);	// Send memory out UART 
-									// using CMUcam format
-
-void image_fifo_to_mem (unsigned char *img, int size_x, int size_y);	// Copy lines from FIFO
-									// to memory.  Note, must
-									// copy entire lines at a time.
-
-void image_send_direct (int size_x, int size_y);	// Send an image directly from the FIFO without
-							// buffering it on the processor first
-
-void InitialiseI2C (void);
-void delay (void);
-void delay_i2c ();
-void delay_us_4 (int cnt);
-void set_cam_ddr_i2c_idle ();
-void set_cam_ddr_i2c_write ();
-void set_cam_ddr (volatile unsigned long val);
-unsigned int i2c_send (unsigned int num, unsigned int *buffer);
-
-/*
-// 1 = output 0 = input
-#define DEFAULT_PORT_DIR	0x002EBD89
-//#define DEFAULT_PORT_DIR	0x0 | BUF_WEE | CAM_RESET | BUF_WRST | BUF_RRST | BUF_RCK | BUF_RESET
-
-// I2C Config Constants
-#define I2C_PORT_DDR_IDLE	0x000EBD89
-#define I2C_PORT_DDR_READ_SDA	0x006EBD89
-#define I2C_PORT_DDR_READ_SCL	0x00AEBD89
-#define I2C_PORT_DDR_WRITE	0x00EEBD89
 
 
-// Camera Bus Constants
-//#define CAM_BUF_ENABLE 	0x8
-#define CAM_VSYNC	0x10000
-#define BUF_WEE		0x400
-#define CAM_RESET	0x80
-#define CAM_HREF	0x4
-#define CAM_SCL		0x400000
-#define CAM_SDA		0x800000
+typedef enum  {
+     CC3_HIGH_RES,
+     CC3_LOW_RES
+} cc3_camera_resolution_t;
 
-// Camera FIFO Constants
-#define BUF_WRST	0x2000
-#define BUF_RRST	0x1000
-#define BUF_RCK		0x800
-#define BUF_RESET	0x8
-*/
+typedef enum {
+   CC3_GREEN=0,
+   CC3_RED=1,
+   CC3_GREEN2=2,
+   CC3_BLUE=3,
+   CC3_Y=0,
+   CC3_CR=1,
+   CC3_Y2=2,
+   CC3_CB=3,
+   CC3_ALL
+} cc3_channel_t;
+
+typedef enum {
+   CC3_YCRCB,
+   CC3_RGB
+} cc3_colorspace_t ;
+
+typedef enum {
+   CC3_NEAREST,
+   CC3_MEAN,
+   CC3_RANDOM
+} cc3_subsample_mode_t ;
+
+typedef struct {
+    cc3_colorspace_t colorspace;
+    uint16_t width, height;
+    uint16_t x1,y1,x2,y2;
+    uint8_t x_step, y_step;
+} cc3_frame_t;
+
+typedef struct {
+    uint32_t channel[4];  // index with cc3_channel_t 
+} cc3_pixel_t;    
+
+typedef struct {
+    uint16_t width, height;
+    void* img;
+} cc3_image_t;
 
 
-#define DEFAULT_PORT_DIR	0x0028BDF1 //0x00003971
+// Globals used by CMUcam functions
+cc3_pixel_t cc3_g_current_pixel;   // global that gets updated with pixbuf calls
+cc3_frame_t cc3_g_current_frame;   // global that keeps clip, stride
+uint8_t cc3_g_camera_type;	    // FIXME
 
-// I2C Config Constants
-#define I2C_PORT_DDR_IDLE	0x0008BDF1 
-#define I2C_PORT_DDR_READ_SDA	0x0068BDF1
-#define I2C_PORT_DDR_READ_SCL	0x00A8BDF1
-#define I2C_PORT_DDR_WRITE	0x00E8BDF1
+void image_send_direct (int size_x, int size_y);
+void cc3_pixbuf_load();
+void cc3_pixbuf_skip(uint32_t size);
 
+/**
+ * cc3_pixbuf_read():
+ * loads cc3_g_current_pixel from fifo
+ */
+void cc3_pixbuf_read();                              
+/**
+ * cc3_pixbuf_read3():
+ * loads 3 bytes into cc3_g_current_pixel from fifo and skips second green. 
+ */
+void cc3_pixbuf_read3();                            
+/**
+ * cc3_pixbuf_rewind():
+ * Rewinds the fifo 
+ */
+void cc3_pixbuf_rewind();                            
+/**
+ * cc3_pixbuf_read_rows():
+ * Using the cc3_frame_t reads rows taking into account virtual window and subsampling. 
+ */
+void cc3_pixbuf_read_rows( void* memory, uint32_t rows );
+/**
+ * cc3_pixbuf_set_roi():
+ * Sets the region of interest in cc3_frame_t for virtual windowing. 
+ */
+int cc3_pixbuf_set_roi( uint16_t x0, uint16_t y0, uint16_t x1, uint16_t x2);
+/**
+ * cc3_pixbuf_set_subsample():
+ * Sets the subsampling step and mode in cc3_frame_t. 
+ */
+int cc3_pixbuf_set_subsample( cc3_subsample_mode_t, uint8_t x_step, uint8_t y_step );
 
-#define CAM_BUF_ENABLE 	0x8000	//0x10
-//#define CAM_ORDY	0x8000
-#define CAM_VSYNC	0x10000
-#define BUF_WEE		0x400 //0x40
-#define CAM_RESET	0x80
-#define CAM_HREF	0x100000 //0x400
+/**
+ * cc3_pixbuf_set_coi():
+ * Sets the channel of interest 1 or all
+ */
+int cc3_pixbuf_set_coi( cc3_channel_t chan );
+void cc3_set_led(bool);
 
-//#define CAM_SCL		0x4
-//#define CAM_SDA		0x8
-#define CAM_SCL		0x400000
-#define CAM_SDA		0x800000
-
-#define BUF_WRST	0x2000
-#define BUF_RRST	0x1000
-#define BUF_RCK		0x800
-#define BUF_RESET	0x80000
-
-#define LED		0x100
+/**
+ * cc3_camera_init():
+ * 1) Enable Camera & FIFO Power
+ * 2) Reset Camera
+ * 3) call cc3_set functions for default state 
+ */
+int cc3_camera_init();
+/**
+ * cc3_camera_kill():
+ * Turn camera power off 
+ * Turn fifo power off (may "cause picture to evaporate")
+ */
+void cc3_camera_kill();
+/**
+ * cc3_set_resolution():
+ * Sets the resolution, also updates cc3_g_current_frame width and height
+ */
+int cc3_set_resolution( cc3_camera_resolution_t );  
+int cc3_set_colorspace( cc3_colorspace_t );
+int cc3_set_framerate_divider( uint8_t rate_divider );
+int cc3_set_auto_exposure( bool );
+int cc3_set_auto_white_balance( bool );
+int cc3_set_brightness( uint8_t level);
+int cc3_set_contrast( uint8_t level);
+int cc3_set_raw_register( uint8_t address, uint8_t value);
+void cc3_io_init(int);
 
 
 #endif

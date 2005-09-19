@@ -10,7 +10,7 @@ HALDIR=../../hal/$(hal)
 include $(HALDIR)/defs.mk
 
 
-OBJS=main.o
+OBJS=main.o 
 
 # targets
 

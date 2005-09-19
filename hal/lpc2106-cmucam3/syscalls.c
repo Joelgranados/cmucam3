@@ -14,20 +14,20 @@ int _write (int file, char *ptr, int len)
 
   char c;
 
-  //uart_0write("in _write\r\n");
+  //uart0_write("in _write\r\n");
 
   if (file == UART0OUT_FILENO) {
     for (i = 0; i < len; i++) {
-      //uart_0write(" uart0\r\n");
+      //uart0_write(" uart0\r\n");
       c = *ptr++;
-      if (c == '\n') {
+     /* if (c == '\n') {
 	uart0_putc('\r');
-      }
+      }*/
       uart0_putc(c);
     }
   } else if (file == UART1OUT_FILENO) {
     for (i = 0; i < len; i++) {
-      //uart_0write(" uart1\r\n");
+      //uart0_write(" uart1\r\n");
       c = *ptr++;
       if (c == '\n') {
 	uart1_putc('\r');
@@ -106,13 +106,13 @@ static void *heap_ptr;		/* Points to current end of the heap.	*/
 void *_sbrk(int nbytes) 
 {
   char *base;		/*  errno should be set to  ENOMEM on error	*/
-  //uart_0write("in _sbrk\r\n");
+  //uart0_write("in _sbrk\r\n");
   
-  //uart_0write(" nbytes = ");
-  //uart_0write_hex((unsigned int) nbytes);
+  //uart0_write(" nbytes = ");
+  //uart0_write_hex((unsigned int) nbytes);
 
-  //uart_0write(" heap_ptr = ");
-  //uart_0write_hex((unsigned int) heap_ptr);
+  //uart0_write(" heap_ptr = ");
+  //uart0_write_hex((unsigned int) heap_ptr);
 
   if (!heap_ptr) {	/*  Initialize if first time through.		*/
     heap_ptr = end;
@@ -136,7 +136,7 @@ void *_sbrk(int nbytes)
   //uart_0write(" heap_ptr = ");
   //uart_0write_hex((unsigned int) heap_ptr);
 
-  //uart_0write(" returning\r\n");
+  //uart0_write(" returning\r\n");
   return base;		/*  Return pointer to start of new heap area.	*/
 }
 

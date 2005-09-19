@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include "LPC2100.h"
 #include "cc3.h"
+#include "cc3_pin_defines.h"
 #include "serial.h"
 
 void
@@ -27,7 +28,9 @@ enable_ext_interrupt ()
 void
 interrupt ()
 {
-  REG (GPIO_IOCLR) = BUF_WEE;	//BUF_WEE=0
+  
+  uart0_write("EXT Interrupt!\r\n");
+  REG (GPIO_IOCLR) = _CC3_BUF_WEE;	//BUF_WEE=0
   // Before returning, wait for the external interrupt line to got high...
   //while (REG(SYSCON_EXTINT) & 1);
   disable_ext_interrupt ();

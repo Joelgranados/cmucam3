@@ -4,6 +4,52 @@
 #include "serial.h"
 #include "cc3.h"
 
+#define PINSEL_BITPIN0  0
+#define PINSEL_BITPIN1  2
+// #define PINSEL_BITPIN2  4
+#define PINSEL_FIRST_ALT_FUNC   1
+// #define PINSEL_SECOND_ALT_FUNC   2
+
+// Values of Bits 0-3 in PINSEL to activate UART0
+#define UART0_PINSEL    ((PINSEL_FIRST_ALT_FUNC<<PINSEL_BITPIN0)|(PINSEL_FIRST_ALT_FUNC<<PINSEL_BITPIN1))
+// Mask of Bits 0-4
+#define UART0_PINMASK      (0x0000000F)    /* PINSEL0 Mask for UART0 */
+
+// REG(UART0__LCR devisor latch bit 
+#define UART0_LCR_DLAB  7
+
+/*    baudrate divisor - use UART_BAUD macro
+ *    mode - see typical modes (uart.h)
+ *    fmode - see typical fmodes (uart.h)
+ *    NOTE: uart0Init(UART_BAUD(9600), UART_8N1, UART_FIFO_8); 
+ */
+void _cc3_uart0_setup(uint16_t baud, uint8_t mode, uint8_t fmode)
+{
+  // setup Pin Function Select Register (Pin Connect Block) 
+  // make sure old values of Bits 0-4 are masked out and
+  // set them according to UART0-Pin-Selection
+  REG(PCB_PINSEL0) = (REG(PCB_PINSEL0) & ~UART0_PINMASK) | UART0_PINSEL;
+
+  REG(UART0_IER) = 0x00;             // disable all interrupts
+  REG(UART0_IIR) = 0x00;             // clear interrupt ID register
+  REG(UART0_LSR )= 0x00;             // clear line status register
+
+  // set the baudrate - DLAB must be set to access DLL/DLM
+  REG(UART0_LCR )= (1<<UART0_LCR_DLAB); // set divisor latches (DLAB)
+  REG(UART0_DLL )= (uint8_t)baud;         // set for baud low byte
+  REG(UART0_DLM )= (uint8_t)(baud >> 8);  // set for baud high byte
+  
+  // set the number of characters and other
+  // user specified operating parameters
+  // Databits, Parity, Stopbits - Settings in Line Control Register
+  REG(UART0_LCR )= (mode & ~(1<<UART0_LCR_DLAB)); // clear DLAB "on-the-fly"
+  // setup FIFO Control Register (fifo-enabled + xx trig) 
+  REG(UART0_FCR) = fmode;
+}
+
+
+
+
 char uart0_putc(const char c)
 {
   while ((REG(UART0_LSR) & LSR_THR_EMPTY) == 0);
@@ -87,11 +133,6 @@ int uart1_getc_nb()
 void
 uart0_setup (void)
 {
-  // disable all UART0 interrupts
-  REG (UART0_IER) = 0;
-  REG (UART0_IIR) = 0;
-  REG (UART0_LSR) = 0;
-
   // enable access to divisor latch regs
   REG (UART0_LCR) = LCR_ENABLE_LATCH_ACCESS;
   // set divisor for desired baud
@@ -101,7 +142,8 @@ uart0_setup (void)
   // disable access to divisor latch regs (enable access to xmit/rcv fifos
   // and int enable regs)
   REG (UART0_LCR) = LCR_DISABLE_LATCH_ACCESS;
-
+  // disable all UART0 interrupts
+  REG (UART0_IER) = 0;
   // setup fifo control reg - trigger level 0 (1 byte fifos), no dma
   // disable fifos (450 mode)
   REG (UART0_FCR) = 0;
@@ -109,9 +151,6 @@ uart0_setup (void)
   // 1 stop bit, 8 bit chars
   //REG(UART0_LCR) = 0x1B;
   REG (UART0_LCR) = 0x03;	// Turn off even parity 
-
-
-  //uart0_write("uart0 initalized\n");
 }
 
 void uart1_setup()
