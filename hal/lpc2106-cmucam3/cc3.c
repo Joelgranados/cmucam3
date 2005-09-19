@@ -304,6 +304,16 @@ unsigned int _cc3_i2c_send (unsigned int num, unsigned int *buffer)
 
 }
 
+/**
+ * cc3_set_raw_register():
+ * This will take an address and a value from the OmniVision manual
+ * and set it on the camera.  This should be used for advanced low level
+ * manipulation of the camera modes.  Currently, this will not set the 
+ * corresponding cc3 internal data structure that keeps record of the camera
+ * mode.  Use with CAUTION.
+ *
+ * For basic manipulation of camera parameters see other cc3_set_xxxx functions.
+ */
 int cc3_set_raw_register (uint8_t address, uint8_t value)
 {
     unsigned int data[3];
