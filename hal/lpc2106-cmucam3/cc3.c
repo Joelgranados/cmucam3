@@ -319,8 +319,8 @@ int cc3_set_raw_register (uint8_t address, uint8_t value)
 
 
 /**
- * cc3_set_resolution():
  * Sets the resolution, also updates cc3_g_current_frame width and height
+ * Takes enum CC3_LOW_RES and CC3_HIGH_RES.
  */
 int cc3_set_resolution (cc3_camera_resolution_t cam_res)
 {
@@ -329,12 +329,20 @@ int cc3_set_resolution (cc3_camera_resolution_t cam_res)
     return 1;
 }
 
+/**
+ * This sets the hardware colorspace that comes out of the camera.
+ * You can choose between CC3_RGB or CC3_YCRCB.  In RGB mode, then
+ * address pixels with CC3_RED, CC3_GREEN, CC3_BLUE, and CC3_GREEN2
+ * in YCrCb mode, use CC3_CR, CC3_Y, CC3_CB, CC3_Y2 when indexing
+ * the pixel array.
+ */ 
 int cc3_set_colorspace (cc3_colorspace_t colorspace)
 {
     _cc3_g_current_camera_state.colorspace = colorspace;
     _cc3_set_register_state ();
     return 1;
 }
+
 
 int cc3_set_framerate_divider (uint8_t rate_divider)
 {

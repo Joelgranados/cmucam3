@@ -125,11 +125,6 @@ void _cc3_set_register_state ()
                               _cc3_g_current_camera_state.clock_divider);
 
 
-
-        //cc3_set_raw_register (0x14, 0x20);  // set low resolutiun
-        // cc3_set_raw_register (0x13, 0x21);
-        //cc3_set_raw_register (0x12, 0x2C);  // color mode RGB White balance
-        // cc3_set_raw_register (0x11, 0x00);
         break;
 
     case _CC3_OV7620:
