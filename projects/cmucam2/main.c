@@ -6,9 +6,6 @@
 #include <stdio.h>
 #include "serial.h"
 
-#define IMG_X	88
-#define IMG_Y	144
-
 void image_send_direct (int size_x, int size_y);
 
 
@@ -26,25 +23,16 @@ int main ()
     cc3_io_init (115200);
     cc3_camera_init ();
 
-
     printf ("CMUcam3 Starting up\r\n");
-
-
     cc3_set_led (true);
-    cc3_set_raw_register (0x14, 0x20);  // set low resolutiun
-    //camera_set_reg (0x14, 0x00);        // sets high resolutiun
-    cc3_set_raw_register (0x13, 0x21);
-    cc3_set_raw_register (0x12, 0x2C);  // color mode RGB White balance
-    cc3_set_raw_register (0x11, 0x00);
 
-    printf ("Registers Loaded\r\n");
     for (i = 0; i < 50; i++) {
         cc3_pixbuf_load ();
-        printf (".\r\n");
     }
     printf ("Sending Image\r\n");
     while (1) {
-        image_send_direct (IMG_X, IMG_Y);
+        image_send_direct (cc3_g_current_frame.width,
+                           cc3_g_current_frame.height);
     }
 
 
@@ -58,6 +46,8 @@ void image_send_direct (int size_x, int size_y)
     cc3_pixbuf_load ();
     putchar (1);
     putchar (size_x);
+    if (size_y > 255)
+        size_y = 255;
     putchar (size_y);
     for (y = 0; y < size_y; y++) {
         putchar (2);

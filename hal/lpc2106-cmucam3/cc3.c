@@ -162,9 +162,7 @@ int cc3_pixbuf_set_coi (cc3_channel_t chan)
 
 /**
  * cc3_camera_init():
- * 1) Enable Camera & FIFO Power
- * 2) Reset Camera
- * 3) call cc3_set functions for default state 
+ * First Enable Camera & FIFO Power, next Reset Camera, then call cc3_set functions for default state 
  *
  * Return:
  * 	1 sucessfully got acks back
@@ -180,8 +178,14 @@ int cc3_camera_init ()
     _cc3_camera_reset ();
     _cc3_fifo_reset ();
 
-    cc3_g_camera_type = _CC3_OV6620;
-
+    _cc3_g_current_camera_state.camera_type = _CC3_OV6620;      // XXX add autodetect code
+    _cc3_g_current_camera_state.clock_divider = 0;
+    _cc3_g_current_camera_state.brightness = -1;
+    _cc3_g_current_camera_state.contrast = -1;
+    _cc3_g_current_camera_state.auto_exposure = true;
+    _cc3_g_current_camera_state.auto_white_balance = false;
+    _cc3_g_current_camera_state.colorspace = CC3_RGB;
+    _cc3_set_register_state ();
 
 }
 
@@ -299,7 +303,7 @@ int cc3_set_raw_register (uint8_t address, uint8_t value)
 {
     unsigned int data[3];
     int to;
-    data[0] = cc3_g_camera_type;
+    data[0] = _cc3_g_current_camera_state.camera_type;
     data[1] = address;
     data[2] = value;
     to = 0;
@@ -320,35 +324,49 @@ int cc3_set_raw_register (uint8_t address, uint8_t value)
  */
 int cc3_set_resolution (cc3_camera_resolution_t cam_res)
 {
+    _cc3_g_current_camera_state.resolution = cam_res;
+    _cc3_set_register_state (); // XXX Don't reset all of them, this is just quick and dirty...
     return 1;
 }
 
 int cc3_set_colorspace (cc3_colorspace_t colorspace)
 {
+    _cc3_g_current_camera_state.colorspace = colorspace;
+    _cc3_set_register_state ();
     return 1;
 }
 
 int cc3_set_framerate_divider (uint8_t rate_divider)
 {
+    _cc3_g_current_camera_state.clock_divider = rate_divider;
+    _cc3_set_register_state (); // XXX Don't reset all of them, this is just quick and dirty...
     return 1;
 }
 
 int cc3_set_auto_exposure (bool exp)
 {
+    _cc3_g_current_camera_state.auto_exposure = exp;
+    _cc3_set_register_state (); // XXX Don't reset all of them, this is just quick and dirty...
     return 1;
 }
 
 int cc3_set_auto_white_balance (bool awb)
 {
+    _cc3_g_current_camera_state.auto_white_balance = awb;
+    _cc3_set_register_state (); // XXX Don't reset all of them, this is just quick and dirty...
     return 1;
 }
 
 int cc3_set_brightness (uint8_t level)
 {
+    _cc3_g_current_camera_state.brightness = level;
+    _cc3_set_register_state (); // XXX Don't reset all of them, this is just quick and dirty...
     return 1;
 }
 
 int cc3_set_contrast (uint8_t level)
 {
+    _cc3_g_current_camera_state.contrast = level;
+    _cc3_set_register_state (); // XXX Don't reset all of them, this is just quick and dirty...
     return 1;
 }

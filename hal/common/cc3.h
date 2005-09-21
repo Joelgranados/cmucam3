@@ -16,12 +16,9 @@
 
 
 
-
-
-
 typedef enum  {
-     CC3_HIGH_RES,
-     CC3_LOW_RES
+     CC3_LOW_RES=0,
+     CC3_HIGH_RES=1
 } cc3_camera_resolution_t;
 
 typedef enum {
@@ -37,8 +34,8 @@ typedef enum {
 } cc3_channel_t;
 
 typedef enum {
-   CC3_YCRCB,
-   CC3_RGB
+   CC3_YCRCB=0,
+   CC3_RGB=1
 } cc3_colorspace_t ;
 
 typedef enum {
@@ -47,8 +44,9 @@ typedef enum {
    CC3_RANDOM
 } cc3_subsample_mode_t ;
 
+
+
 typedef struct {
-    cc3_colorspace_t colorspace;
     uint16_t width, height;
     uint16_t x1,y1,x2,y2;
     uint8_t x_step, y_step;
@@ -67,7 +65,6 @@ typedef struct {
 // Globals used by CMUcam functions
 cc3_pixel_t cc3_g_current_pixel;   // global that gets updated with pixbuf calls
 cc3_frame_t cc3_g_current_frame;   // global that keeps clip, stride
-uint8_t cc3_g_camera_type;	    // FIXME
 
 void cc3_pixbuf_load();
 void cc3_pixbuf_skip(uint32_t size);

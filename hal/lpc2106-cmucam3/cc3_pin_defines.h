@@ -2,7 +2,7 @@
 #define CC3_PIN_DEFINES_H
 
 
-#define _CC3_OV6620 0xC0
+
 
 /*
  1 = output 0 = input
