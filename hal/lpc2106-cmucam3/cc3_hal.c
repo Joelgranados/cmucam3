@@ -16,7 +16,7 @@ void _cc3_camera_reset ()
 {
     // Reset the Camera 
     REG (GPIO_IOCLR) = _CC3_CAM_RESET;
-    _cc3_delay_us_4 (1);        // XXX maybe wrong
+    _cc3_delay_us_4 (1);        
     REG (GPIO_IOSET) = _CC3_CAM_RESET;
     _cc3_delay_us_4 (1);
     REG (GPIO_IOCLR) = _CC3_CAM_RESET;

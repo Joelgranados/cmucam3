@@ -26,6 +26,9 @@ int main ()
     printf ("CMUcam3 Starting up\r\n");
     cc3_set_led (true);
 
+    putchar('*');
+    putchar('*');
+    
     for (i = 0; i < 50; i++) {
         cc3_pixbuf_load ();
     }
