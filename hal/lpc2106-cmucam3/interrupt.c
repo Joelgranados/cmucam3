@@ -37,8 +37,33 @@ interrupt ()
 }
 
 
-void segfault()
+void undefined()
 {
-  uart0_write("segfault\r\n");
+  uart0_write("undefined instruction!\r\n");
+  // XXX: tell us which instruction!
+  exit(-1);
+}
+
+void swi()
+{
+  uart0_write("swi!\r\n");
+  // XXX: tell us something
+  exit(-1);
+}
+
+void prefetch_abort()
+{
+  volatile char *r_14 asm("r14");
+  long prev_pc = (long)r_14 - 4;
+  uart0_write("prefetch abort!\r\n");
+  uart0_write_hex(prev_pc);
+  // XXX: register dump
+  exit(-1);
+}
+
+void data_abort()
+{
+  uart0_write("data abort!\r\n");
+  // XXX: register dump
   exit(-1);
 }

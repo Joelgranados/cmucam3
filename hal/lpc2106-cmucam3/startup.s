@@ -64,14 +64,14 @@ _dabt:  .word __dabt                    @ data abort
 _irq:   .word __irq                     @ IRQ
 _fiq:   .word __fiq                     @ FIQ
 
-__undf: b     .                         @ undefined
-__swi:  b     .                         @ SWI
-__pabt: bl    segfault                  @ prefetch abort
-__dabt: bl    segfault                  @ data abort
+__undf: b     undefined                 @ undefined
+__swi:  b     swi                       @ SWI
+__pabt: b     prefetch_abort            @ prefetch abort
+__dabt: b     data_abort                @ data abort
 __irq:  stmfd   sp!, { lr }               /* save return address on stack */
 	mrs     lr, spsr                  /* use lr to save spsr_irq */
 	stmfd   sp!, { r0-r3, r12, lr }   /* save work regs & spsr on stack */
-	bl      interrupt		      /* go handle the interrupt */
+	bl      interrupt                 /* go handle the interrupt */
 	ldmfd   sp!, { r0-r3, r12, lr }   /* restore regs from stack */
 	msr     spsr_cxsf, lr             /* put back spsr_irq */
 	ldmfd   sp!, { lr }               /* put back lr_irq */
