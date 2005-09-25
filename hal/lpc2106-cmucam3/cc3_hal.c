@@ -3,6 +3,10 @@
 #include "serial.h"
 #include <stdio.h>
 
+
+_cc3_camera_state_t _cc3_g_current_camera_state;
+
+
 /*****************************************
 *                                        *
 * CAMERA REGISTER CONTROL FUNCTIONS      *

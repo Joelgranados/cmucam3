@@ -28,7 +28,7 @@ int main ()
 
     putchar('*');
     putchar('*');
-    
+
     for (i = 0; i < 50; i++) {
         cc3_pixbuf_load ();
     }

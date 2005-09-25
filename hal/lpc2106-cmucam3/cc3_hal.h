@@ -35,7 +35,7 @@ typedef struct {
  * This is the global structure that the different cc3_set_xxxx() functions use in order to maintain consistency
  * if an attribute is changed that shares the same register as others.
  */
-_cc3_camera_state_t _cc3_g_current_camera_state;
+extern _cc3_camera_state_t _cc3_g_current_camera_state;
 
 void _cc3_set_register_state ();
 void _cc3_camera_reset ();

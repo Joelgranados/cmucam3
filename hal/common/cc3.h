@@ -63,8 +63,8 @@ typedef struct {
 
 
 // Globals used by CMUcam functions
-cc3_pixel_t cc3_g_current_pixel;   // global that gets updated with pixbuf calls
-cc3_frame_t cc3_g_current_frame;   // global that keeps clip, stride
+extern cc3_pixel_t cc3_g_current_pixel;   // global that gets updated with pixbuf calls
+extern cc3_frame_t cc3_g_current_frame;   // global that keeps clip, stride
 
 void cc3_pixbuf_load();
 void cc3_pixbuf_skip(uint32_t size);

@@ -10,22 +10,29 @@
 #include "serial.h"
 
 
+// Globals used by CMUCam functions
+cc3_pixel_t cc3_g_current_pixel;   // global that gets updated with pixbuf calls
+cc3_frame_t cc3_g_current_frame;   // global that keeps clip, stride
+
+
 
 void cc3_io_init (int BAUDRATE)
 {
-uint8_t val;
+  uint8_t val;
+  
+  _cc3_uart0_setup (UART_BAUD (BAUDRATE), UART_8N1, UART_FIFO_8);
 
-    _cc3_uart0_setup (UART_BAUD (BAUDRATE), UART_8N1, UART_FIFO_8);
-    /*val=setvbuf(stdout, NULL, _IONBF, 0 );
-    if(val)
+  /*  
+  val=setvbuf(stdout, NULL, _IOLBF, 0 ); 
+  if(val)
     {
-    uart0_write("fail\r\n");
-    }
-    else
+      uart0_write("fail\r\n");
+      }
+  else
     {
-    uart0_write("win\r\n");
-    } */
-
+      uart0_write("win\r\n");
+    } 
+  */
 }
 
 

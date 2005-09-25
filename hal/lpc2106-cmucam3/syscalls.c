@@ -12,27 +12,17 @@ int _write (int file, char *ptr, int len)
 {
   int i = 0;
 
-  char c;
-
   //uart0_write("in _write\r\n");
 
   if (file == UART0OUT_FILENO) {
     for (i = 0; i < len; i++) {
       //uart0_write(" uart0\r\n");
-      c = *ptr++;
-     /* if (c == '\n') {
-	uart0_putc('\r');
-      }*/
-      uart0_putc(c);
+      uart0_putc(*ptr++);
     }
   } else if (file == UART1OUT_FILENO) {
     for (i = 0; i < len; i++) {
       //uart0_write(" uart1\r\n");
-      c = *ptr++;
-      if (c == '\n') {
-	uart1_putc('\r');
-      }
-      uart1_putc(c);
+      uart1_putc(*ptr++);
     }
   }
 
@@ -61,21 +51,24 @@ int _read (int file, char *ptr, int len)
 }
 
 
-int _close(int file)
+int _close(int file __attribute((unused)))
 {
   //uart_0write("in _close\r\n");
   //uart_0write(" returning\r\n");
   return 0;
 }
 
-_off_t _lseek(int file, _off_t ptr, int dir)
+_off_t _lseek(int file __attribute((unused)), 
+	      _off_t ptr __attribute((unused)), 
+	      int dir __attribute((unused)))
 {
   //uart_0write("in _lseek\r\n");
   //uart_0write(" returning\r\n");
   return 0;
 }
 
-int _fstat(int file, struct stat *st)
+int _fstat(int file __attribute((unused)), 
+	   struct stat *st __attribute((unused)))
 {
   //uart_0write("in _fstat\r\n");
   st->st_mode = S_IFCHR;	
@@ -84,7 +77,7 @@ int _fstat(int file, struct stat *st)
 }
 
 
-int isatty (int fd) 
+int isatty (int fd __attribute((unused))) 
 {
   //uart_0write("in isatty\r\n");
   //uart_0write(" returning\r\n");
