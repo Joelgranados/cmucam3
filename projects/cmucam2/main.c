@@ -26,12 +26,11 @@ int main ()
     printf ("CMUcam3 Starting up\r\n");
     cc3_set_led (true);
 
-    putchar('*');
-    putchar('*');
-
-    for (i = 0; i < 50; i++) {
+   /* for (i = 0; i < 50; i++) {
+    	printf ("Try load\r\n");
         cc3_pixbuf_load ();
-    }
+    	printf ("loaded..\r\n");
+    }*/
     printf ("Sending Image\r\n");
     while (1) {
         image_send_direct (cc3_g_current_frame.width,

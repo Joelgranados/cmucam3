@@ -68,6 +68,7 @@ __undf: b     undefined                 @ undefined
 __swi:  b     swi                       @ SWI
 __pabt: b     prefetch_abort            @ prefetch abort
 __dabt: b     data_abort                @ data abort
+__fiq:  nop                              @ FIQ
 __irq:  stmfd   sp!, { lr }               /* save return address on stack */
 	mrs     lr, spsr                  /* use lr to save spsr_irq */
 	stmfd   sp!, { r0-r3, r12, lr }   /* save work regs & spsr on stack */
@@ -76,7 +77,6 @@ __irq:  stmfd   sp!, { lr }               /* save return address on stack */
 	msr     spsr_cxsf, lr             /* put back spsr_irq */
 	ldmfd   sp!, { lr }               /* put back lr_irq */
 	subs    pc, lr, #0x4              /* return, restoring CPSR from SPSR */    
-__fiq:  b     .                         @ FIQ
         .size _boot, . - _boot
         .endfunc
 
@@ -163,7 +163,8 @@ ctor_end:
 
 /* Enter the C code, use BX instruction so as to never return */
 /* use BLX (?) main if you want to use c++ destructors below */
-
+        @msr     cpsr_c, #0x13       /* I=0 F=0 T=0 MODE=supervisor */
+        msr   CPSR_c,#MODE_SYS|F_BIT @ System Mode
         bx    r10                       @ enter main()
 
 /* "global object"-dtors are never called and it should not be 

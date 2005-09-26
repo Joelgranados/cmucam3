@@ -34,6 +34,8 @@ cc3_system_setup ()
 
         // --- map INT-vector ---
 	REG(SYSCON_MEMMAP) = MEMMAP_USER_FLASH_MODE;
-
+	
+	//REG(PCB_PINSEL1) = 0x1;  // External interrupt 0
+ 
 
 }

@@ -51,15 +51,14 @@ void cc3_pixbuf_load ()
     // wait for vsync to finish
     while (!(REG (GPIO_IOPIN) & _CC3_CAM_VSYNC));       //while(CAM_VSYNC);
 
-    // enable_ext_interrupt ();
-
+    enable_ext_interrupt ();
     for (i = 0; i < 3; i++) {
         while (!(REG (GPIO_IOPIN) & _CC3_CAM_HREF));
         while (REG (GPIO_IOPIN) & _CC3_CAM_HREF);
     }
 
-    while (REG (GPIO_IOPIN) & _CC3_CAM_VSYNC);
-    REG (GPIO_IOCLR) = _CC3_BUF_WEE;
+    //while (REG (GPIO_IOPIN) & _CC3_CAM_VSYNC);
+    //REG (GPIO_IOCLR) = _CC3_BUF_WEE;
 //      delay();
 //  REG(GPIO_IOCLR)=_CC3_BUF_WEE;  //BUF_WEE=0return 1;
 }
