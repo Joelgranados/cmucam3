@@ -34,14 +34,13 @@ int _read (int file, char *ptr, int len)
   int i = 0;
  
   //uart0_write("in _read\r\n");
-
   if (file == UART0IN_FILENO) {
-    //uart0_write(" uart0\r\n");
+   // uart0_write(" uart0\r\n");
     for (i = 0; i < len; i++) {
-      *ptr++ = uart0_getc();
+	if((*ptr++ = uart0_getc())=='\n') break;
     }
   } else if (file == UART1IN_FILENO) {
-    //uart0_write(" uart1\r\n");
+   // uart0_write(" uart1\r\n");
     for (i = 0; i < len; i++) {
       *ptr++ = uart1_getc();
     }
