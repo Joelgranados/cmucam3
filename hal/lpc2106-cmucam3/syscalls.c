@@ -42,7 +42,7 @@ int _read (int file, char *ptr, int len)
   } else if (file == UART1IN_FILENO) {
    // uart0_write(" uart1\r\n");
     for (i = 0; i < len; i++) {
-      *ptr++ = uart1_getc();
+      if((*ptr++ = uart1_getc())=='\n') break;
     }
   }
 

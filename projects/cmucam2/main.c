@@ -13,7 +13,6 @@ int main ()
 {
     unsigned int i = 0;
     int val;
-  
     cc3_system_setup ();
 
 
@@ -27,9 +26,9 @@ int main ()
     cc3_set_led (true);
 
 val=0;
-while(val!=1980)
+while(val!=2106)
 {
-    printf( "Type 1980 to break...\r\n");
+    printf( "Type a number, or 2106 to break...\r\n");
     scanf( "%d",&val );
     printf( "You typed %d\r\n",val);
 }
