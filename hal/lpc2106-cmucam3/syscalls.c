@@ -7,7 +7,6 @@
 #undef errno
 extern int errno;
 
-
 int _write (int file, char *ptr, int len)
 {
   int i = 0;
@@ -24,6 +23,9 @@ int _write (int file, char *ptr, int len)
       //uart0_write(" uart1\r\n");
       uart1_putc(*ptr++);
     }
+  } else {
+    errno = EBADF;
+    return -1;
   }
 
   return i;
@@ -44,6 +46,9 @@ int _read (int file, char *ptr, int len)
     for (i = 0; i < len; i++) {
       if((*ptr++ = uart1_getc())=='\n') break;
     }
+  } else {
+    errno = EBADF;
+    return -1;
   }
 
   return i;
@@ -83,6 +88,38 @@ int isatty (int fd __attribute((unused)))
   return 1;
 }
 
+int _link(char *old, char *new){
+  errno = EMLINK;
+  return -1;
+}
+
+int _open(const char *name, int flags, int mode){
+  errno = ENOENT;
+  return -1;
+}
+
+int _stat(char *file, struct stat *st) {
+  st->st_mode = S_IFCHR;
+  return 0;
+}
+
+int _rename(char *oldpath, char *newpath) {
+  errno = EINVAL;
+  return -1;
+}
+
+int _gettimeofday (struct timeval * tp, struct timezone * tzp) {
+  return -1;
+}
+
+int _times(struct tms *buf){
+  return -1;
+}
+
+int _unlink(char *name){
+  errno = ENOENT;
+  return -1; 
+}
 
 
 /* exciting memory management! */
