@@ -15,7 +15,7 @@ ifeq ($(strip $(thumb)),1)
 endif
 
 LIBS=
-CFLAGS=-I$(HALDIR) -I$(HALDIR)/../common -O2 -mcpu=arm7tdmi -Wextra -Wall -ffreestanding -std=gnu99 -g -fdata-sections -ffunction-sections -Werror-implicit-function-declaration -msoft-float $(THUMB_FLAGS)
+CFLAGS=-I$(HALDIR) -I$(HALDIR)/../common -Os -mcpu=arm7tdmi -Wextra -Wall -ffreestanding -std=gnu99 -g -fdata-sections -ffunction-sections -Werror-implicit-function-declaration -msoft-float $(THUMB_FLAGS)
 LDFLAGS=-nostartfiles -lm -T$(HALDIR)/arm.ln -Wl,--gc-sections -mcpu=arm7tdmi -msoft-float $(THUMB_FLAGS)
 
 
