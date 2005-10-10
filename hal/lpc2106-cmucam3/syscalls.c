@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
+#include <sys/time.h>
+#include <sys/times.h>
 #include "serial.h"
 
 #include <errno.h>
@@ -88,35 +90,41 @@ int isatty (int fd __attribute((unused)))
   return 1;
 }
 
-int _link(char *old, char *new){
+int _link(char *old __attribute((unused)), 
+	  char *new __attribute((unused))){
   errno = EMLINK;
   return -1;
 }
 
-int _open(const char *name, int flags, int mode){
+int _open(const char *name __attribute((unused)), 
+	  int flags __attribute((unused)), 
+	  int mode __attribute((unused))){
   errno = ENOENT;
   return -1;
 }
 
-int _stat(char *file, struct stat *st) {
+int _stat(char *file __attribute((unused)), 
+	  struct stat *st) {
   st->st_mode = S_IFCHR;
   return 0;
 }
 
-int _rename(char *oldpath, char *newpath) {
+int _rename(char *oldpath __attribute((unused)), 
+	    char *newpath __attribute((unused))) {
   errno = EINVAL;
   return -1;
 }
 
-int _gettimeofday (struct timeval * tp, struct timezone * tzp) {
+int _gettimeofday (struct timeval *tp __attribute((unused)), 
+		   struct timezone *tzp __attribute((unused))) {
   return -1;
 }
 
-int _times(struct tms *buf){
+int _times(struct tms *buf __attribute((unused))) {
   return -1;
 }
 
-int _unlink(char *name){
+int _unlink(char *name __attribute((unused))) {
   errno = ENOENT;
   return -1; 
 }
