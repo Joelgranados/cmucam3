@@ -66,21 +66,21 @@ typedef struct {
 extern cc3_pixel_t cc3_g_current_pixel;   // global that gets updated with pixbuf calls
 extern cc3_frame_t cc3_g_current_frame;   // global that keeps clip, stride
 
-void cc3_pixbuf_load();
+void cc3_pixbuf_load(void);
 void cc3_pixbuf_skip(uint32_t size);
 
 /**
  * loads cc3_g_current_pixel from fifo
  */
-void cc3_pixbuf_read();                              
+void cc3_pixbuf_read(void);                              
 /**
  * loads 3 bytes into cc3_g_current_pixel from fifo and skips second green. 
  */
-void cc3_pixbuf_read3();                            
+void cc3_pixbuf_read3(void);                            
 /**
  * Rewinds the fifo 
  */
-void cc3_pixbuf_rewind();                            
+void cc3_pixbuf_rewind(void);                            
 /**
  * Using the cc3_frame_t reads rows taking into account virtual window and subsampling. 
  */
@@ -105,12 +105,12 @@ void cc3_set_led(bool);
  * 2) Reset Camera
  * 3) call cc3_set functions for default state 
  */
-int cc3_camera_init();
+int cc3_camera_init(void);
 /**
  * Turn camera power off 
  * Turn fifo power off (may "cause picture to evaporate")
  */
-void cc3_camera_kill();
+void cc3_camera_kill(void);
 /**
  * Sets the resolution, also updates cc3_g_current_frame width and height
  */

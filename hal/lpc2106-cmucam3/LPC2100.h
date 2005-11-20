@@ -1,7 +1,7 @@
 #ifndef LPC2100_H
 #define LPC2100_H
 
-void cc3_system_setup ();
+void cc3_system_setup(void);
 
 // write address to register macro
 #define REG(addr) (*(volatile unsigned long *)(addr))

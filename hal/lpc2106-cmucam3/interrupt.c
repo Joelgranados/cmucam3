@@ -5,7 +5,7 @@
 #include "serial.h"
 
 void
-disable_ext_interrupt ()
+disable_ext_interrupt (void)
 {
   // Enable bit 14, which is the external interrupt 0...
   REG (VICIntEnClr) = 0x4000;
@@ -15,7 +15,7 @@ disable_ext_interrupt ()
 
 
 void
-enable_ext_interrupt ()
+enable_ext_interrupt (void)
 {
   REG (SYSCON_EXTINT) = 0x1; 
    // Enable bit 14, which is the external interrupt 0...
@@ -26,7 +26,7 @@ enable_ext_interrupt ()
 
 
 void
-interrupt ()
+interrupt (void)
 {
   
   REG (GPIO_IOCLR) = _CC3_BUF_WEE;	//BUF_WEE=0
@@ -36,23 +36,23 @@ interrupt ()
 }
 
 
-void undefined()
+void undefined(void)
 {
   uart0_write("undefined instruction!\r\n");
   // XXX: tell us which instruction!
   exit(-1);
 }
 
-void swi()
+void swi(void)
 {
   uart0_write("swi!\r\n");
   // XXX: tell us something
   exit(-1);
 }
 
-void prefetch_abort()
+void prefetch_abort(void)
 {
-  volatile char *r_14 asm("r14");
+  register volatile char *r_14 asm("r14");
   long prev_pc = (long)r_14 - 4;
   uart0_write("prefetch abort!\r\n");
   uart0_write_hex(prev_pc);
@@ -60,7 +60,7 @@ void prefetch_abort()
   exit(-1);
 }
 
-void data_abort()
+void data_abort(void)
 {
   uart0_write("data abort!\r\n");
   // XXX: register dump

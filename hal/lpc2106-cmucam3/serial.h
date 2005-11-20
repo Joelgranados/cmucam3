@@ -152,11 +152,11 @@ void uart1_setup (void);
 char uart0_putc(const char c);
 char uart1_putc(const char c);
 
-int uart0_getc();
-int uart0_getc_nb();     // return -1 if no char avail
+int uart0_getc(void);
+int uart0_getc_nb(void);     // return -1 if no char avail
 
-int uart1_getc();
-int uart1_getc_nb();     // return -1 if no char avail
+int uart1_getc(void);
+int uart1_getc_nb(void);     // return -1 if no char avail
 
 
 void uart0_write (char *str);

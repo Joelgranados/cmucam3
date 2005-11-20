@@ -130,7 +130,7 @@ int uart1_getc_nb()
 
 
 
-void
+static void
 uart0_setup (void)
 {
   // enable access to divisor latch regs
@@ -174,7 +174,7 @@ void uart1_setup()
  * Call this once at the start of the program.
  *
  */
-void
+static void
 InitializeUARTs (void)
 {
   /*
@@ -237,7 +237,7 @@ InitializeUARTs (void)
  * Call this once at the start of the program.
  *
  */
-void
+static void
 InitializeUART0_Int (void)
 {
   /*

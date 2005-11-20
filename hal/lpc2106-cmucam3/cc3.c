@@ -150,7 +150,7 @@ void cc3_pixbuf_read_rows (void *memory, uint32_t rows)
  */
 int cc3_pixbuf_set_roi (uint16_t x0, uint16_t y0, uint16_t x1, uint16_t x2)
 {
-
+  return 0;
 }
 
 /**
@@ -160,8 +160,7 @@ int cc3_pixbuf_set_roi (uint16_t x0, uint16_t y0, uint16_t x1, uint16_t x2)
 int cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
                               uint8_t y_step)
 {
-
-
+  return 0;
 }
 
 /**
@@ -170,7 +169,7 @@ int cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
  */
 int cc3_pixbuf_set_coi (cc3_channel_t chan)
 {
-
+  return 0;
 }
 
 
@@ -202,6 +201,7 @@ int cc3_camera_init ()
     _cc3_g_current_camera_state.colorspace = CC3_RGB;
     _cc3_set_register_state ();
 
+    return 1;
 }
 
 /**
@@ -216,20 +216,20 @@ void cc3_camera_kill ()
 }
 
 
-void _cc3_set_cam_ddr_i2c_idle ()
+static void _cc3_set_cam_ddr_i2c_idle (void)
 {
     REG (GPIO_IODIR) = _CC3_I2C_PORT_DDR_IDLE;
     _cc3_delay_i2c ();
 }
 
-void _cc3_set_cam_ddr_i2c_write ()
+static void _cc3_set_cam_ddr_i2c_write (void)
 {
     REG (GPIO_IODIR) = _CC3_I2C_PORT_DDR_WRITE;
     _cc3_delay_i2c ();
 }
 
 
-void _cc3_set_cam_ddr (volatile unsigned long val)
+static void _cc3_set_cam_ddr (volatile unsigned long val)
 {
     //DDR(I2C_PORT,val);
     REG (GPIO_IODIR) = val;
@@ -238,7 +238,7 @@ void _cc3_set_cam_ddr (volatile unsigned long val)
 
 
 
-unsigned int _cc3_i2c_send (unsigned int num, unsigned int *buffer)
+static unsigned int _cc3_i2c_send (unsigned int num, unsigned int *buffer)
 {
     unsigned int ack, i, k;
     unsigned int data;

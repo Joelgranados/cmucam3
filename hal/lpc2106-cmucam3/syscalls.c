@@ -168,7 +168,7 @@ void *_sbrk(int nbytes)
     return (void *) -1;
   }
 
-  heap_ptr += nbytes;	/*  Increase heap.				*/
+  heap_ptr = (char *)heap_ptr + nbytes;	        /*  Increase heap */
   
   //uart_0write(" heap_ptr = ");
   //uart_0write_hex((unsigned int) heap_ptr);
