@@ -1,0 +1,376 @@
+Only in lua-5.0.2/bin: lua
+Only in lua-5.0.2/bin: luac
+diff -ur lua-5.0.2.orig/config lua-5.0.2/config
+--- lua-5.0.2.orig/config	2003-04-11 10:00:41.000000000 -0400
++++ lua-5.0.2/config	2005-12-03 18:16:44.000000000 -0500
+@@ -13,6 +13,20 @@
+ 
+ # == CHANGE THE SETTINGS BELOW TO SUIT YOUR ENVIRONMENT =======================
+ 
++# set hal if not given by "hal=____"
++
++ifeq ($(strip $(hal)),)
++  hal=lpc2106-cmucam3
++endif
++
++HALDIR=$(LUA)/../../../hal/$(hal)
++
++# include definitions (compiler, options, etc)
++include $(HALDIR)/defs.mk
++
++
++
++
+ # --------------------------------------------------------------- Lua libraries
+ 
+ # Support for dynamically loading C libraries for Lua is a very important
+@@ -92,7 +106,8 @@
+ # or if you are using a modified interpreter that does not need them,
+ # then comment the following line or add the appropriates libraries.
+ #
+-EXTRA_LIBS= -lm
++EXTRA_LIBS= -lm -L$(HALDIR) \
++	-Wl,-whole-archive -lhal-$(hal) -Wl,-no-whole-archive
+ 
+ # If you want to customize the stand-alone Lua interpreter, uncomment and
+ # edit the following two lines; also edit etc/saconfig.c to suit your needs.
+@@ -108,7 +123,7 @@
+ # You need an ANSI C compiler. gcc is a popular one. We do not use -ansi in
+ # WARN because it disables POSIX features used in the libraries.
+ #
+-CC= gcc
++#CC= gcc
+ WARN= -Wall
+ 
+ # ------------------------------------------------------------------ C options
+@@ -119,22 +134,23 @@
+ # debug information. If you only want the shared libraries, you may want to
+ # add -fPIC to MYCFLAGS.
+ #
+-MYCFLAGS= -O2
++MYCFLAGS:= $(CFLAGS)
+ #MYCFLAGS= -O3 -fomit-frame-pointer # -fPIC
+ 
+ # Write here any options you may need for your C linker.
+-#MYLDFLAGS=
++MYLDFLAGS:= $(LDFLAGS)
+ 
+ # ------------------------------------------------------------------ librarian
+ 
+ # This should work in all Unix systems.
+ #
+-AR= ar rcu
++AR:= $(AR) rcu
+ 
+ # If your system doesn't have (or need) ranlib, use RANLIB=true.
+ # On some systems, "ar s" does what ranlib would do.
+ #
+-RANLIB= ranlib
++RANLIB= true
++#RANLIB= ranlib
+ #RANLIB= ar s
+ #RANLIB= true
+ 
+@@ -142,7 +158,7 @@
+ 
+ # This should work in all Unix systems, but you may want to add options.
+ #
+-STRIP= strip
++#STRIP= strip
+ 
+ # ------------------------------------------------------------------ install
+ 
+Only in lua-5.0.2: config~
+Only in lua-5.0.2/lib: liblua.a
+Only in lua-5.0.2/lib: liblualib.a
+Only in lua-5.0.2: Makefile~
+Only in lua-5.0.2/src: lapi.o
+Only in lua-5.0.2/src: lcode.o
+Only in lua-5.0.2/src: ldebug.o
+Only in lua-5.0.2/src: ldo.o
+Only in lua-5.0.2/src: ldump.o
+Only in lua-5.0.2/src: lfunc.o
+Only in lua-5.0.2/src: lgc.o
+Only in lua-5.0.2/src/lib: lauxlib.o
+Only in lua-5.0.2/src/lib: lbaselib.o
+Only in lua-5.0.2/src/lib: ldblib.o
+Only in lua-5.0.2/src/lib: liolib.o
+Only in lua-5.0.2/src/lib: lmathlib.o
+Only in lua-5.0.2/src/lib: loadlib.o
+Only in lua-5.0.2/src/lib: lstrlib.o
+Only in lua-5.0.2/src/lib: ltablib.o
+Only in lua-5.0.2/src/lib: Makefile~
+Only in lua-5.0.2/src: llex.o
+Only in lua-5.0.2/src: lmem.o
+Only in lua-5.0.2/src: lobject.o
+Only in lua-5.0.2/src: lopcodes.o
+Only in lua-5.0.2/src: lparser.o
+Only in lua-5.0.2/src: lstate.o
+Only in lua-5.0.2/src: lstring.o
+Only in lua-5.0.2/src: ltable.o
+Only in lua-5.0.2/src: ltests.o
+Only in lua-5.0.2/src: ltm.o
+diff -ur lua-5.0.2.orig/src/lua/lua.c lua-5.0.2/src/lua/lua.c
+--- lua-5.0.2.orig/src/lua/lua.c	2003-04-03 08:34:42.000000000 -0500
++++ lua-5.0.2/src/lua/lua.c	2005-12-04 01:17:02.000000000 -0500
+@@ -17,6 +17,7 @@
+ #include "lauxlib.h"
+ #include "lualib.h"
+ 
++#include "cc3.h"
+ 
+ /*
+ ** generic extra include file
+@@ -72,9 +73,9 @@
+   {"table", luaopen_table},
+   {"io", luaopen_io},
+   {"string", luaopen_string},
+-  {"math", luaopen_math},
+-  {"debug", luaopen_debug},
+-  {"loadlib", luaopen_loadlib},
++  /*{"math", luaopen_math},*/
++  /*{"debug", luaopen_debug},*/
++  /*{"loadlib", luaopen_loadlib},*/
+   /* add your libraries here */
+   LUA_EXTRALIBS
+   {NULL, NULL}
+@@ -96,20 +97,6 @@
+ }
+ 
+ 
+-static void print_usage (void) {
+-  fprintf(stderr,
+-  "usage: %s [options] [script [args]].\n"
+-  "Available options are:\n"
+-  "  -        execute stdin as a file\n"
+-  "  -e stat  execute string `stat'\n"
+-  "  -i       enter interactive mode after executing `script'\n"
+-  "  -l name  load and run library `name'\n"
+-  "  -v       show version information\n"
+-  "  --       stop handling options\n" ,
+-  progname);
+-}
+-
+-
+ static void l_message (const char *pname, const char *msg) {
+   if (pname) fprintf(stderr, "%s: ", pname);
+   fprintf(stderr, "%s\n", msg);
+@@ -142,56 +129,6 @@
+ }
+ 
+ 
+-static void print_version (void) {
+-  l_message(NULL, LUA_VERSION "  " LUA_COPYRIGHT);
+-}
+-
+-
+-static void getargs (char *argv[], int n) {
+-  int i;
+-  lua_newtable(L);
+-  for (i=0; argv[i]; i++) {
+-    lua_pushnumber(L, i - n);
+-    lua_pushstring(L, argv[i]);
+-    lua_rawset(L, -3);
+-  }
+-  /* arg.n = maximum index in table `arg' */
+-  lua_pushliteral(L, "n");
+-  lua_pushnumber(L, i-n-1);
+-  lua_rawset(L, -3);
+-}
+-
+-
+-static int docall (int status) {
+-  if (status == 0) status = lcall(0, 1);
+-  return report(status);
+-}
+-
+-
+-static int file_input (const char *name) {
+-  return docall(luaL_loadfile(L, name));
+-}
+-
+-
+-static int dostring (const char *s, const char *name) {
+-  return docall(luaL_loadbuffer(L, s, strlen(s), name));
+-}
+-
+-
+-static int load_file (const char *name) {
+-  lua_pushliteral(L, "require");
+-  lua_rawget(L, LUA_GLOBALSINDEX);
+-  if (!lua_isfunction(L, -1)) {  /* no `require' defined? */
+-    lua_pop(L, 1);
+-    return file_input(name);
+-  }
+-  else {
+-    lua_pushstring(L, name);
+-    return report(lcall(1, 1));
+-  }
+-}
+-
+-
+ /*
+ ** this macro can be used by some `history' system to save lines
+ ** read in manual input
+@@ -296,87 +233,6 @@
+ }
+ 
+ 
+-static int handle_argv (char *argv[], int *interactive) {
+-  if (argv[1] == NULL) {  /* no more arguments? */
+-    if (stdin_is_tty()) {
+-      print_version();
+-      manual_input();
+-    }
+-    else
+-      file_input(NULL);  /* executes stdin as a file */
+-  }
+-  else {  /* other arguments; loop over them */
+-    int i;
+-    for (i = 1; argv[i] != NULL; i++) {
+-      if (argv[i][0] != '-') break;  /* not an option? */
+-      switch (argv[i][1]) {  /* option */
+-        case '-': {  /* `--' */
+-          if (argv[i][2] != '\0') {
+-            print_usage();
+-            return 1;
+-          }
+-          i++;  /* skip this argument */
+-          goto endloop;  /* stop handling arguments */
+-        }
+-        case '\0': {
+-          file_input(NULL);  /* executes stdin as a file */
+-          break;
+-        }
+-        case 'i': {
+-          *interactive = 1;
+-          break;
+-        }
+-        case 'v': {
+-          print_version();
+-          break;
+-        }
+-        case 'e': {
+-          const char *chunk = argv[i] + 2;
+-          if (*chunk == '\0') chunk = argv[++i];
+-          if (chunk == NULL) {
+-            print_usage();
+-            return 1;
+-          }
+-          if (dostring(chunk, "=<command line>") != 0)
+-            return 1;
+-          break;
+-        }
+-        case 'l': {
+-          const char *filename = argv[i] + 2;
+-          if (*filename == '\0') filename = argv[++i];
+-          if (filename == NULL) {
+-            print_usage();
+-            return 1;
+-          }
+-          if (load_file(filename))
+-            return 1;  /* stop if file fails */
+-          break;
+-        }
+-        case 'c': {
+-          l_message(progname, "option `-c' is deprecated");
+-          break;
+-        }
+-        case 's': {
+-          l_message(progname, "option `-s' is deprecated");
+-          break;
+-        }
+-        default: {
+-          print_usage();
+-          return 1;
+-        }
+-      }
+-    } endloop:
+-    if (argv[i] != NULL) {
+-      const char *filename = argv[i];
+-      getargs(argv, i);  /* collect arguments */
+-      lua_setglobal(L, "arg");
+-      return file_input(filename);  /* stop scanning arguments */
+-    }
+-  }
+-  return 0;
+-}
+-
+-
+ static void openstdlibs (lua_State *l) {
+   const luaL_reg *lib = lualibs;
+   for (; lib->func; lib++) {
+@@ -386,16 +242,6 @@
+ }
+ 
+ 
+-static int handle_luainit (void) {
+-  const char *init = getenv("LUA_INIT");
+-  if (init == NULL) return 0;  /* status OK */
+-  else if (init[0] == '@')
+-    return file_input(init+1);
+-  else
+-    return dostring(init, "=LUA_INIT");
+-}
+-
+-
+ struct Smain {
+   int argc;
+   char **argv;
+@@ -404,24 +250,19 @@
+ 
+ 
+ static int pmain (lua_State *l) {
+-  struct Smain *s = (struct Smain *)lua_touserdata(l, 1);
+-  int status;
+-  int interactive = 0;
+-  if (s->argv[0] && s->argv[0][0]) progname = s->argv[0];
+   L = l;
++  printf("Opening libraries...\n");
+   lua_userinit(l);  /* open libraries */
+-  status = handle_luainit();
+-  if (status == 0) {
+-    status = handle_argv(s->argv, &interactive);
+-    if (status == 0 && interactive) manual_input();
+-  }
+-  s->status = status;
++  printf("Manual input...\n");
++  manual_input();
+   return 0;
+ }
+ 
+-
+-int main (int argc, char *argv[]) {
++int main(void)
++{
+   int status;
++  int argc = 1;
++  char *argv[] = {"lua"};
+   struct Smain s;
+   lua_State *l = lua_open();  /* create state */
+   if (l == NULL) {
+@@ -430,9 +271,15 @@
+   }
+   s.argc = argc;
+   s.argv = argv;
++  
++  cc3_system_setup();
++  cc3_io_init(115200);
++  cc3_camera_init();
++  printf("cc3 initialized\n");
++
++  printf("starting lua...\n");
+   status = lua_cpcall(l, &pmain, &s);
+   report(status);
+   lua_close(l);
+   return (status || s.status) ? EXIT_FAILURE : EXIT_SUCCESS;
+ }
+-
+Only in lua-5.0.2/src/lua: lua.c~
+Only in lua-5.0.2/src/lua: lua.o
+Only in lua-5.0.2/src/luac: lopcodes.o
+Only in lua-5.0.2/src/luac: luac.o
+Only in lua-5.0.2/src/luac: print.o
+Only in lua-5.0.2/src: lundump.o
+Only in lua-5.0.2/src: lvm.o
+Only in lua-5.0.2/src: lzio.o
