@@ -11,28 +11,17 @@
 
 
 // Globals used by CMUCam functions
-cc3_pixel_t cc3_g_current_pixel;   // global that gets updated with pixbuf calls
-cc3_frame_t cc3_g_current_frame;   // global that keeps clip, stride
+cc3_pixel_t cc3_g_current_pixel;        // global that gets updated with pixbuf calls
+cc3_frame_t cc3_g_current_frame;        // global that keeps clip, stride
 
 
 
 void cc3_io_init (int BAUDRATE)
 {
-  uint8_t val;
-  
-  _cc3_uart0_setup (UART_BAUD (BAUDRATE), UART_8N1, UART_FIFO_8);
+    uint8_t val;
 
-  /*
-  val=setvbuf(stdout, NULL, _IONBF, 0 ); 
-  if(val)
-    {
-      uart0_write("fail\r\n");
-      }
-  else
-    {
-      uart0_write("win\r\n");
-    } 
-  */
+    _cc3_uart0_setup (UART_BAUD (BAUDRATE), UART_8N1, UART_FIFO_8);
+
 }
 
 
@@ -56,7 +45,8 @@ void cc3_pixbuf_load ()
         while (!(REG (GPIO_IOPIN) & _CC3_CAM_HREF));
         while (REG (GPIO_IOPIN) & _CC3_CAM_HREF);
     }
-
+    cc3_g_current_frame.x_loc = 0;
+    cc3_g_current_frame.y_loc = 0;
     //while (REG (GPIO_IOPIN) & _CC3_CAM_VSYNC);
     //REG (GPIO_IOCLR) = _CC3_BUF_WEE;
 //      delay();
@@ -64,7 +54,7 @@ void cc3_pixbuf_load ()
 }
 
 
-void cc3_pixbuf_skip (uint32_t size)
+void _cc3_pixbuf_skip (uint32_t size)
 {
     uint32_t i;
     for (i = 0; i < size; i++) {
@@ -78,8 +68,129 @@ void cc3_pixbuf_skip (uint32_t size)
 /**
  * cc3_pixbuf_read():
  * loads cc3_g_current_pixel from fifo
+ * Returns 1 upon success and 0 upon a bounds failure
+ * This is slow, but takes care of channel of interest, downsampling, and virtual bounding boxes
  */
-void cc3_pixbuf_read ()
+int cc3_pixbuf_read ()
+{
+    int8_t i;
+    int16_t j;
+
+    if (cc3_g_current_frame.y_loc < cc3_g_current_frame.y0) {
+        // First read into frame
+        // Skip top
+        for (cc3_g_current_frame.y_loc = 0;
+             cc3_g_current_frame.y_loc < cc3_g_current_frame.y0;
+             cc3_g_current_frame.y_loc++)
+            for (i = 0; i < cc3_g_current_frame.y_step; i++)
+                _cc3_pixbuf_skip (cc3_g_current_frame.raw_width);
+        cc3_g_current_frame.x_loc = 0;
+        //printf( "Skipping Top %d %d\n",cc3_g_current_frame.x_loc, cc3_g_current_frame.y_loc );
+    }
+
+    if (cc3_g_current_frame.x_loc >= cc3_g_current_frame.x1) {
+        // First read after line
+        // Skip right and down 
+        _cc3_pixbuf_skip (cc3_g_current_frame.raw_width -
+                          (cc3_g_current_frame.x_loc *
+                           cc3_g_current_frame.x_step));
+        cc3_g_current_frame.x_loc = 0;
+        cc3_g_current_frame.y_loc++;
+        if (cc3_g_current_frame.y_step > 1) {
+            // skip horizontally down the image
+            for (j = 0; j < cc3_g_current_frame.y_step - 1; j++)
+                _cc3_pixbuf_skip (cc3_g_current_frame.raw_width);
+        }
+        //printf( "Skipping right and down %d %d\n",cc3_g_current_frame.x_loc, cc3_g_current_frame.y_loc );
+    }
+    if (cc3_g_current_frame.x_loc < cc3_g_current_frame.x0) {
+        // First read into line
+        // Skip left 
+        _cc3_pixbuf_skip (cc3_g_current_frame.x0 *
+                          cc3_g_current_frame.x_step);
+        cc3_g_current_frame.x_loc = cc3_g_current_frame.x0;
+        //printf( "Skipping Left to %d %d\n", cc3_g_current_frame.x_loc, cc3_g_current_frame.y_loc );
+    }
+//printf( "[%d %d] \n",cc3_g_current_frame.x_loc, cc3_g_current_frame.y_loc );
+    if (cc3_g_current_frame.y_loc > cc3_g_current_frame.y1)
+        return 0;
+
+// read the pixel
+    for (i = 0; i < 4; i++) {
+        if (cc3_g_current_frame.coi == i
+            || cc3_g_current_frame.coi == CC3_ALL) {
+            cc3_g_current_pixel.channel[i] = REG (GPIO_IOPIN);
+            cc3_g_current_pixel.channel[i] >>= 24;
+        }
+        _CC3_FIFO_READ_INC ();
+    }
+
+    cc3_g_current_frame.x_loc++;
+// skip horizontally for next read
+    if (cc3_g_current_frame.x_step > 1) {
+        if (cc3_g_current_frame.raw_width >
+            (cc3_g_current_frame.x_loc + cc3_g_current_frame.x_step)) {
+            // skip pixel
+            _cc3_pixbuf_skip (cc3_g_current_frame.x_step - 1);
+        }
+    }
+
+    return 1;
+}
+
+void _cc3_seek_top ()
+{
+
+}
+
+
+void _cc3_seek_left ()
+{
+
+}
+
+void _cc3_seek_right ()
+{
+
+
+}
+
+
+void _cc3_pixbuf_read_0 ()
+{
+    cc3_g_current_pixel.channel[0] = REG (GPIO_IOPIN);
+    _CC3_FIFO_READ_INC ();
+    _CC3_FIFO_READ_INC ();
+    _CC3_FIFO_READ_INC ();
+    _CC3_FIFO_READ_INC ();
+    cc3_g_current_pixel.channel[0] >>= 24;
+}
+
+void _cc3_pixbuf_read_1 ()
+{
+    _CC3_FIFO_READ_INC ();
+    cc3_g_current_pixel.channel[1] = REG (GPIO_IOPIN);
+    _CC3_FIFO_READ_INC ();
+    _CC3_FIFO_READ_INC ();
+    _CC3_FIFO_READ_INC ();
+    cc3_g_current_pixel.channel[1] >>= 24;
+}
+
+void _cc3_pixbuf_read_2 ()
+{
+    _CC3_FIFO_READ_INC ();
+    _CC3_FIFO_READ_INC ();
+    cc3_g_current_pixel.channel[2] = REG (GPIO_IOPIN);
+    _CC3_FIFO_READ_INC ();
+    _CC3_FIFO_READ_INC ();
+    cc3_g_current_pixel.channel[2] >>= 24;
+}
+
+/**
+ * cc3_pixbuf_read():
+ * loads cc3_g_current_pixel from fifo
+ */
+void _cc3_pixbuf_read_all ()
 {
     //if(hiresMode && !frame_dump) frame_skip_pixel();
     cc3_g_current_pixel.channel[0] = REG (GPIO_IOPIN);
@@ -91,12 +202,10 @@ void cc3_pixbuf_read ()
     cc3_g_current_pixel.channel[3] = REG (GPIO_IOPIN);
     _CC3_FIFO_READ_INC ();
 
-    cc3_g_current_pixel.channel[0] >>= 24;
-    cc3_g_current_pixel.channel[1] >>= 24;
-    cc3_g_current_pixel.channel[2] >>= 24;
-    cc3_g_current_pixel.channel[3] >>= 24;
-
-
+    //cc3_g_current_pixel.channel[0] >>= 24;
+    //cc3_g_current_pixel.channel[1] >>= 24;
+    //cc3_g_current_pixel.channel[2] >>= 24;
+    //cc3_g_current_pixel.channel[3] >>= 24;
     //if(CAM_VSYNC && !buffer_mode )frame_write_reset();
 
 }
@@ -104,16 +213,29 @@ void cc3_pixbuf_read ()
 /**
  * cc3_pixbuf_read3():
  * loads 3 bytes into cc3_g_current_pixel from fifo and skips second green. 
+ * This is slightly faster if full image color information is not needed.
  */
-void cc3_pixbuf_read3 ()
+void _cc3_pixbuf_read_all_3 ()
 {
+    cc3_g_current_pixel.channel[0] = REG (GPIO_IOPIN);
+    _CC3_FIFO_READ_INC ();
+    cc3_g_current_pixel.channel[1] = REG (GPIO_IOPIN);
+    _CC3_FIFO_READ_INC ();
+    _CC3_FIFO_READ_INC ();
+    cc3_g_current_pixel.channel[3] = REG (GPIO_IOPIN);
+    _CC3_FIFO_READ_INC ();
 
-
+    cc3_g_current_pixel.channel[0] >>= 24;
+    cc3_g_current_pixel.channel[1] >>= 24;
+    cc3_g_current_pixel.channel[3] >>= 24;
 }
 
 /**
  * cc3_pixbuf_rewind():
- * Rewinds the fifo 
+ * Rewinds the fifo.
+ * Calling this and then changing parameters such as the 
+ * region of interest, channel of interest, virtual frame, and
+ * subsampling will allow rapid reprocessing of a new frame.
  */
 void cc3_pixbuf_rewind ()
 {
@@ -136,40 +258,78 @@ void cc3_set_led (bool state)
 
 /**
  * cc3_pixbuf_read_rows():
- * Using the cc3_frame_t reads rows taking into account virtual window and subsampling. 
+ * Using the cc3_frame_t reads rows taking into account the virtual window and subsampling. 
+ * This should be the lowest level call that the user directly interacts with.
  */
-void cc3_pixbuf_read_rows (void *memory, uint32_t rows)
+int cc3_pixbuf_read_rows (void *memory, uint32_t rows)
 {
 
-
+    return 1;
 }
 
 /**
  * cc3_pixbuf_set_roi():
  * Sets the region of interest in cc3_frame_t for virtual windowing. 
+ * This function changes the way data is read from the FIFO.
+ * Returns 1 upon success and 0 on an out of bounds failure.
  */
-int cc3_pixbuf_set_roi (uint16_t x0, uint16_t y0, uint16_t x1, uint16_t x2)
+int cc3_pixbuf_set_roi (uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 {
-  return 0;
+    if (x0 >= 0
+        && x0 <= (cc3_g_current_frame.raw_width / cc3_g_current_frame.x_step)
+        && y0 >= 0
+        && y0 <= (cc3_g_current_frame.raw_height / cc3_g_current_frame.y_step)
+        && x1 >= 0
+        && x1 <= (cc3_g_current_frame.raw_width / cc3_g_current_frame.x_step)
+        && y1 >= 0
+        && y1 <= (cc3_g_current_frame.raw_height / cc3_g_current_frame.y_step)
+        && x0 < x1 && y0 < y1) {
+        cc3_g_current_frame.x0 = x0;
+        cc3_g_current_frame.y0 = y0;
+        cc3_g_current_frame.x1 = x1;
+        cc3_g_current_frame.y1 = y1;
+        cc3_g_current_frame.width = x1 - x0;
+        cc3_g_current_frame.height = y1 - y0;
+        return 1;
+    }
+    return 0;
 }
 
 /**
  * cc3_pixbuf_set_subsample():
  * Sets the subsampling step and mode in cc3_frame_t. 
+ * This function changes the way data is read from the FIFO.
+ * Warning:  This function resets the ROI to the size of the new image.
  */
 int cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
                               uint8_t y_step)
 {
-  return 0;
+    if (x_step < 0 || y_step < 0)
+        return 0;
+    cc3_g_current_frame.x_step = x_step;
+    cc3_g_current_frame.y_step = y_step;
+    cc3_g_current_frame.width = cc3_g_current_frame.raw_width / x_step;
+    cc3_g_current_frame.height = cc3_g_current_frame.raw_height / y_step;
+    cc3_g_current_frame.x0 = 0;
+    cc3_g_current_frame.y0 = 0;
+    cc3_g_current_frame.x1 = cc3_g_current_frame.width;
+    cc3_g_current_frame.y1 = cc3_g_current_frame.height;
+    cc3_g_current_frame.subsample_mode = mode;
+    return 1;
 }
 
 /**
  * cc3_pixbuf_set_coi():
- * Sets the channel of interest 1 or all
+ * Sets the channel of interest 1 or all.
+ * This function changes the way data is read from the FIFO.
+ * Returns 1 upon success and 0 on failure.
  */
 int cc3_pixbuf_set_coi (cc3_channel_t chan)
 {
-  return 0;
+    if (chan < 0 || chan > 4)
+        return 0;               // Sanity check on bounds
+    cc3_g_current_frame.coi = chan;
+    return 1;
 }
 
 
@@ -179,7 +339,7 @@ int cc3_pixbuf_set_coi (cc3_channel_t chan)
  * First Enable Camera & FIFO Power, next Reset Camera, then call cc3_set functions for default state 
  *
  * Return:
- * 	1 sucessfully got acks back
+ * 	1 successfully got acks back
  * 	0 failure (probably due to hardware?)
  */
 int cc3_camera_init ()
@@ -201,7 +361,24 @@ int cc3_camera_init ()
     _cc3_g_current_camera_state.colorspace = CC3_RGB;
     _cc3_set_register_state ();
 
-    return 1;
+    cc3_frame_default ();
+}
+
+void cc3_frame_default ()
+{
+    cc3_g_current_frame.coi = CC3_ALL;
+    cc3_g_current_frame.pixel_mode = CC3_BAYER;
+    cc3_g_current_frame.x_step = 1;
+    cc3_g_current_frame.y_step = 1;
+    cc3_g_current_frame.x0 = 0;
+    cc3_g_current_frame.y0 = 0;
+    cc3_g_current_frame.width = cc3_g_current_frame.raw_width;
+    cc3_g_current_frame.height = cc3_g_current_frame.raw_height;
+    cc3_g_current_frame.x1 = cc3_g_current_frame.raw_width;
+    cc3_g_current_frame.y1 = cc3_g_current_frame.raw_height;
+    cc3_g_current_frame.x_loc = 0;
+    cc3_g_current_frame.y_loc = 0;
+    cc3_g_current_frame.subsample_mode = CC3_NEAREST;
 }
 
 /**
@@ -350,7 +527,7 @@ int cc3_set_resolution (cc3_camera_resolution_t cam_res)
  * address pixels with CC3_RED, CC3_GREEN, CC3_BLUE, and CC3_GREEN2
  * in YCrCb mode, use CC3_CR, CC3_Y, CC3_CB, CC3_Y2 when indexing
  * the pixel array.
- */ 
+ */
 int cc3_set_colorspace (cc3_colorspace_t colorspace)
 {
     _cc3_g_current_camera_state.colorspace = colorspace;

@@ -44,12 +44,21 @@ typedef enum {
    CC3_RANDOM
 } cc3_subsample_mode_t ;
 
-
+typedef enum {
+   CC3_DROP_2ND_GREEN,
+   CC3_BUILD_2ND_PIXEL,
+   CC3_BAYER
+} cc3_pixel_mode_t;
 
 typedef struct {
-    uint16_t width, height;
-    uint16_t x1,y1,x2,y2;
-    uint8_t x_step, y_step;
+    uint16_t raw_width, raw_height;  // raw image width and height
+    uint16_t width, height;  // subsampled and bound width and height
+    uint16_t x0,y0,x1,y1;   // bounding box in frame
+    uint16_t x_loc,y_loc;   // current position in frame
+    uint8_t x_step, y_step;  // subsampling step
+    cc3_channel_t coi;
+    cc3_subsample_mode_t subsample_mode;
+    cc3_pixel_mode_t pixel_mode;
 } cc3_frame_t;
 
 typedef struct {
@@ -66,29 +75,39 @@ typedef struct {
 extern cc3_pixel_t cc3_g_current_pixel;   // global that gets updated with pixbuf calls
 extern cc3_frame_t cc3_g_current_frame;   // global that keeps clip, stride
 
-void cc3_pixbuf_load(void);
-void cc3_pixbuf_skip(uint32_t size);
+void cc3_pixbuf_load();
+void _cc3_pixbuf_skip(uint32_t size);
+
+void cc3_frame_default();
+/**
+ * Using the cc3_frame_t reads rows taking into account virtual window and subsampling. 
+ */
+int cc3_pixbuf_read_rows( void* memory, uint32_t rows );
 
 /**
  * loads cc3_g_current_pixel from fifo
+ * Must adjust for channel, subframe, position in frame etc
  */
-void cc3_pixbuf_read(void);                              
+int cc3_pixbuf_read();                              
+
 /**
- * loads 3 bytes into cc3_g_current_pixel from fifo and skips second green. 
+ * The following are raw faster, pixel grab routines used by cc3_pixbuf_read_row(). 
  */
-void cc3_pixbuf_read3(void);                            
+void _cc3_pixbuf_read_all(); 
+void _cc3_pixbuf_read_all_3(); 
+void _cc3_pixbuf_read_0(); 
+void _cc3_pixbuf_read_1(); 
+void _cc3_pixbuf_read_2(); 
+
+
 /**
  * Rewinds the fifo 
  */
 void cc3_pixbuf_rewind(void);                            
 /**
- * Using the cc3_frame_t reads rows taking into account virtual window and subsampling. 
- */
-void cc3_pixbuf_read_rows( void* memory, uint32_t rows );
-/**
  * Sets the region of interest in cc3_frame_t for virtual windowing. 
  */
-int cc3_pixbuf_set_roi( uint16_t x0, uint16_t y0, uint16_t x1, uint16_t x2);
+int cc3_pixbuf_set_roi( uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
 /**
  * Sets the subsampling step and mode in cc3_frame_t. 
  */

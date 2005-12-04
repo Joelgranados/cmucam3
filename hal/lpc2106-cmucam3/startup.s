@@ -50,8 +50,8 @@ Vectors:
         b     _start                    @ reset - _start
         ldr   pc,_undf                  @ undefined - _undf
         ldr   pc,_swi                   @ SWI - _swi
-        ldr   pc,_pabt                  @ program abort - _pabt
-        ldr   pc,_dabt                  @ data abort - _dabt
+	ldr   pc,_pabt                  @ program abort - _pabt
+	ldr   pc,_dabt                  @ data abort - _dabt
         nop                             @ reserved
         ldr   pc,_irq                   @ IRQ
         ldr   pc,_fiq                   @ FIQ - _fiq
@@ -66,8 +66,8 @@ _fiq:   .word __fiq                     @ FIQ
 
 __undf: b     undefined                 @ undefined
 __swi:  b     swi                       @ SWI
-__pabt: b     prefetch_abort            @ prefetch abort
-__dabt: b     data_abort                @ data abort
+__pabt: b     .				@ prefetch abort
+__dabt: b     .			 	@ data abort
 __fiq:  nop                              @ FIQ
 __irq:  stmfd   sp!, { lr }               /* save return address on stack */
 	mrs     lr, spsr                  /* use lr to save spsr_irq */

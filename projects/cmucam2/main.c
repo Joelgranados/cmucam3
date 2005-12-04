@@ -20,8 +20,10 @@ int main ()
     //uart0_write("CMUcam3 v2 Starting up...\r");
     //system_setup ();
     cc3_io_init (115200);
-    cc3_camera_init ();
-
+   // cc3_camera_init ();
+   //
+   val=setvbuf(stdout, NULL, _IONBF, 0 );
+    //fprintf( stderr, "This is a test...\n" );
     printf ("CMUcam3 Starting up\r\n");
     cc3_set_led (true);
 
