@@ -56,6 +56,16 @@ int _read (int file, char *ptr, int len)
   return i;
 }
 
+int kill(int pid, int sig)
+{
+  errno=EINVAL;
+  return(-1);
+}
+
+void _exit(int status __attribute((unused)))
+{
+  while(1);
+}
 
 int _close(int file __attribute((unused)))
 {
@@ -90,6 +100,16 @@ int isatty (int fd __attribute((unused)))
   return 1;
 }
 
+int _system(const char *s) 
+{
+  if (s == NULL) {
+    return 0; /* no shell */
+  } else {
+    errno = EINVAL;
+    return -1;
+  }
+}
+
 int _link(char *old __attribute((unused)), 
 	  char *new __attribute((unused))){
   errno = EMLINK;
@@ -120,6 +140,17 @@ int _gettimeofday (struct timeval *tp __attribute((unused)),
   return -1;
 }
 
+int _kill(int pid, int sig)
+{
+  errno = EINVAL;
+  return -1;
+}
+
+int _getpid() 
+{
+  return 1;
+}
+
 int _times(struct tms *buf __attribute((unused))) {
   return -1;
 }
@@ -127,6 +158,11 @@ int _times(struct tms *buf __attribute((unused))) {
 int _unlink(char *name __attribute((unused))) {
   errno = ENOENT;
   return -1; 
+}
+
+int _raise(int sig) 
+{
+  return 1;
 }
 
 
