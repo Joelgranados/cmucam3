@@ -153,7 +153,8 @@ int _getpid()
 }
 
 int _times(struct tms *buf) {
-  int ticks = REG(TIMER0_TC) / (1000 / CLOCKS_PER_SEC); // REG in milliseconds
+  clock_t ticks 
+    = REG(TIMER0_TC) / (1000 / CLOCKS_PER_SEC); // REG in milliseconds
   buf->tms_utime = ticks;
   buf->tms_stime = 0;
   buf->tms_cutime = 0;
