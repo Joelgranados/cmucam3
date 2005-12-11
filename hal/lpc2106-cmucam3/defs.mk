@@ -1,5 +1,5 @@
-#COMPILER_PREFIX=arm-none-eabi
-COMPILER_PREFIX=arm-elf
+COMPILER_PREFIX=arm-none-eabi
+#COMPILER_PREFIX=arm-elf
 
 CC=$(COMPILER_PREFIX)-gcc
 LD=$(COMPILER_PREFIX)-ld

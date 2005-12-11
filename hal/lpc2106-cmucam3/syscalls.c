@@ -9,6 +9,7 @@
 #undef errno
 extern int errno;
 
+
 int _write (int file, char *ptr, int len)
 {
   int i = 0;
@@ -152,7 +153,8 @@ int _getpid()
 }
 
 int _times(struct tms *buf __attribute((unused))) {
-  return -1;
+   // return REG(TIMER0_TC);
+    return -1;
 }
 
 int _unlink(char *name __attribute((unused))) {

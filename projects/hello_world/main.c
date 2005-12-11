@@ -31,6 +31,14 @@ while(val!=2106)
     scanf( "%d",&val );
     printf( "You typed %d\r\n",val);
 }*/
+ 
+
+
+while(1)
+{
+    printf( "timer= %d\r\n",REG(TIMER0_TC) ); 
+}
+
     /* for (i = 0; i < 50; i++) {
        printf ("Try load\r\n");
        cc3_pixbuf_load ();
@@ -38,7 +46,7 @@ while(val!=2106)
        } */
     printf ("Sending Image\r\n");
     //if( cc3_pixbuf_set_roi( 30,30,50,60 )==0 ) printf( "Error Setting region of interest\r\n" );
-    if (cc3_pixbuf_set_subsample (CC3_NEAREST, 3, 3) == 0)
+    if (cc3_pixbuf_set_subsample (CC3_NEAREST, 1, 3) == 0)
         printf ("Error Setting Subsample Mode\r\n");
     //if( cc3_pixbuf_set_roi( 2,20,40,50 )==0 ) printf( "Error Setting region of interest\r\n" );
 

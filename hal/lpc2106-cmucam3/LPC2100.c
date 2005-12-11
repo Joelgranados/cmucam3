@@ -36,6 +36,12 @@ cc3_system_setup ()
 	REG(SYSCON_MEMMAP) = MEMMAP_USER_FLASH_MODE;
 	
 	//REG(PCB_PINSEL1) = 0x1;  // External interrupt 0
- 
+	
+	// Setup timer0 to count by milliseconds starting from 0
+	REG(TIMER0_TCR)=0;   // turn off timer
+	REG(TIMER0_TC)=0;    // clear counter
+	REG(TIMER0_PC)=0;    // clear prescale count 
+	REG(TIMER0_PR) = (int)((FOSC*PLL_M)/1000);
+	REG(TIMER0_TCR)=1;   // start the timer 
 
 }
