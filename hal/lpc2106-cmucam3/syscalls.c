@@ -153,8 +153,8 @@ int _getpid()
 }
 
 int _times(struct tms *buf __attribute((unused))) {
-   // return REG(TIMER0_TC);
-    return -1;
+  int ticks = REG(TIMER0_TC); // in milliseconds
+  return ticks / (1000 / CLOCKS_PER_SEC);
 }
 
 int _unlink(char *name __attribute((unused))) {
@@ -193,13 +193,13 @@ void *_sbrk(int nbytes)
     heap_ptr = end;
   }
 
-  //uart_0write(" heap_ptr = ");
-  //uart_0write_hex((unsigned int) heap_ptr);
+  //uart0_write(" heap_ptr = ");
+  //uart0_write_hex((unsigned int) heap_ptr);
 
   base = heap_ptr;	/*  Point to end of heap.			*/
 
-  //uart_0write(" base = ");
-  //uart_0write_hex((unsigned int) base);
+  //uart0_write(" base = ");
+  //uart0_write_hex((unsigned int) base);
 
   if (base + nbytes >= (char *) 0x40010000) {
     errno = ENOMEM;
@@ -208,8 +208,8 @@ void *_sbrk(int nbytes)
 
   heap_ptr = (char *)heap_ptr + nbytes;	        /*  Increase heap */
   
-  //uart_0write(" heap_ptr = ");
-  //uart_0write_hex((unsigned int) heap_ptr);
+  //uart0_write(" heap_ptr = ");
+  //uart0_write_hex((unsigned int) heap_ptr);
 
   //uart0_write(" returning\r\n");
   return base;		/*  Return pointer to start of new heap area.	*/
