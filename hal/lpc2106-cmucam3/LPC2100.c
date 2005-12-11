@@ -39,9 +39,11 @@ cc3_system_setup ()
 	
 	// Setup timer0 to count by milliseconds starting from 0
 	REG(TIMER0_TCR)=0;   // turn off timer
+	REG(TIMER0_MCR)=0;    // disable interrupt 
 	REG(TIMER0_TC)=0;    // clear counter
 	REG(TIMER0_PC)=0;    // clear prescale count 
-	REG(TIMER0_PR) = (int)((FOSC*PLL_M)/1000);
+	REG(TIMER0_PR) = (int)((FOSC*PLL_M)/1000);  // every 1 ms
 	REG(TIMER0_TCR)=1;   // start the timer 
 
+	
 }

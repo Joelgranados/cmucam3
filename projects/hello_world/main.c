@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <time.h>
 #include "serial.h"
 
 void image_send_direct (int size_x, int size_y);
@@ -33,10 +34,12 @@ while(val!=2106)
 }*/
  
 
+   int blah;
 
 while(1)
 {
-    printf( "timer= %d\r\n",REG(TIMER0_TC) ); 
+   // printf( "timer= %d %d\r\n",clock(),clock()/CLOCKS_PER_SEC); 
+    printf( "timer= %d\r\n",clock()); 
 }
 
     /* for (i = 0; i < 50; i++) {

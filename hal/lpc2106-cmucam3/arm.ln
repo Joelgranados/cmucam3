@@ -27,6 +27,8 @@ SECTIONS
 	*(.glue_7t)
 	*(.gcc_except_table)
 	*(.gnu.linkonce.r.*)
+	*(.rodata)                 /* read-only data (constants) */
+	*(.rodata*)
   } > ROM
   
   /***** old: 
@@ -73,8 +75,6 @@ SECTIONS
     _data = .;
     *(.data)
 	*(.data.*)
-	*(.rodata)                 /* read-only data (constants) */
-	*(.rodata*)
 	*(.gnu.linkonce.d*)
 	SORT(CONSTRUCTORS) /* mt 4/2005 */
 	. = ALIGN(4);

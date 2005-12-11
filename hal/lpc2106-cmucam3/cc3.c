@@ -22,7 +22,7 @@ void cc3_io_init (int BAUDRATE)
   
   _cc3_uart0_setup (UART_BAUD (BAUDRATE), UART_8N1, UART_FIFO_8);
 
-  val=setvbuf(stdout, NULL, _IONBF, 0 ); 
+//  val=setvbuf(stdout, NULL, _IONBF, 0 ); 
   /*
   if(val)
     {
