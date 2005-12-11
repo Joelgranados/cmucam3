@@ -18,10 +18,21 @@ cc3_frame_t cc3_g_current_frame;        // global that keeps clip, stride
 
 void cc3_io_init (int BAUDRATE)
 {
-    uint8_t val;
+  uint8_t val;
+  
+  _cc3_uart0_setup (UART_BAUD (BAUDRATE), UART_8N1, UART_FIFO_8);
 
-    _cc3_uart0_setup (UART_BAUD (BAUDRATE), UART_8N1, UART_FIFO_8);
-
+  val=setvbuf(stdout, NULL, _IONBF, 0 ); 
+  /*
+  if(val)
+    {
+      uart0_write("fail\r\n");
+    }
+  else
+    {
+      uart0_write("win\r\n");
+    } 
+  */
 }
 
 

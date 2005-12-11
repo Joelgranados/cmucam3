@@ -62,7 +62,10 @@ void prefetch_abort(void)
 
 void data_abort(void)
 {
+  register volatile char *r_14 asm("r14");
+  long prev_pc = (long)r_14 - 8;
   uart0_write("data abort!\r\n");
+  uart0_write_hex(prev_pc);
   // XXX: register dump
   exit(-1);
 }
