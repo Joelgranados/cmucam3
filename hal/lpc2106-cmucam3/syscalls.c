@@ -152,9 +152,13 @@ int _getpid()
   return 1;
 }
 
-int _times(struct tms *buf __attribute((unused))) {
-  int ticks = REG(TIMER0_TC); // in milliseconds
-  return ticks / (1000 / CLOCKS_PER_SEC);
+int _times(struct tms *buf) {
+  int ticks = REG(TIMER0_TC) / (1000 / CLOCKS_PER_SEC); // REG in milliseconds
+  buf->tms_utime = ticks;
+  buf->tms_stime = 0;
+  buf->tms_cutime = 0;
+  buf->tms_cstime = 0;
+  return ticks;
 }
 
 int _unlink(char *name __attribute((unused))) {
