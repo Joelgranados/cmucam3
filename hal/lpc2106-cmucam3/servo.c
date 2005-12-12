@@ -86,7 +86,7 @@ void _cc3_servo_int ()
         for (i = 0; i < MAX_SERVOS; i++) {
             if (servo_tmp[i] < min && servo_tmp[i] > (ct + 1))
                 min = servo_tmp[i];
-            if (servo_tmp[i] <= ct)
+            if (servo_tmp[i] <= (ct+1))
                 _cc3_servo_lo (i);
         }
 
