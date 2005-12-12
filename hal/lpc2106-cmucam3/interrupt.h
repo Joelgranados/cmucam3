@@ -3,6 +3,8 @@
 
 void enable_ext_interrupt (void);
 void disable_ext_interrupt (void);
+void enable_servo_interrupt (void);
+void disable_servo_interrupt (void);
 void interrupt (void);
 
 void undefined (void);

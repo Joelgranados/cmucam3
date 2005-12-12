@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <time.h>
 #include "serial.h"
+#include "servo.h"
 
 void image_send_direct (int size_x, int size_y);
 void image_touch (int size_x, int size_y);
@@ -23,7 +24,7 @@ int main ()
     cc3_io_init (115200);
     cc3_camera_init ();
     printf ("CMUcam3 Starting up\r\n");
-    cc3_set_led (true);
+    cc3_set_led (false);
 /*
 val=0;
 while(val!=2106)
@@ -32,15 +33,26 @@ while(val!=2106)
     scanf( "%d",&val );
     printf( "You typed %d\r\n",val);
 }*/
- 
 
-   int blah;
 
-while(1)
-{
-   // printf( "timer= %d %d\r\n",clock(),clock()/CLOCKS_PER_SEC); 
-    printf( "timer= %d\r\n",clock()); 
-}
+    cc3_servo_init ();
+/*while(1)
+{*/
+    // printf( "timer= %d %d\r\n",clock(),clock()/CLOCKS_PER_SEC); 
+    printf ("timer= %d\r\n", clock ());
+//}
+    int cnt = 1;
+    while (1) {
+        int t;
+        t = clock ();
+        while (clock () < t + 3);
+        val = cc3_servo_set (0, cnt);
+        if (val == -1)
+            printf ("Error setting servo\n");
+        cnt += 1;
+        cnt &= 0xFF;
+        printf ("cnt = %d\n", cnt);
+    }
 
     /* for (i = 0; i < 50; i++) {
        printf ("Try load\r\n");
