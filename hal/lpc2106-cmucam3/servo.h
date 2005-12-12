@@ -6,7 +6,7 @@
 #include "inttypes.h"
 #include "stdbool.h"
 
-#define SERVO_RESOLUTION  255
+#define SERVO_RESOLUTION 255 
 #define MAX_SERVOS 4
 #define SERVO_PERIOD 18
 
