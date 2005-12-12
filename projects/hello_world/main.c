@@ -41,7 +41,7 @@ while(val!=2106)
     // printf( "timer= %d %d\r\n",clock(),clock()/CLOCKS_PER_SEC); 
     printf ("timer= %d\r\n", clock ());
 //}
-    int cnt = 1;
+    uint32_t cnt = 1;
     while (1) {
         int t;
         t = clock ();
