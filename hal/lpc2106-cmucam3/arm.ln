@@ -100,6 +100,9 @@ SECTIONS
   __bss_end__ = . ;
   PROVIDE (__bss_end = .);
 
+  __stack_limit = . ;
+  PROVIDE (__stack_limit = .);
+
   .stack ALIGN(256) :
   {
     . += STACK_SIZE;
