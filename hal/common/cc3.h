@@ -70,7 +70,7 @@ typedef struct {
 
 typedef struct {
     uint16_t width, height;
-    void* img;
+    cc3_pixel_t* pix;
 } cc3_image_t;
 
 
@@ -85,7 +85,7 @@ void cc3_frame_default();
 /**
  * Using the cc3_frame_t reads rows taking into account virtual window and subsampling. 
  */
-int cc3_pixbuf_read_rows(cc3_pixel_t *mem, uint32_t rows );
+int cc3_pixbuf_read_rows(cc3_pixel_t *mem, uint32_t width, uint32_t rows );
 
 /**
  * loads cc3_g_current_pixel from fifo
@@ -100,7 +100,8 @@ void _cc3_pixbuf_read_all();
 void _cc3_pixbuf_read_all_3(); 
 void _cc3_pixbuf_read_0(); 
 void _cc3_pixbuf_read_1(); 
-void _cc3_pixbuf_read_2(); 
+// No read_2() because it is just the second green channel
+void _cc3_pixbuf_read_3(); 
 
 
 /**
@@ -148,6 +149,6 @@ int cc3_set_brightness( uint8_t level);
 int cc3_set_contrast( uint8_t level);
 int cc3_set_raw_register( uint8_t address, uint8_t value);
 void cc3_io_init(int);
-
+uint32_t cc3_time();
 
 #endif

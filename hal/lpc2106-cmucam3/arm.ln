@@ -4,7 +4,7 @@
 /*                                                                     */
 /***********************************************************************/
 ENTRY(_boot)
-STACK_SIZE = 0xF00;
+STACK_SIZE = 0x2400;
 
 /* Memory Definitions */
 /* lpc2129 mt */

@@ -14,7 +14,7 @@ void image_touch (int size_x, int size_y);
 void ppm_send_direct (int size_x, int size_y);
 void ppm_send_mem(int size_x, int size_y, cc3_pixel_t *img);
 
-cc3_pixel_t my_img[80][140];
+cc3_pixel_t my_img[144][88];
 
 int main ()
 {
@@ -35,17 +35,25 @@ int main ()
     printf ("timer= %d\n", clock ());
     
     printf ("Setting up Image Parameters\n");
-    if( cc3_pixbuf_set_roi( 0,0,80,140 )==0 ) printf( "Error Setting region of interest\n" );
-    //if (cc3_pixbuf_set_subsample (CC3_NEAREST, 1, 1) == 0) printf ("Error Setting Subsample Mode\n");
+    if( cc3_pixbuf_set_roi( 0,0,88,144 )==0 ) printf( "Error Setting region of interest\n" );
+    if (cc3_pixbuf_set_subsample (CC3_NEAREST, 1, 1) == 0) printf ("Error Setting Subsample Mode\n");
     if (cc3_pixbuf_set_coi(CC3_ALL) == 0) printf ("Error Setting Channel of Interest\n");
+    if (cc3_pixbuf_set_pixel_mode(CC3_DROP_2ND_GREEN) == 0) printf ("Error Setting Pixel Mode\n");
+
+
+    printf( "width=%d height=%d\n", cc3_g_current_frame.width, cc3_g_current_frame.height); 
 
     while (1) {
         scanf ("%d", &val);
 	cc3_pixbuf_load();
-
-	if( cc3_pixbuf_read_rows( &my_img, 140 )== 0) 
-		printf( "Fuck, pixbuf read returned some madness!\n" );
-	ppm_send_mem(cc3_g_current_frame.width, 140, &my_img ); 
+	// The array bounds should match the dimensions provided as well as the width of the actual image
+	// The height of the image does not matter since you may want to operate on a slice 
+	if( cc3_pixbuf_read_rows( &my_img, cc3_g_current_frame.width, cc3_g_current_frame.height )!=1)
+	{	
+		printf( "Damn, pixbuf read returned some badness!\n" );
+		while(1);
+	}
+	ppm_send_mem(cc3_g_current_frame.width, cc3_g_current_frame.height, &my_img ); 
 	
 	//ppm_send_direct (cc3_g_current_frame.width, cc3_g_current_frame.height);
     }

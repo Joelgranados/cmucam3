@@ -29,16 +29,6 @@ void cc3_io_init (int BAUDRATE)
   // Make it so that it does not buffer until return character 
   val=setvbuf(stdout, NULL, _IONBF, 0 );
   
-  /*
-  if(val)
-    {
-      uart0_write("fail\r\n");
-    }
-  else
-    {
-      uart0_write("win\r\n");
-    } 
-  */
 }
 
 
@@ -194,15 +184,15 @@ void _cc3_pixbuf_read_1 ()
     cc3_g_current_pixel.channel[1] = c >> 24;
 }
 
-void _cc3_pixbuf_read_2 ()
+void _cc3_pixbuf_read_3 ()
 {
     uint32_t c;
     _CC3_FIFO_READ_INC ();
     _CC3_FIFO_READ_INC ();
+    _CC3_FIFO_READ_INC ();
     c = REG (GPIO_IOPIN);
     _CC3_FIFO_READ_INC ();
-    _CC3_FIFO_READ_INC ();
-    cc3_g_current_pixel.channel[2] = c >> 24;
+    cc3_g_current_pixel.channel[3] = c >> 24;
 }
 
 /**
@@ -241,10 +231,10 @@ void _cc3_pixbuf_read_all_3 ()
     _CC3_FIFO_READ_INC ();
     c[2] = REG (GPIO_IOPIN);
     _CC3_FIFO_READ_INC ();
-
     cc3_g_current_pixel.channel[0] = c[0] >> 24;
     cc3_g_current_pixel.channel[1] = c[1] >> 24;
     cc3_g_current_pixel.channel[3] = c[2] >> 24;
+
 }
 
 /**
@@ -276,22 +266,30 @@ void cc3_set_led (bool state)
 /**
  * cc3_pixbuf_read_rows():
  * Using the cc3_frame_t reads rows taking into account the virtual window and subsampling. 
+ * This function copies a specified number of rows from the camera FIFO into a block
+ * of cc3_pixel_t memory.
  * This should be the lowest level call that the user directly interacts with.
+ * Returns 1 upon success
+ * Returns -1 if requesting too many rows
+ * Returns -2 if provided width does not match actual width of image
  */
-int cc3_pixbuf_read_rows (cc3_pixel_t *mem, uint32_t rows)
+int cc3_pixbuf_read_rows (cc3_pixel_t *mem, uint32_t width, uint32_t rows)
 {
 
     int8_t i;
     int16_t j;
     int16_t r;
 
+    if ( (cc3_g_current_frame.y0+rows) > cc3_g_current_frame.y1)
+        return -1;
+
+    if( cc3_g_current_frame.width!=width ) return -2;
+
     if (cc3_g_current_frame.y_loc < cc3_g_current_frame.y0) {
         // First read into frame
 	_cc3_seek_top ();
     }
-
-    if (cc3_g_current_frame.y_loc > (cc3_g_current_frame.y1+rows))
-        return 0;
+    
 
 for(r=0; r<rows; r++ )
 {
@@ -314,31 +312,28 @@ for(r=0; r<rows; r++ )
 		    if(cc3_g_current_frame.pixel_mode==CC3_BAYER )
 		    {
 		    _cc3_pixbuf_read_all ();
-		   // mem[r][j][0]=cc3_g_current_pixel.channel[0]; 
-		    mem[r*cc3_g_current_frame.width+j].channel[0]=cc3_g_current_pixel.channel[0];
-		    mem[r*cc3_g_current_frame.width+j].channel[1]=cc3_g_current_pixel.channel[1];
-		    mem[r*cc3_g_current_frame.width+j].channel[2]=cc3_g_current_pixel.channel[2];
-		    mem[r*cc3_g_current_frame.width+j].channel[3]=cc3_g_current_pixel.channel[3];
-		    /*memory[r][j][1]=cc3_g_current_pixel.channel[1]; 
-		    memory[r][j][2]=cc3_g_current_pixel.channel[2]; 
-		    memory[r][j][3]=cc3_g_current_pixel.channel[3];
-		    */} 
+		    mem[r*width+j].channel[0]=cc3_g_current_pixel.channel[0];
+		    mem[r*width+j].channel[1]=cc3_g_current_pixel.channel[1];
+		    mem[r*width+j].channel[2]=cc3_g_current_pixel.channel[2];
+		    mem[r*width+j].channel[3]=cc3_g_current_pixel.channel[3];
+		    } 
 		    else {
 		    _cc3_pixbuf_read_all_3 (); 
-		    /*memory[r][j][0]=cc3_g_current_pixel.channel[0]; 
-		    memory[r][j][1]=cc3_g_current_pixel.channel[1]; 
-		    memory[r][j][2]=cc3_g_current_pixel.channel[2]; 
-		    */} 
+		    mem[r*width+j].channel[0]=cc3_g_current_pixel.channel[0];
+		    mem[r*width+j].channel[1]=cc3_g_current_pixel.channel[1];
+		    mem[r*width+j].channel[3]=cc3_g_current_pixel.channel[3];
+		    } 
 		    break; 
 	    case 0: _cc3_pixbuf_read_0(); 
-		    //memory[r][j]=cc3_g_current_pixel.channel[0]; 
+		    mem[r*width+j].channel[0]=cc3_g_current_pixel.channel[0];
 		    break; 
 	    case 1: _cc3_pixbuf_read_1(); 
-		    //memory[r][j]=cc3_g_current_pixel.channel[1]; 
+		    mem[r*width+j].channel[1]=cc3_g_current_pixel.channel[1];
 		    break; 
-	    case 2: _cc3_pixbuf_read_2(); 
-		    //memory[r][j]=cc3_g_current_pixel.channel[2]; 
-		    break; 
+	    case 3: _cc3_pixbuf_read_3(); 
+		    mem[r*width+j].channel[3]=cc3_g_current_pixel.channel[3];
+		    break;
+
         }
         //_CC3_FIFO_READ_INC ();
 
@@ -359,6 +354,14 @@ for(r=0; r<rows; r++ )
     return 1;
 }
 
+/**
+ * cc3_time():
+ *
+ * This function returns the time since startup in ms as a uint32
+ */
+uint32_t cc3_time() {
+    return( REG(TIMER0_TC) ); // REG in milliseconds
+}
 /**
  * cc3_pixbuf_set_roi():
  * Sets the region of interest in cc3_frame_t for virtual windowing. 
