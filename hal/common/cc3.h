@@ -61,9 +61,12 @@ typedef struct {
     cc3_pixel_mode_t pixel_mode;
 } cc3_frame_t;
 
+
+
 typedef struct {
-    uint32_t channel[4];  // index with cc3_channel_t 
-} cc3_pixel_t;    
+    uint8_t channel[4];  // index with cc3_channel_t 
+} cc3_pixel_t;   
+
 
 typedef struct {
     uint16_t width, height;
@@ -82,7 +85,7 @@ void cc3_frame_default();
 /**
  * Using the cc3_frame_t reads rows taking into account virtual window and subsampling. 
  */
-int cc3_pixbuf_read_rows( void* memory, uint32_t rows );
+int cc3_pixbuf_read_rows(cc3_pixel_t *mem, uint32_t rows );
 
 /**
  * loads cc3_g_current_pixel from fifo
@@ -117,6 +120,9 @@ int cc3_pixbuf_set_subsample( cc3_subsample_mode_t, uint8_t x_step, uint8_t y_st
  * Sets the channel of interest 1 or all
  */
 int cc3_pixbuf_set_coi( cc3_channel_t chan );
+
+int cc3_pixbuf_set_pixel_mode( cc3_pixel_mode_t mode);
+
 void cc3_set_led(bool);
 
 /**

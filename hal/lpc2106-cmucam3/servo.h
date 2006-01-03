@@ -12,8 +12,12 @@
 #define MAX_SERVOS 4
 #define SERVO_PERIOD 18
 
+
+
 // Sets up the servo timers and begins servicing the servos
 void cc3_servo_init ();
+
+void cc3_servo_mask();
 
 // Interrupt called from interrupt.c when the servo needs to be serviced
 void _cc3_servo_int ();

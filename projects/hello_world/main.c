@@ -5,71 +5,49 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <time.h>
+#include <stdlib.h>
 #include "serial.h"
 #include "servo.h"
 
 void image_send_direct (int size_x, int size_y);
 void image_touch (int size_x, int size_y);
 void ppm_send_direct (int size_x, int size_y);
+void ppm_send_mem(int size_x, int size_y, cc3_pixel_t *img);
 
+cc3_pixel_t my_img[80][140];
 
 int main ()
 {
-    unsigned int i = 0;
-    int val;
+    uint32_t i = 0;
+    uint32_t cnt = 1;
+    int32_t val;
+    
+
+    
     cc3_system_setup ();
-
-
-    //system_setup ();
     cc3_io_init (115200);
     cc3_camera_init ();
-    printf ("CMUcam3 Starting up\r\n");
-    cc3_set_led (false);
-/*
-val=0;
-while(val!=2106)
-{
-    printf( "Type a number, or 2106 to break...\r\n");
-    scanf( "%d",&val );
-    printf( "You typed %d\r\n",val);
-}*/
+    printf ("CMUcam3 Starting up\n");
+    cc3_set_led (true);
 
 
     cc3_servo_init ();
-/*while(1)
-{*/
-    // printf( "timer= %d %d\r\n",clock(),clock()/CLOCKS_PER_SEC); 
-    printf ("timer= %d\r\n", clock ());
-//}
-    uint32_t cnt = 1;
-    while (1) {
-        int t;
-        t = clock ();
-        while (clock () < t + 3);
-        val = cc3_servo_set (0, cnt);
-        if (val == -1)
-            printf ("Error setting servo\n");
-        cnt += 1;
-        cnt &= 0xFF;
-        printf ("cnt = %d\n", cnt);
-    }
-
-    /* for (i = 0; i < 50; i++) {
-       printf ("Try load\r\n");
-       cc3_pixbuf_load ();
-       printf ("loaded..\r\n");
-       } */
-    printf ("Sending Image\r\n");
-    //if( cc3_pixbuf_set_roi( 30,30,50,60 )==0 ) printf( "Error Setting region of interest\r\n" );
-    if (cc3_pixbuf_set_subsample (CC3_NEAREST, 1, 3) == 0)
-        printf ("Error Setting Subsample Mode\r\n");
-    //if( cc3_pixbuf_set_roi( 2,20,40,50 )==0 ) printf( "Error Setting region of interest\r\n" );
+    printf ("timer= %d\n", clock ());
+    
+    printf ("Setting up Image Parameters\n");
+    if( cc3_pixbuf_set_roi( 0,0,80,140 )==0 ) printf( "Error Setting region of interest\n" );
+    //if (cc3_pixbuf_set_subsample (CC3_NEAREST, 1, 1) == 0) printf ("Error Setting Subsample Mode\n");
+    if (cc3_pixbuf_set_coi(CC3_ALL) == 0) printf ("Error Setting Channel of Interest\n");
 
     while (1) {
-        //image_send_direct (cc3_g_current_frame.width,
         scanf ("%d", &val);
-        ppm_send_direct (cc3_g_current_frame.width,
-                         cc3_g_current_frame.height);
+	cc3_pixbuf_load();
+
+	if( cc3_pixbuf_read_rows( &my_img, 140 )== 0) 
+		printf( "Fuck, pixbuf read returned some madness!\n" );
+	ppm_send_mem(cc3_g_current_frame.width, 140, &my_img ); 
+	
+	//ppm_send_direct (cc3_g_current_frame.width, cc3_g_current_frame.height);
     }
 
 
@@ -78,7 +56,7 @@ while(val!=2106)
 
 void image_touch (int size_x, int size_y)
 {
-    int x, y, val;
+    uint32_t x, y, val;
 
     cc3_pixbuf_load ();
     for (y = 0; y < size_y; y++) {
@@ -93,6 +71,24 @@ void image_touch (int size_x, int size_y)
     //putchar (3);
     //fflush (stdout);
 }
+
+void ppm_send_mem(int size_x, int size_y, cc3_pixel_t *img)
+{
+    uint32_t x, y, val;
+    printf ("P3\n%d %d\n255\n", size_x, size_y);
+    for (y = 0; y < size_y; y++) {
+        for (x = 0; x < size_x; x++) {
+	    uint32_t i;
+	    i=(y*size_x)+x;
+            printf ("%d %d %d  ", img[i].channel[CC3_RED],
+                    img[i].channel[CC3_GREEN],
+                    img[i].channel[CC3_BLUE]);
+        }
+        printf ("\n");
+    }
+}
+
+
 
 void ppm_send_direct (int size_x, int size_y)
 {
@@ -109,7 +105,6 @@ void ppm_send_direct (int size_x, int size_y)
         }
         printf ("\n");
     }
-    fflush (stdout);
 
 }
 
@@ -137,5 +132,4 @@ void image_send_direct (int size_x, int size_y)
         }
     }
     putchar (3);
-    fflush (stdout);
 }

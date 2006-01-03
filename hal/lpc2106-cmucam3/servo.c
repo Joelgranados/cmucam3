@@ -6,7 +6,7 @@
 
 uint32_t servo_val[MAX_SERVOS];
 uint32_t servo_tmp[MAX_SERVOS];
-
+uint32_t servo_mask;
 
 /**
  * cc3_servo_set()
@@ -39,6 +39,7 @@ uint8_t cc3_servo_set (uint8_t servo, uint32_t pos)
 void cc3_servo_init ()
 {
     int i;
+    servo_mask=0xFFFFF;
     for (i = 0; i < MAX_SERVOS; i++)
         servo_val[i] = SERVO_RESOLUTION / 2;
     // Setup timer1 to handle servos
@@ -54,6 +55,12 @@ void cc3_servo_init ()
     enable_servo_interrupt ();
 }
 
+void cc3_servo_mask(uint32_t mask)
+{
+servo_mask=mask;
+}
+
+
 /**
  * _cc3_servo_hi_all()
  *
@@ -62,8 +69,13 @@ void cc3_servo_init ()
  */
 void _cc3_servo_hi_all ()
 {
-    REG (GPIO_IOSET) =
-        _CC3_SERVO_0 | _CC3_SERVO_1 | _CC3_SERVO_2 | _CC3_SERVO_3;
+uint32_t tmp;
+   tmp=0;
+   if(servo_mask&0x1) tmp |= _CC3_SERVO_0;
+   if(servo_mask&0x2) tmp |= _CC3_SERVO_1;
+   if(servo_mask&0x4) tmp |= _CC3_SERVO_2;
+   if(servo_mask&0x8) tmp |= _CC3_SERVO_3;
+   REG( GPIO_IOSET) = tmp;
 }
 
 /**
@@ -75,15 +87,19 @@ void _cc3_servo_lo (uint8_t n)
 {
     switch (n) {
     case 0:
-        REG (GPIO_IOCLR) = _CC3_SERVO_0;
+        if(servo_mask&0x1) 
+           REG (GPIO_IOCLR) = _CC3_SERVO_0;
         break;
     case 1:
+        if(servo_mask&0x2) 
         REG (GPIO_IOCLR) = _CC3_SERVO_1;
         break;
     case 2:
+        if(servo_mask&0x4) 
         REG (GPIO_IOCLR) = _CC3_SERVO_2;
         break;
     case 3:
+        if(servo_mask&0x8) 
         REG (GPIO_IOCLR) = _CC3_SERVO_3;
         break;
     }

@@ -15,6 +15,10 @@ cc3_pixel_t cc3_g_current_pixel;        // global that gets updated with pixbuf 
 cc3_frame_t cc3_g_current_frame;        // global that keeps clip, stride
 
 
+void _cc3_seek_left();
+void _cc3_seek_right_down();
+void _cc3_seek_top();
+
 
 void cc3_io_init (int BAUDRATE)
 {
@@ -22,7 +26,9 @@ void cc3_io_init (int BAUDRATE)
   
   _cc3_uart0_setup (UART_BAUD (BAUDRATE), UART_8N1, UART_FIFO_8);
 
-//  val=setvbuf(stdout, NULL, _IONBF, 0 ); 
+  // Make it so that it does not buffer until return character 
+  val=setvbuf(stdout, NULL, _IONBF, 0 );
+  
   /*
   if(val)
     {
@@ -89,40 +95,17 @@ int cc3_pixbuf_read ()
 
     if (cc3_g_current_frame.y_loc < cc3_g_current_frame.y0) {
         // First read into frame
-        // Skip top
-        for (cc3_g_current_frame.y_loc = 0;
-             cc3_g_current_frame.y_loc < cc3_g_current_frame.y0;
-             cc3_g_current_frame.y_loc++)
-            for (i = 0; i < cc3_g_current_frame.y_step; i++)
-                _cc3_pixbuf_skip (cc3_g_current_frame.raw_width);
-        cc3_g_current_frame.x_loc = 0;
-        //printf( "Skipping Top %d %d\n",cc3_g_current_frame.x_loc, cc3_g_current_frame.y_loc );
+	_cc3_seek_top();
     }
-
     if (cc3_g_current_frame.x_loc >= cc3_g_current_frame.x1) {
         // First read after line
-        // Skip right and down 
-        _cc3_pixbuf_skip (cc3_g_current_frame.raw_width -
-                          (cc3_g_current_frame.x_loc *
-                           cc3_g_current_frame.x_step));
-        cc3_g_current_frame.x_loc = 0;
-        cc3_g_current_frame.y_loc++;
-        if (cc3_g_current_frame.y_step > 1) {
-            // skip horizontally down the image
-            for (j = 0; j < cc3_g_current_frame.y_step - 1; j++)
-                _cc3_pixbuf_skip (cc3_g_current_frame.raw_width);
-        }
-        //printf( "Skipping right and down %d %d\n",cc3_g_current_frame.x_loc, cc3_g_current_frame.y_loc );
+       _cc3_seek_right_down(); 
     }
     if (cc3_g_current_frame.x_loc < cc3_g_current_frame.x0) {
         // First read into line
-        // Skip left 
-        _cc3_pixbuf_skip (cc3_g_current_frame.x0 *
-                          cc3_g_current_frame.x_step);
-        cc3_g_current_frame.x_loc = cc3_g_current_frame.x0;
-        //printf( "Skipping Left to %d %d\n", cc3_g_current_frame.x_loc, cc3_g_current_frame.y_loc );
+       _cc3_seek_left(); 
     }
-//printf( "[%d %d] \n",cc3_g_current_frame.x_loc, cc3_g_current_frame.y_loc );
+    
     if (cc3_g_current_frame.y_loc > cc3_g_current_frame.y1)
         return 0;
 
@@ -130,8 +113,9 @@ int cc3_pixbuf_read ()
     for (i = 0; i < 4; i++) {
         if (cc3_g_current_frame.coi == i
             || cc3_g_current_frame.coi == CC3_ALL) {
-            cc3_g_current_pixel.channel[i] = REG (GPIO_IOPIN);
-            cc3_g_current_pixel.channel[i] >>= 24;
+            uint32_t c;
+	    c = REG (GPIO_IOPIN);
+            cc3_g_current_pixel.channel[i] = c >> 24;
         }
         _CC3_FIFO_READ_INC ();
     }
@@ -151,50 +135,74 @@ int cc3_pixbuf_read ()
 
 void _cc3_seek_top ()
 {
-
+    int8_t i;
+    // Skip top
+        for (cc3_g_current_frame.y_loc = 0;
+             cc3_g_current_frame.y_loc < cc3_g_current_frame.y0;
+             cc3_g_current_frame.y_loc++)
+            for (i = 0; i < cc3_g_current_frame.y_step; i++)
+                _cc3_pixbuf_skip (cc3_g_current_frame.raw_width);
+        cc3_g_current_frame.x_loc = 0;
 }
 
 
 void _cc3_seek_left ()
 {
-
+// Skip left 
+        _cc3_pixbuf_skip (cc3_g_current_frame.x0 *
+                          cc3_g_current_frame.x_step);
+        cc3_g_current_frame.x_loc = cc3_g_current_frame.x0;
 }
 
-void _cc3_seek_right ()
+void _cc3_seek_right_down ()
 {
-
+ int16_t j;
+ // Skip right and down 
+        _cc3_pixbuf_skip (cc3_g_current_frame.raw_width -
+                          (cc3_g_current_frame.x_loc *
+                           cc3_g_current_frame.x_step));
+        cc3_g_current_frame.x_loc = 0;
+        cc3_g_current_frame.y_loc++;
+        if (cc3_g_current_frame.y_step > 1) {
+            // skip horizontally down the image
+            for (j = 0; j < cc3_g_current_frame.y_step - 1; j++)
+                _cc3_pixbuf_skip (cc3_g_current_frame.raw_width);
+        }
 
 }
 
 
 void _cc3_pixbuf_read_0 ()
 {
-    cc3_g_current_pixel.channel[0] = REG (GPIO_IOPIN);
+    uint32_t c;
+    c = REG (GPIO_IOPIN);
     _CC3_FIFO_READ_INC ();
     _CC3_FIFO_READ_INC ();
     _CC3_FIFO_READ_INC ();
     _CC3_FIFO_READ_INC ();
-    cc3_g_current_pixel.channel[0] >>= 24;
+    cc3_g_current_pixel.channel[0] = c >> 24;
 }
 
 void _cc3_pixbuf_read_1 ()
 {
+    uint32_t c;
     _CC3_FIFO_READ_INC ();
-    cc3_g_current_pixel.channel[1] = REG (GPIO_IOPIN);
+    c = REG (GPIO_IOPIN);
     _CC3_FIFO_READ_INC ();
     _CC3_FIFO_READ_INC ();
     _CC3_FIFO_READ_INC ();
-    cc3_g_current_pixel.channel[1] >>= 24;
+    cc3_g_current_pixel.channel[1] = c >> 24;
 }
 
 void _cc3_pixbuf_read_2 ()
 {
+    uint32_t c;
     _CC3_FIFO_READ_INC ();
     _CC3_FIFO_READ_INC ();
-    cc3_g_current_pixel.channel[2] = REG (GPIO_IOPIN);
+    c = REG (GPIO_IOPIN);
     _CC3_FIFO_READ_INC ();
     _CC3_FIFO_READ_INC ();
-    cc3_g_current_pixel.channel[2] >>= 24;
+    cc3_g_current_pixel.channel[2] = c >> 24;
 }
 
 /**
@@ -203,22 +211,19 @@ void _cc3_pixbuf_read_2 ()
  */
 void _cc3_pixbuf_read_all ()
 {
-    //if(hiresMode && !frame_dump) frame_skip_pixel();
-    cc3_g_current_pixel.channel[0] = REG (GPIO_IOPIN);
+    uint32_t c[4];
+    c[0] = REG (GPIO_IOPIN);
     _CC3_FIFO_READ_INC ();
-    cc3_g_current_pixel.channel[1] = REG (GPIO_IOPIN);
+    c[1] = REG (GPIO_IOPIN);
     _CC3_FIFO_READ_INC ();
-    cc3_g_current_pixel.channel[2] = REG (GPIO_IOPIN);
+    c[2] = REG (GPIO_IOPIN);
     _CC3_FIFO_READ_INC ();
-    cc3_g_current_pixel.channel[3] = REG (GPIO_IOPIN);
+    c[3] = REG (GPIO_IOPIN);
     _CC3_FIFO_READ_INC ();
-
-    //cc3_g_current_pixel.channel[0] >>= 24;
-    //cc3_g_current_pixel.channel[1] >>= 24;
-    //cc3_g_current_pixel.channel[2] >>= 24;
-    //cc3_g_current_pixel.channel[3] >>= 24;
-    //if(CAM_VSYNC && !buffer_mode )frame_write_reset();
-
+    cc3_g_current_pixel.channel[0] = c[0] >> 24;
+    cc3_g_current_pixel.channel[1] = c[1] >> 24;
+    cc3_g_current_pixel.channel[2] = c[2] >> 24;
+    cc3_g_current_pixel.channel[3] = c[3] >> 24;
 }
 
 /**
@@ -228,17 +233,18 @@ void _cc3_pixbuf_read_all ()
  */
 void _cc3_pixbuf_read_all_3 ()
 {
-    cc3_g_current_pixel.channel[0] = REG (GPIO_IOPIN);
+    uint32_t c[3];
+    c[0] = REG (GPIO_IOPIN);
     _CC3_FIFO_READ_INC ();
-    cc3_g_current_pixel.channel[1] = REG (GPIO_IOPIN);
+    c[1] = REG (GPIO_IOPIN);
     _CC3_FIFO_READ_INC ();
     _CC3_FIFO_READ_INC ();
-    cc3_g_current_pixel.channel[3] = REG (GPIO_IOPIN);
+    c[2] = REG (GPIO_IOPIN);
     _CC3_FIFO_READ_INC ();
 
-    cc3_g_current_pixel.channel[0] >>= 24;
-    cc3_g_current_pixel.channel[1] >>= 24;
-    cc3_g_current_pixel.channel[3] >>= 24;
+    cc3_g_current_pixel.channel[0] = c[0] >> 24;
+    cc3_g_current_pixel.channel[1] = c[1] >> 24;
+    cc3_g_current_pixel.channel[3] = c[2] >> 24;
 }
 
 /**
@@ -272,9 +278,84 @@ void cc3_set_led (bool state)
  * Using the cc3_frame_t reads rows taking into account the virtual window and subsampling. 
  * This should be the lowest level call that the user directly interacts with.
  */
-int cc3_pixbuf_read_rows (void *memory, uint32_t rows)
+int cc3_pixbuf_read_rows (cc3_pixel_t *mem, uint32_t rows)
 {
 
+    int8_t i;
+    int16_t j;
+    int16_t r;
+
+    if (cc3_g_current_frame.y_loc < cc3_g_current_frame.y0) {
+        // First read into frame
+	_cc3_seek_top ();
+    }
+
+    if (cc3_g_current_frame.y_loc > (cc3_g_current_frame.y1+rows))
+        return 0;
+
+for(r=0; r<rows; r++ )
+{
+    if (cc3_g_current_frame.x_loc >= cc3_g_current_frame.x1) {
+        // First read after line
+       _cc3_seek_right_down (); 
+    }
+
+    if (cc3_g_current_frame.x_loc < cc3_g_current_frame.x0) {
+        // First read into line
+       _cc3_seek_left(); 
+    }
+
+    for(j=0; j<cc3_g_current_frame.width; j++ )
+    { 
+    // read the pixel
+        switch(cc3_g_current_frame.coi)
+        {
+	    case CC3_ALL: 
+		    if(cc3_g_current_frame.pixel_mode==CC3_BAYER )
+		    {
+		    _cc3_pixbuf_read_all ();
+		   // mem[r][j][0]=cc3_g_current_pixel.channel[0]; 
+		    mem[r*cc3_g_current_frame.width+j].channel[0]=cc3_g_current_pixel.channel[0];
+		    mem[r*cc3_g_current_frame.width+j].channel[1]=cc3_g_current_pixel.channel[1];
+		    mem[r*cc3_g_current_frame.width+j].channel[2]=cc3_g_current_pixel.channel[2];
+		    mem[r*cc3_g_current_frame.width+j].channel[3]=cc3_g_current_pixel.channel[3];
+		    /*memory[r][j][1]=cc3_g_current_pixel.channel[1]; 
+		    memory[r][j][2]=cc3_g_current_pixel.channel[2]; 
+		    memory[r][j][3]=cc3_g_current_pixel.channel[3];
+		    */} 
+		    else {
+		    _cc3_pixbuf_read_all_3 (); 
+		    /*memory[r][j][0]=cc3_g_current_pixel.channel[0]; 
+		    memory[r][j][1]=cc3_g_current_pixel.channel[1]; 
+		    memory[r][j][2]=cc3_g_current_pixel.channel[2]; 
+		    */} 
+		    break; 
+	    case 0: _cc3_pixbuf_read_0(); 
+		    //memory[r][j]=cc3_g_current_pixel.channel[0]; 
+		    break; 
+	    case 1: _cc3_pixbuf_read_1(); 
+		    //memory[r][j]=cc3_g_current_pixel.channel[1]; 
+		    break; 
+	    case 2: _cc3_pixbuf_read_2(); 
+		    //memory[r][j]=cc3_g_current_pixel.channel[2]; 
+		    break; 
+        }
+        //_CC3_FIFO_READ_INC ();
+
+    cc3_g_current_frame.x_loc++;
+
+    // skip horizontally for next read
+    if (cc3_g_current_frame.x_step > 1) {
+        if (cc3_g_current_frame.raw_width >
+            (cc3_g_current_frame.x_loc + cc3_g_current_frame.x_step)) {
+            // skip pixel
+            _cc3_pixbuf_skip (cc3_g_current_frame.x_step - 1);
+        }
+    }
+
+    }
+
+}
     return 1;
 }
 
@@ -304,6 +385,21 @@ int cc3_pixbuf_set_roi (uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
         return 1;
     }
     return 0;
+}
+
+/**
+ * cc3_pixbuf_set_pixel_mode():
+ * Sets the way that the bayer pixels are treated.  By default
+ * (CC3_BAYER) pixels are stored as 4 bytes R G1 B G2.
+ * If you do not need the second green, setting CC3_DROP_2ND_GREEN
+ * will accelerate pixel grabbing. 
+ * Returns 1 upon success and 0 on an unknown or unsupported mode.
+ **/
+int cc3_pixbuf_set_pixel_mode( cc3_pixel_mode_t mode )
+{
+	// XXX Add some sort of sanity check here
+	cc3_g_current_frame.pixel_mode=mode;	
+return 1;
 }
 
 /**
@@ -399,7 +495,7 @@ void cc3_frame_default ()
  */
 void cc3_camera_kill ()
 {
-// FUCK I need to be implemented
+// XXX I need to be implemented
 
 }
 

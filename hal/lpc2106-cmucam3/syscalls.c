@@ -7,6 +7,12 @@
 
 #include <errno.h>
 #undef errno
+
+// register char *stack_ptr asm ("sp");
+// The above line can be used to check the stack pointer
+// uart0_write_hex(stack_ptr);
+
+
 extern int errno;
 
 
@@ -40,12 +46,10 @@ int _read (int file, char *ptr, int len)
  
   //uart0_write("in _read\r\n");
   if (file == UART0IN_FILENO) {
-   // uart0_write(" uart0\r\n");
     for (i = 0; i < len; i++) {
 	if((*ptr++ = uart0_getc())=='\n') { i++; break; }
     }
   } else if (file == UART1IN_FILENO) {
-   // uart0_write(" uart1\r\n");
     for (i = 0; i < len; i++) {
       if((*ptr++ = uart1_getc())=='\n') { i++; break; }
     }
