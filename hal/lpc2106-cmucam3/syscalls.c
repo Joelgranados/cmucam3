@@ -32,8 +32,8 @@ int _write (int file, char *ptr, int len)
     }
   } else if (file == UART1OUT_FILENO) {
     for (i = 0; i < len; i++) {
-      if(_cc3_uart1_select==UART_STDOUT) uart1_putc(*ptr++);
-      	else uart0_putc(*ptr++);
+      if(_cc3_uart1_select==UART_STDOUT) uart0_putc(*ptr++);
+      	else uart1_putc(*ptr++);
     }
   } else {
     errno = EBADF;
@@ -58,8 +58,8 @@ int _read (int file, char *ptr, int len)
     }
   } else if (file == UART1IN_FILENO) {
     for (i = 0; i < len; i++) {
-      if(_cc3_uart1_select==UART_STDOUT) c = uart1_getc();
-      else c = uart0_getc();
+      if(_cc3_uart1_select==UART_STDOUT) c = uart0_getc();
+      else c = uart1_getc();
 	if(_cc3_cr_lf_read_mode_uart1==CC3_UART_CR_OR_LF) if(c=='\r') c='\n';
 	if((*ptr++ = c)=='\n') { i++; break; }
     }

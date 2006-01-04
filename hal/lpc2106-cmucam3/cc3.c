@@ -388,6 +388,18 @@ for(r=0; r<rows; r++ )
 }
 
 /**
+ * cc3_wait_ms():
+ *
+ * This function returns the time since startup in ms as a uint32
+ */
+void cc3_wait_ms(uint32_t delay) {
+	uint32_t start;
+	start=cc3_timer();
+	while(cc3_timer()<(start+delay));
+}
+
+
+/**
  * cc3_timer():
  *
  * This function returns the time since startup in ms as a uint32

@@ -156,5 +156,6 @@ void cc3_uart0_cr_lf(cc3_uart_cr_lf_t mode);
 void cc3_uart1_cr_lf(cc3_uart_cr_lf_t mode);
 
 uint32_t cc3_timer();
+void cc3_wait_ms(uint32_t delay);
 
 #endif

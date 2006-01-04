@@ -25,11 +25,17 @@ int main ()
     cc3_system_setup ();
     cc3_uart0_init (115200,UART_8N1,UART_STDOUT);
 
-    cc3_uart1_init (19200,UART_8N1,UART_STDERR);
+    cc3_uart1_init (9600,UART_8N1,UART_STDERR);
     cc3_camera_init ();
     printf ("CMUcam3 Starting up\n");
     cc3_set_led (true);
-
+    
+   while(1) 
+   {
+	   fprintf(stderr, "Can you hear me now?\n" );
+	   cc3_wait_ms(500);
+   }
+     
     cc3_servo_init ();
     printf ("timer= %d\n", clock());
     printf ("cc3 timer= %d\n", cc3_timer());
