@@ -1,4 +1,4 @@
-SUBDIRS=cmucam2 jpeg hello_world
+SUBDIRS=cmucam2 hello_world
 
 # Build rules
 all:

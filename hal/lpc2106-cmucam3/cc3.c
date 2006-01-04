@@ -19,15 +19,48 @@ void _cc3_seek_left();
 void _cc3_seek_right_down();
 void _cc3_seek_top();
 
+uint8_t  _cc3_uart0_select;
+uint8_t  _cc3_uart1_select;
+cc3_uart_cr_lf_t _cc3_cr_lf_read_mode_uart0;
+cc3_uart_cr_lf_t _cc3_cr_lf_read_mode_uart1;
 
-void cc3_io_init (int BAUDRATE)
+
+void cc3_uart0_cr_lf(cc3_uart_cr_lf_t mode)
+{
+  _cc3_cr_lf_read_mode_uart0=mode;
+}
+
+void cc3_uart1_cr_lf(cc3_uart_cr_lf_t mode)
+{
+  _cc3_cr_lf_read_mode_uart1=mode;
+}
+
+
+void cc3_uart0_init (int32_t rate, uint8_t mode, uint8_t file_sel)
+{
+  uint8_t val;
+  _cc3_uart0_setup (UART_BAUD (rate), mode, UART_FIFO_8);
+  
+  _cc3_uart0_select=file_sel;
+  // Make it so that it does not buffer until return character 
+  if(file_sel==UART_STDOUT) val=setvbuf(stdout, NULL, _IONBF, 0 );
+  else val=setvbuf(stderr, NULL, _IONBF, 0 );
+  cc3_uart0_cr_lf(CC3_UART_CR_LF_NORMAL);
+  
+}
+
+
+void cc3_uart1_init (int32_t rate, uint8_t mode, uint8_t file_sel)
 {
   uint8_t val;
   
-  _cc3_uart0_setup (UART_BAUD (BAUDRATE), UART_8N1, UART_FIFO_8);
+  _cc3_uart1_setup (UART_BAUD (rate), UART_8N1, UART_FIFO_8);
 
+  _cc3_uart1_select=file_sel;  
   // Make it so that it does not buffer until return character 
-  val=setvbuf(stdout, NULL, _IONBF, 0 );
+  if(file_sel==UART_STDOUT) val=setvbuf(stdout, NULL, _IONBF, 0 );
+  else val=setvbuf(stderr, NULL, _IONBF, 0 );
+  cc3_uart1_cr_lf(CC3_UART_CR_LF_NORMAL);
   
 }
 
@@ -355,11 +388,11 @@ for(r=0; r<rows; r++ )
 }
 
 /**
- * cc3_time():
+ * cc3_timer():
  *
  * This function returns the time since startup in ms as a uint32
  */
-uint32_t cc3_time() {
+uint32_t cc3_timer() {
     return( REG(TIMER0_TC) ); // REG in milliseconds
 }
 /**

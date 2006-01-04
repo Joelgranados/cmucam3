@@ -10,7 +10,10 @@
 #define UART1IN_FILENO   3       // ?
 #define UART1OUT_FILENO  2       // stderr
 
-
+typedef enum {
+	CC3_UART_CR_LF_NORMAL,
+	CC3_UART_CR_OR_LF,
+} cc3_uart_cr_lf_t;
 
 /******************************************************************************
  * based on software from:
@@ -126,9 +129,9 @@
 #define UART_FIFO_14  (uint8_t)(UFCR_FIFO_ENABLE + UFCR_FIFO_TRIG14)
 
 void _cc3_uart0_setup(uint16_t baud, uint8_t mode, uint8_t fmode);
+void _cc3_uart1_setup(uint16_t baud, uint8_t mode, uint8_t fmode);
 /************************************************ UART ****************************/
 
-void uart1_setup (void);
 
 // LPC21000 misc uart0 definitions
 #define UART0_PCB_PINSEL_CFG     (uint32_t)0x00000005
@@ -147,6 +150,15 @@ void uart1_setup (void);
 #define LSR_THR_EMPTY           (uint32_t)0x00000020
 #define LSR_RBR_EMPTY           (uint32_t)0x00000001
 
+
+// Use this if you want to quickly swap between uart0 or uart1 being stdout or error
+#define UART_STDOUT	1
+#define UART_STDERR	0
+
+extern uint8_t _cc3_uart0_select;
+extern uint8_t _cc3_uart1_select;
+extern cc3_uart_cr_lf_t _cc3_cr_lf_read_mode_uart0;
+extern cc3_uart_cr_lf_t _cc3_cr_lf_read_mode_uart1;
 
 char uart0_putc(const char c);
 char uart1_putc(const char c);

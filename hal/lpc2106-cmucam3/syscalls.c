@@ -14,7 +14,10 @@
 
 
 extern int errno;
-
+extern uint8_t _cc3_uart0_select;
+extern uint8_t _cc3_uart1_select;
+extern cc3_uart_cr_lf_t _cc3_cr_lf_read_mode_uart0;
+extern cc3_uart_cr_lf_t _cc3_cr_lf_read_mode_uart1;
 
 int _write (int file, char *ptr, int len)
 {
@@ -24,13 +27,13 @@ int _write (int file, char *ptr, int len)
 
   if (file == UART0OUT_FILENO) {
     for (i = 0; i < len; i++) {
-      //uart0_write(" uart0\r\n");
-      uart0_putc(*ptr++);
+        if(_cc3_uart0_select==UART_STDOUT) uart0_putc(*ptr++);
+      	else uart1_putc(*ptr++);
     }
   } else if (file == UART1OUT_FILENO) {
     for (i = 0; i < len; i++) {
-      //uart0_write(" uart1\r\n");
-      uart1_putc(*ptr++);
+      if(_cc3_uart1_select==UART_STDOUT) uart1_putc(*ptr++);
+      	else uart0_putc(*ptr++);
     }
   } else {
     errno = EBADF;
@@ -43,15 +46,22 @@ int _write (int file, char *ptr, int len)
 int _read (int file, char *ptr, int len)
 {
   int i = 0;
- 
+  char c;
+
   //uart0_write("in _read\r\n");
   if (file == UART0IN_FILENO) {
     for (i = 0; i < len; i++) {
-	if((*ptr++ = uart0_getc())=='\n') { i++; break; }
+      if(_cc3_uart0_select==UART_STDOUT) c = uart0_getc();
+      else c = uart1_getc();
+	if(_cc3_cr_lf_read_mode_uart0==CC3_UART_CR_OR_LF) if(c=='\r') c='\n';
+	if((*ptr++ = c)=='\n') { i++; break; }
     }
   } else if (file == UART1IN_FILENO) {
     for (i = 0; i < len; i++) {
-      if((*ptr++ = uart1_getc())=='\n') { i++; break; }
+      if(_cc3_uart1_select==UART_STDOUT) c = uart1_getc();
+      else c = uart0_getc();
+	if(_cc3_cr_lf_read_mode_uart1==CC3_UART_CR_OR_LF) if(c=='\r') c='\n';
+	if((*ptr++ = c)=='\n') { i++; break; }
     }
   } else {
     errno = EBADF;

@@ -4,6 +4,7 @@
 #include "LPC2100.h"
 #include "cc3_pin_defines.h"
 #include "cc3_hal.h"
+#include "serial.h"
 #include "inttypes.h"
 #include <stdbool.h>
 #include "interrupt.h" 
@@ -148,7 +149,12 @@ int cc3_set_auto_white_balance( bool );
 int cc3_set_brightness( uint8_t level);
 int cc3_set_contrast( uint8_t level);
 int cc3_set_raw_register( uint8_t address, uint8_t value);
-void cc3_io_init(int);
-uint32_t cc3_time();
+
+void cc3_uart0_init(int32_t rate, uint8_t mode, uint8_t file_sel);
+void cc3_uart1_init(int32_t rate, uint8_t mode, uint8_t file_sel);
+void cc3_uart0_cr_lf(cc3_uart_cr_lf_t mode);
+void cc3_uart1_cr_lf(cc3_uart_cr_lf_t mode);
+
+uint32_t cc3_timer();
 
 #endif

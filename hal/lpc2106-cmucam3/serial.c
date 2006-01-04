@@ -47,6 +47,30 @@ void _cc3_uart0_setup(uint16_t baud, uint8_t mode, uint8_t fmode)
   REG(UART0_FCR) = fmode;
 }
 
+void _cc3_uart1_setup(uint16_t baud, uint8_t mode, uint8_t fmode)
+{
+  // setup Pin Function Select Register (Pin Connect Block) 
+  // make sure old values of Bits 0-4 are masked out and
+  // set them according to UART0-Pin-Selection
+  //REG(PCB_PINSEL0) = (REG(PCB_PINSEL0) & ~UART1_PINMASK) | UART1_PINSEL;
+  REG(PCB_PINSEL0) = (REG(PCB_PINSEL0) & ~0x000F0000) | 0x00050000;
+
+  REG(UART1_IER) = 0x00;             // disable all interrupts
+  REG(UART1_IIR) = 0x00;             // clear interrupt ID register
+  REG(UART1_LSR )= 0x00;             // clear line status register
+
+  // set the baudrate - DLAB must be set to access DLL/DLM
+  REG(UART1_LCR )= (1<<UART0_LCR_DLAB); // set divisor latches (DLAB) // same as uart0
+  REG(UART1_DLL )= (uint8_t)baud;         // set for baud low byte
+  REG(UART1_DLM )= (uint8_t)(baud >> 8);  // set for baud high byte
+  
+  // set the number of characters and other
+  // user specified operating parameters
+  // Databits, Parity, Stopbits - Settings in Line Control Register
+  REG(UART1_LCR )= (mode & ~(1<<UART0_LCR_DLAB)); // clear DLAB "on-the-fly"
+  // setup FIFO Control Register (fifo-enabled + xx trig) 
+  REG(UART1_FCR) = fmode;
+}
 
 
 
