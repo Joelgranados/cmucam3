@@ -17,7 +17,7 @@ int main ()
 
     cc3_system_setup ();
 
-    cc3_io_init (115200);
+    cc3_uart0_init (115200,UART_8N1, UART_STDOUT);
     cc3_camera_init ();
     cc3_set_colorspace(CC3_YCRCB);
 
