@@ -30,25 +30,24 @@ int main ()
     printf ("CMUcam3 Starting up\n");
     cc3_set_led (true);
     
-   while(1) 
-   {
-	   fprintf(stderr, "Can you hear me now?\n" );
-	   cc3_wait_ms(500);
-   }
+    cc3_wait_ms(500);
+    fprintf(stderr, "Can you hear the CMUcam?\n" );
      
     cc3_servo_init ();
     printf ("timer= %d\n", clock());
     printf ("cc3 timer= %d\n", cc3_timer());
     
     printf ("Setting up Image Parameters\n");
-    if( cc3_pixbuf_set_roi( 0,0,88,144 )==0 ) printf( "Error Setting region of interest\n" );
-    if (cc3_pixbuf_set_subsample (CC3_NEAREST, 1, 1) == 0) printf ("Error Setting Subsample Mode\n");
-    if (cc3_pixbuf_set_coi(CC3_ALL) == 0) printf ("Error Setting Channel of Interest\n");
-    if (cc3_pixbuf_set_pixel_mode(CC3_DROP_2ND_GREEN) == 0) printf ("Error Setting Pixel Mode\n");
+   // if( cc3_pixbuf_set_roi( 0,0,88,144 )==0 ) printf( "Error Setting region of interest\n" );
+   // if (cc3_pixbuf_set_subsample (CC3_NEAREST, 1, 1) == 0) printf ("Error Setting Subsample Mode\n");
+   // if (cc3_pixbuf_set_coi(CC3_ALL) == 0) printf ("Error Setting Channel of Interest\n");
+   // if (cc3_pixbuf_set_pixel_mode(CC3_DROP_2ND_GREEN) == 0) printf ("Error Setting Pixel Mode\n");
 
+    cc3_set_resolution(CC3_HIGH_RES);
 
-    printf( "width=%d height=%d\n", cc3_g_current_frame.width, cc3_g_current_frame.height); 
-
+    printf( "width=%d height=%d\n", cc3_g_current_frame.width, cc3_g_current_frame.height);
+    ppm_send_direct (cc3_g_current_frame.width, cc3_g_current_frame.height);
+    while(1);
     while (1) {
         scanf ("%d", &val);
 	cc3_pixbuf_load();

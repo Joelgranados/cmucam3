@@ -67,9 +67,9 @@ int block_position;
 #endif 
 
 
-uint8_t img_Y[8][88*2];
-uint8_t img_Cr[8][88];
-uint8_t img_Cb[8][88];
+uint8_t img_Y[8][IMG_X*2];
+uint8_t img_Cr[8][IMG_X];
+uint8_t img_Cb[8][IMG_X];
 
 void load_line()
 {
@@ -77,9 +77,9 @@ uint8_t i,j;
 
 		
 for(i=0; i<8; i++ )
-	for(j=0; j<88; j++ )
+	for(j=0; j<IMG_X; j++ )
 	{
-	   cc3_pixbuf_read ();
+	   if(cc3_pixbuf_read ()!=1) {printf( "*** ERROR READING FROM FIFO!\n"); while(1); }
            img_Y[i][2*j]= cc3_g_current_pixel.channel[CC3_Y];
            img_Y[i][2*j+1]= cc3_g_current_pixel.channel[CC3_Y2];
            img_Cr[i][j]= cc3_g_current_pixel.channel[CC3_CR];
@@ -3876,10 +3876,10 @@ void initialize_and_run_jpeg()
 
     cc3_pixbuf_load();
 
-    for(int row=0; row<11; row++ )
+    for(int row=0; row<(IMG_Y/8); row++ )
     {
     load_line();
-    for( int col=0; col<18; col+=2 )
+    for( int col=0; col<(IMG_X/8); col+=2 )
     {
     for(int ijkl = 0; ijkl < 1; ijkl++)           // We want to just do one block at a time.  One block is YYUV
     {
@@ -3954,8 +3954,8 @@ void initialize_and_run_jpeg()
       // TODO: WE ARE FORCING THE LAST NETWORK PACKET START BITS & BYTES!!! FIX THIS
       last_network_packet_start_bit = bit_pos;  // Before we add the block, record where we are
       last_network_packet_start_byte = byte_pos;
-      printf( "frame_number = %d\r\n",col+(row*18) );
-      send_network_packet(col+(row*18));                        // TODO: This will not always be frame 1!!!
+      printf( "frame_number = %d\r\n",col+(row*(IMG_X/8)) );
+      send_network_packet(col+(row*(IMG_X/8)));                        // TODO: This will not always be frame 1!!!
    }
     }
     }

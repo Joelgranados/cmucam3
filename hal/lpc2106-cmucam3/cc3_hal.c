@@ -65,7 +65,8 @@ void _cc3_delay_us_4 (int cnt)
 void _cc3_delay_i2c ()
 {
     volatile int x;
-    for (x = 0; x < 1000; x++);
+    //for (x = 0; x < 1000; x++);
+    for (x = 0; x < 25; x++);
 
 }
 
@@ -89,7 +90,6 @@ void _cc3_set_register_state ()
     case _CC3_OV6620:
         // Set the right data bus mode
         cc3_set_raw_register (0x14, 0x20);
-
         // Set the resolution and update the cc3_g_current_frame size flags
         if (_cc3_g_current_camera_state.resolution == CC3_LOW_RES) {
             cc3_g_current_frame.raw_width = 88;
