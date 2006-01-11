@@ -1,4 +1,5 @@
 Only in lua-5.0.2/bin: lua
+Only in lua-5.0.2/bin: lua~
 Only in lua-5.0.2/bin: luac
 diff -ur lua-5.0.2.orig/config lua-5.0.2/config
 --- lua-5.0.2.orig/config	2003-04-11 10:00:41.000000000 -0400
@@ -112,7 +113,7 @@ Only in lua-5.0.2/src: ltests.o
 Only in lua-5.0.2/src: ltm.o
 diff -ur lua-5.0.2.orig/src/lua/lua.c lua-5.0.2/src/lua/lua.c
 --- lua-5.0.2.orig/src/lua/lua.c	2003-04-03 08:34:42.000000000 -0500
-+++ lua-5.0.2/src/lua/lua.c	2005-12-04 01:17:02.000000000 -0500
++++ lua-5.0.2/src/lua/lua.c	2006-01-10 22:01:16.000000000 -0500
 @@ -17,6 +17,7 @@
  #include "lauxlib.h"
  #include "lualib.h"
@@ -317,7 +318,7 @@ diff -ur lua-5.0.2.orig/src/lua/lua.c lua-5.0.2/src/lua/lua.c
  struct Smain {
    int argc;
    char **argv;
-@@ -404,24 +250,19 @@
+@@ -404,24 +250,17 @@
  
  
  static int pmain (lua_State *l) {
@@ -326,7 +327,6 @@ diff -ur lua-5.0.2.orig/src/lua/lua.c lua-5.0.2/src/lua/lua.c
 -  int interactive = 0;
 -  if (s->argv[0] && s->argv[0][0]) progname = s->argv[0];
    L = l;
-+  printf("Opening libraries...\n");
    lua_userinit(l);  /* open libraries */
 -  status = handle_luainit();
 -  if (status == 0) {
@@ -334,7 +334,6 @@ diff -ur lua-5.0.2.orig/src/lua/lua.c lua-5.0.2/src/lua/lua.c
 -    if (status == 0 && interactive) manual_input();
 -  }
 -  s->status = status;
-+  printf("Manual input...\n");
 +  manual_input();
    return 0;
  }
@@ -349,13 +348,13 @@ diff -ur lua-5.0.2.orig/src/lua/lua.c lua-5.0.2/src/lua/lua.c
    struct Smain s;
    lua_State *l = lua_open();  /* create state */
    if (l == NULL) {
-@@ -430,9 +271,15 @@
+@@ -430,9 +269,15 @@
    }
    s.argc = argc;
    s.argv = argv;
 +  
 +  cc3_system_setup();
-+  cc3_io_init(115200);
++  cc3_uart0_init (115200,UART_8N1,UART_STDOUT);
 +  cc3_camera_init();
 +  printf("cc3 initialized\n");
 +
