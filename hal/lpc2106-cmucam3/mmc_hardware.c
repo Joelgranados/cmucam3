@@ -6,21 +6,20 @@
  *
  *
 ******************************************************/
-#include <LPC21xx.h>
-#include <types.h>
+#include "LPC2100.h"
+#include <stdbool.h>
+#include <stdint.h>
 #include <mmc_hardware.h>
 #include <spi.h>
-#include <sysdefs.h>
 #include <time.h>
 #include <rdcf2.h>
-#include <sysdefs.h>
 
 #define MMC_CMD_SIZE 8
-uchar MMCCmd[MMC_CMD_SIZE];
+uint8_t MMCCmd[MMC_CMD_SIZE];
 
-uchar cmdReset [] = { 0x40, 0x00, 0x00, 0x00, 0x00, 0x95 };
-uchar cmdInitCard [] = { 0x41, 0x00, 0x00, 0x00, 0x00, 0xFF };
-uchar cmdSetBlock [] = { CMD16, 0, 0, 2, 0, 0xff };
+uint8_t cmdReset [] = { 0x40, 0x00, 0x00, 0x00, 0x00, 0x95 };
+uint8_t cmdInitCard [] = { 0x41, 0x00, 0x00, 0x00, 0x00, 0xFF };
+uint8_t cmdSetBlock [] = { CMD16, 0, 0, 2, 0, 0xff };
 
 /******************************************************
  *
@@ -70,17 +69,17 @@ static void unselectMMC (void)
 	IO1SET = LED_MMC_BIT;
 }
 
-static void spiPutByte(uchar inBuf)
+static void spiPutByte(uint8_t inBuf)
 {// spit a byte of data at the MMC.
 	SSPDR = (REG16) inBuf; while (SSPSR & SSP_BSY);
 		// dummy read clears SPI BSY flag on LPC2xxx processors.
-	dummyReader = (uchar) SSPDR;
+	dummyReader = (uint8_t) SSPDR;
 }
 
-static uchar spiGetByte(void)
+static uint8_t spiGetByte(void)
 {// read one byte from the MMC card.
 	SSPDR = (REG16) 0xff; while (SSPSR & SSP_BSY);
-	return (uchar) SSPDR;
+	return (uint8_t) SSPDR;
 }
 
 /***************************************************************
@@ -90,9 +89,9 @@ static uchar spiGetByte(void)
  *   Send N bytes from buf into SPI
  * 
 ***************************************************************/
-static void SPI_Send(const uchar *buf, long Length )
+static void SPI_Send(const uint8_t *buf, long Length )
 {
-	uchar Dummy;
+	uint8_t Dummy;
 	if ( Length == 0 ) return;
 	while ( Length != 0 ) {
 			/* as long as TNF bit's set, TxFIFO isn¿t full, write */
@@ -114,7 +113,7 @@ static void SPI_Send(const uchar *buf, long Length )
  * Reads N bytes into buffer
  *
 ***************************************************************/
-static void SPI_Read (uchar *buf, long Length)
+static void SPI_Read (uint8_t *buf, long Length)
 {
 int	i;
 	for (i=0; i<Length; i++) {
@@ -133,10 +132,10 @@ int	i;
  * return True if we DID get what we wanted.
  *
 ******************************************************/
-static bool mmcStatus(uchar response)
+static bool mmcStatus(uint8_t response)
 {
 int count = 4000;
-uchar	resultStatus;
+uint8_t	resultStatus;
 	resultStatus = ~response;
 	while (resultStatus != response && --count) resultStatus = spiGetByte();
 	return (count != 0);			// loop was exited before timeout
@@ -186,7 +185,7 @@ bool	result;
  * return True on error, False if all went well.
  *
 ******************************************************/
-bool mmcReadBlock(long sector, uchar * buf)
+bool mmcReadBlock(long sector, uint8_t * buf)
 {
 	sector <<= 1;
 	selectMMC();
@@ -214,10 +213,10 @@ bool mmcReadBlock(long sector, uchar * buf)
  * comes back and return that
  *
 ******************************************************/
-static uchar getWriteResultCode (void)
+static uint8_t getWriteResultCode (void)
 {
 int	count = 60000l;
-uchar	result = 0;
+uint8_t	result = 0;
 	while (result == 0 && --count) result = spiGetByte();
 	return result;
 }
@@ -235,7 +234,7 @@ uchar	result = 0;
  *
 ******************************************************/
 
-bool mmcWriteBlock(long sector, const uchar * buf)
+bool mmcWriteBlock(long sector, const uint8_t * buf)
 {
 int	result = 0;
 	sector <<= 1;
