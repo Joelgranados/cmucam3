@@ -15,13 +15,9 @@
 #include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
-#include <types.h>
-#include <sysdefs.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 
-
-#ifdef HAS_MMC
 
 #define SECTOR_SIZE RDCF_SECTOR_SIZE
 
@@ -72,23 +68,23 @@ endian" to "little endian" form or vice-versa.
 
 #ifdef _BIG_ENDIAN
 
-static void swap_two(uchar *p)
+static void swap_two(uint8_t *p)
 {
-	uchar x = p[0];
+	uint8_t x = p[0];
 	p[0] = p[1];
 	p[1] = x;
 }
 
-static void swap_four(uchar *p)
+static void swap_four(uint8_t *p)
 {
-	uchar x = p[0];
+	uint8_t x = p[0];
 	p[0] = p[3];
 	p[3] = x;
 	swap_two(p+1);
 }
 
-  #define convert_short(x) swap_two((uchar *)(&(x)))
-  #define convert_long(x)  swap_four((uchar *)(&(x)))
+  #define convert_short(x) swap_two((uint8_t *)(&(x)))
+  #define convert_long(x)  swap_four((uint8_t *)(&(x)))
 
 #endif
 
@@ -130,7 +126,7 @@ static void read_sector (struct rdcf *f, unsigned sector, void *buffer)
 	if (f->drive_error != 0) error_exit(f, ~EIO);
 }
 
-static void write_sector (struct rdcf *f, unsigned sector, const uchar *buffer)
+static void write_sector (struct rdcf *f, unsigned sector, const uint8_t *buffer)
 {
 	f->drive_error = f->WriteSector(sector, buffer);
 	if (f->drive_error != 0) error_exit(f, ~EIO);
@@ -192,7 +188,7 @@ static unsigned FAT_entry(struct rdcf *f, unsigned cluster)
 	check_cluster(f, cluster);
 	if (f->maximum_cluster_number < RESERVED_CLUSTER_12_BIT) {
 		unsigned byte_index = cluster + (cluster>>1);
-		uchar p[2];
+		uint8_t p[2];
 		read_buffer(f, f->first_FAT_sector + byte_index/SECTOR_SIZE);
 		p[0] = f->buffer.buf[byte_index%SECTOR_SIZE];
 		byte_index++;
@@ -231,7 +227,7 @@ static void set_FAT_entry(struct rdcf *f, unsigned cluster, unsigned x)
 	sector = f->first_FAT_sector;
 	if (f->maximum_cluster_number < RESERVED_CLUSTER_12_BIT) {
 		unsigned byte_index = cluster + (cluster>>1);
-		uchar *p;
+		uint8_t *p;
 		read_buffer(f, sector + byte_index/SECTOR_SIZE);
 		p = f->buffer.buf + byte_index%SECTOR_SIZE;
 		*p = (cluster&1) ? (*p & 0x0F) | (x<<4) : x;
@@ -254,7 +250,7 @@ file name or extension, it bails out.
 
 static void check_file_character(struct rdcf *f, unsigned c)
 {
-	static uchar table[32] = {
+	static uint8_t table[32] = {
 		0xFF, 0xFF, 0xFF, 0xFF, 0x05, 0xDC, 0x00, 0xFC,
 		0x00, 0x00, 0x00, 0x38, 0x00, 0x00, 0x00, 0x90,
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -270,7 +266,7 @@ following the last one of the spec.
 -----------------------------------------------------------------------------*/
 
 static const char *spec_to_name_extension(struct rdcf *f,
-	uchar *name_extension, const uchar *spec)
+	uint8_t *name_extension, const uint8_t *spec)
 {
 	unsigned i = 0;
 	unsigned c;
@@ -292,10 +288,10 @@ static const char *spec_to_name_extension(struct rdcf *f,
 This function edits the name-extension form used in a file entry to file spec.
 -----------------------------------------------------------------------------*/
 
-static void name_extension_to_spec(uchar *spec, const uchar *name_extension)
+static void name_extension_to_spec(uint8_t *spec, const uint8_t *name_extension)
 {
 	unsigned i;
-	uchar *s = spec;
+	uint8_t *s = spec;
 	for (i=0; i<NAME_SIZE && name_extension[i]!=' '; i++)
 		*s++ = name_extension[i];
 	if (name_extension[NAME_SIZE]!=' ') {
@@ -421,7 +417,7 @@ special value NO_DIRECTORY_INDEX is left in f->directory_index.
 -----------------------------------------------------------------------------*/
 
 static int find_file_in_directory_or_find_volume(struct rdcf *f,
-	const uchar *name_extension)
+	const uint8_t *name_extension)
 {
 	unsigned empty_cluster = 2;
 	unsigned empty_index = NO_DIRECTORY_INDEX;
@@ -485,7 +481,7 @@ static int find_file(struct rdcf *f, const char *spec)
 	f->directory_cluster = 0;
 	while (1) {
 		int found;
-		uchar name_extension[NAME_SIZE+EXTENSION_SIZE];
+		uint8_t name_extension[NAME_SIZE+EXTENSION_SIZE];
 			/* scan name and extension */
 		spec = spec_to_name_extension(f, name_extension, spec);
 			/* look it up in directory */
@@ -642,7 +638,7 @@ functions are defined in alphabetical order.
 int rdcf_close(struct rdcf *f)
 {
 	if ((f->result=setjmp(f->error)) != 0) return f->result;
-	if (f->BufferInUse == False) error_exit(f, ~EBADFD);
+	if (f->BufferInUse == false) error_exit(f, ~EBADFD);
 	if (f->mode & WRITTEN) {
 		f->buffer_status = EMPTY;
 		f->file.attribute |= RDCF_ARCHIVE;
@@ -651,7 +647,7 @@ int rdcf_close(struct rdcf *f)
 		update_directory_entry(f, (f->file.size) ? 0 : 1);
 		flush_buffer(f);
 	}
-	f->BufferInUse = False;
+	f->BufferInUse = false;
 	return 0;
 }
 
@@ -673,7 +669,7 @@ int rdcf_delete(struct rdcf *f, const char *spec)
 			unsigned next_cluster = FAT_entry(f, cluster);
 			do {
 				unsigned entry_count = ENTRIES_PER_SECTOR;
-				uchar *p = f->buffer.buf;
+				uint8_t *p = f->buffer.buf;
 				read_buffer(f, sector);
 				do {
 					unsigned c = *p;
@@ -694,7 +690,7 @@ int rdcf_delete(struct rdcf *f, const char *spec)
 
 int rdcf_rename(struct rdcf *f, const char *old_spec, const char *new_spec)
 {
-	uchar name_extension[NAME_SIZE+EXTENSION_SIZE];
+	uint8_t name_extension[NAME_SIZE+EXTENSION_SIZE];
 	if ((f->result=setjmp(f->error)) != 0) return f->result;
 	old_spec = initialize_fcb(f, old_spec);
 	if (!find_file(f, old_spec)) error_exit(f, ~ENOENT);
@@ -753,7 +749,7 @@ int rdcf_open(struct rdcf *f, const char *spec, unsigned mode)
 		check_write_access(f);
 	}
 	f->last_cluster = EMPTY_CLUSTER;
-	f->BufferInUse = True;
+	f->BufferInUse = true;
 	f->position = 0;
 	f->cluster = f->file.first_cluster;
 	if (mode & _FAPPEND) {
@@ -772,12 +768,12 @@ int rdcf_open(struct rdcf *f, const char *spec, unsigned mode)
 ***************************************************************/
 int rdcf_read(struct rdcf *f, void *buf, int count)
 {
-	ulong size = f->file.size;
+	uint32_t size = f->file.size;
 	unsigned unread_bytes = count;
-	ulong position = f->position;
+	uint32_t position = f->position;
 	char *buffer = buf;
 	if ((f->result=setjmp(f->error)) != 0) return f->result;
-	if (f->BufferInUse == False) error_exit(f, ~EBADF);
+	if (f->BufferInUse == false) error_exit(f, ~EBADF);
 	if ((f->mode & RDCF_READ) == 0) error_exit(f, ~EBADFD);
 	f->buffer_status = EMPTY;
 	while (unread_bytes>0) {
@@ -809,7 +805,7 @@ int rdcf_read(struct rdcf *f, void *buf, int count)
 }
 
 
-int rdcf_seek(struct rdcf *f, ulong offset)
+int rdcf_seek(struct rdcf *f, uint32_t offset)
 {
 	unsigned i, cluster;
 	if ((f->result=setjmp(f->error)) != 0) return f->result;
@@ -826,15 +822,15 @@ int rdcf_seek(struct rdcf *f, ulong offset)
 	return 0;
 }
 
-static int real_rdcf_write(struct rdcf *f, const uchar *buf, int count)
+static int real_rdcf_write(struct rdcf *f, const uint8_t *buf, int count)
 {
-	ulong size = f->file.size;
-	ulong position = f->position;
+	uint32_t size = f->file.size;
+	uint32_t position = f->position;
 	unsigned unwritten_bytes = count;
 	unsigned first_possibly_empty_cluster = 2;
 	const char *buffer = buf;
 	if ((f->result=setjmp(f->error)) != 0) return f->result;
-	if (f->BufferInUse == False) error_exit(f, ~EBADF);
+	if (f->BufferInUse == false) error_exit(f, ~EBADF);
 	f->buffer_status = EMPTY;
 	if ((f->mode & RDCF_WRITE) == 0) error_exit(f, ~EBADFD);
 	while (unwritten_bytes>0) {
@@ -900,7 +896,7 @@ int	result;
 int rdcf_flush_directory(struct rdcf *f)
 {
 	if ((f->result=setjmp(f->error)) != 0) return f->result;
-	if (f->BufferInUse == False) return 0;
+	if (f->BufferInUse == false) return 0;
 	rdcf_get_date_and_time(&f->file.date_and_time);
 		// do not allow empty files.
 	update_directory_entry(f, (f->file.size) ? 0 : 1);
@@ -948,7 +944,7 @@ int rdcf_date_and_time(struct rdcf *f, const char *spec,
 
 int rdcf_directory(struct rdcf *f, const char *spec)
 {
-		/* uchar name_extension[NAME_SIZE+EXTENSION_SIZE]; ??? */
+		/* uint8_t name_extension[NAME_SIZE+EXTENSION_SIZE]; ??? */
 	if ((f->result=setjmp(f->error)) != 0) return f->result;
 	if (find_file(f, initialize_fcb(f, spec))) error_exit(f, ~EISDIR);
 		/* spec_to_name_extension(f, name_extension, f->file.spec); ??? */
@@ -992,7 +988,7 @@ long int rdcf_free_space(struct rdcf *f
 	for (cluster = 2; cluster <= f->maximum_cluster_number; cluster++) {
 		if (FAT_entry(f, cluster) == EMPTY_CLUSTER) number_of_empty_clusters++;
 	}
-	f->file.size = (ulong) number_of_empty_clusters *
+	f->file.size = (uint32_t) number_of_empty_clusters *
 	(f->sectors_per_cluster * SECTOR_SIZE);
 	return (long)(f->file.size);
 }
@@ -1079,6 +1075,4 @@ static void find_entry(struct rdcf *f, const char *spec, unsigned idx)
 #endif
 
 // vi:nowrap:
-
-#endif	// HAS_MMC
 

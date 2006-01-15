@@ -14,8 +14,8 @@
 #define INC_RDCF_H
 
 #include <setjmp.h>
-#include <types.h>
-#include <sysdefs.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 /******************************************************
  * Important defines for the configuration of RDCF.
@@ -37,18 +37,18 @@
 
 struct rdcf_date_and_time
 {
-  uchar second;
-  uchar minute;
-  uchar hour;
-  uchar day;
-  uchar month;
-  ushort year;
+  uint8_t second;
+  uint8_t minute;
+  uint8_t hour;
+  uint8_t day;
+  uint8_t month;
+  uint16_t year;
 };
 
 struct rdcf_file_information
 {
-  uchar spec[13];
-  uchar attribute;
+  uint8_t spec[13];
+  uint8_t attribute;
     #define RDCF_READ_ONLY  0x01
     #define RDCF_HIDDEN     0x02
     #define RDCF_SYSTEM     0x04
@@ -56,8 +56,8 @@ struct rdcf_file_information
     #define RDCF_DIRECTORY  0x10
     #define RDCF_ARCHIVE    0x20
   struct rdcf_date_and_time date_and_time;
-  ushort first_cluster;
-  ulong size;
+  uint16_t first_cluster;
+  uint32_t size;
 };
 
 /* Directory structure as it appears on the diskette. */
@@ -66,19 +66,19 @@ struct rdcf_file_information
 #define EXTENSION_SIZE  3
 struct directory
 {
-  uchar name_extension[NAME_SIZE+EXTENSION_SIZE];
-  uchar attribute;
-  uchar reserved[10];
-  ushort time;
-  ushort date;
-  ushort first_cluster;
-  ulong size;
+  uint8_t name_extension[NAME_SIZE+EXTENSION_SIZE];
+  uint8_t attribute;
+  uint8_t reserved[10];
+  uint16_t time;
+  uint16_t date;
+  uint16_t first_cluster;
+  uint32_t size;
 };
 
 union IO_BUFFER {
 	struct directory dir[RDCF_SECTOR_SIZE / sizeof(struct directory)];
-	ushort fat[RDCF_SECTOR_SIZE/2];
-	uchar  buf[RDCF_SECTOR_SIZE];
+	uint16_t fat[RDCF_SECTOR_SIZE/2];
+	uint8_t  buf[RDCF_SECTOR_SIZE];
 };
 
 /* FCB (File Control Block) */
@@ -89,57 +89,57 @@ struct rdcf
 	union 	IO_BUFFER buffer;
 	bool		BufferInUse;
 		// hardware access.
-	bool	(*ReadSector)(long sector, uchar * buf);
-	bool	(*WriteSector)(long sector, const uchar * buf);
+	bool	(*ReadSector)(long sector, uint8_t * buf);
+	bool	(*WriteSector)(long sector, const uint8_t * buf);
 		/* file information */
 	struct 	rdcf_file_information file;
 		/* result codes */
-	ulong		position;
-	ushort	drive_error;
-	short		result;
+	uint32_t		position;
+	uint16_t	drive_error;
+	int16_t		result;
 		/* file system information */
-	uchar		drive;
-	ulong		first_FAT_sector;
-	ushort	sectors_per_FAT;
-	ulong		first_directory_sector;
-	ulong		first_data_sector;
-	uint		sectors_per_cluster;
-	ushort	maximum_cluster_number;
-	ushort	last_cluster_mark;
+	uint8_t		drive;
+	uint32_t		first_FAT_sector;
+	uint16_t	sectors_per_FAT;
+	uint32_t		first_directory_sector;
+	uint32_t		first_data_sector;
+	uint32_t	sectors_per_cluster;
+	uint16_t	maximum_cluster_number;
+	uint16_t	last_cluster_mark;
 		/* internal use only */
-	uchar		mode;
-	ushort	directory_first_cluster;
-	ushort	directory_cluster;
-	ushort	directory_index;
-	uchar		buffer_status;
-	ushort	cluster;
-	ushort	last_cluster;
-	ulong		sector_in_buffer;
+	uint8_t		mode;
+	uint16_t	directory_first_cluster;
+	uint16_t	directory_cluster;
+	uint16_t	directory_index;
+	uint8_t		buffer_status;
+	uint16_t	cluster;
+	uint16_t	last_cluster;
+	uint32_t		sector_in_buffer;
 	jmp_buf error;
 };
 
 	// description of partion file system is on.
 typedef struct {
 		// is drive present?
-	uchar		IsValid;
+	uint8_t		IsValid;
 		// How large are the FAT tables?
-	ushort	SectorsPerFAT;
+	uint16_t	SectorsPerFAT;
 		// Important info to decode FAT entries into sectors.
-	uchar		SectorsPerCluster;
+	uint8_t		SectorsPerCluster;
 		// Quick reference to BootBlock, if need be.
-	unsigned		SectorZero;
+	uint32_t	SectorZero;
 		// First File Allocation Table.
-	unsigned		FirstFatSector;
+	uint32_t	FirstFatSector;
 		// "backup" copy of the First FAT. usually to undelete files.
-	unsigned		SecondFatSector;
+	uint32_t	SecondFatSector;
 		// Where does the actual drive data area start?
-	unsigned		RootDirSector;
+	uint32_t	RootDirSector;
 		// How many entries can be in the root directory?
-	ushort	NumberRootDirEntries;
+	uint16_t	NumberRootDirEntries;
 		// where does data (cluster 2) actually reside?
-	unsigned		DataStartSector;
+	uint32_t	DataStartSector;
 		// What is the last data sector?
-	unsigned		MaxDataSector;
+	uint32_t	MaxDataSector;
 } DRIVE_DESCRIPTION;
 
 extern DRIVE_DESCRIPTION DriveDesc;
@@ -164,7 +164,7 @@ int rdcf_open(struct rdcf *, const char *, unsigned);
 int rdcf_close(struct rdcf *);
 int rdcf_write(struct rdcf *, const void *, int);
 int rdcf_read(struct rdcf *, void *, int);
-int rdcf_seek(struct rdcf *, ulong);
+int rdcf_seek(struct rdcf *, uint32_t);
 int rdcf_flush_directory(struct rdcf *);
 int rdcf_delete(struct rdcf *, const char *);
 int rdcf_rename(struct rdcf *, const char *, const char *);
