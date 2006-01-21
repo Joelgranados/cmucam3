@@ -43,7 +43,7 @@ void cc3_spi0_init (void)
   // set pins for SPI0 operation.
   REG(PCB_PINSEL0) = (REG(PCB_PINSEL0) & ~_CC3_SPI_PINMASK) | _CC3_SPI_PINSEL;
   // set clock rate to approx 7.4975 MHz?
-  REG(SPI_SPCCR) = 32;
+  REG(SPI_SPCCR) = 8;
   // just turn on master mode for now.
   // clock is rising edge, pre-drive data bit before clock.
   // Most significant bit shifted out first.
