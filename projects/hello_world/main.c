@@ -6,6 +6,9 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+#include "rdcf2.h"
+#include "mmc_hardware.h"
+#include "spi.h"
 #include "serial.h"
 #include "servo.h"
 
@@ -36,7 +39,39 @@ int main ()
     cc3_servo_init ();
     printf ("timer= %d\n", clock());
     printf ("cc3 timer= %d\n", cc3_timer());
+
+
+    printf("initializing MMC...\n");
+    cc3_spi0_init();
+    if (!initMMCdrive()) {
+      printf("success\n\n");
+      
+      printf("IsValid: %d\n"
+	     "SectorsPerFAT: %d\n"
+	     "SectorsPerCluster: %d\n"
+	     "SectorZero: %d\n"
+	     "FirstFatSector: %d\n"
+	     "SecondFatSector: %d\n"
+	     "RootDirSector: %d\n"
+	     "NumberRootDirEntries: %d\n"
+	     "DataStartSector: %d\n"
+	     "MaxDataSector: %d\n",
+	     DriveDesc.IsValid,
+	     DriveDesc.SectorsPerFAT,
+	     DriveDesc.SectorsPerCluster,
+	     DriveDesc.SectorZero,
+	     DriveDesc.FirstFatSector,
+	     DriveDesc.SecondFatSector,
+	     DriveDesc.RootDirSector,
+	     DriveDesc.NumberRootDirEntries,
+	     DriveDesc.DataStartSector,
+	     DriveDesc.MaxDataSector);
+    } else {
+      printf("fail\n");
+    }
     
+    cc3_wait_ms(300000);
+
     printf ("Setting up Image Parameters\n");
    // if( cc3_pixbuf_set_roi( 0,0,88,144 )==0 ) printf( "Error Setting region of interest\n" );
    // if (cc3_pixbuf_set_subsample (CC3_NEAREST, 1, 1) == 0) printf ("Error Setting Subsample Mode\n");

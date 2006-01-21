@@ -11,11 +11,13 @@
 #include <spi.h>
 #include <ioctl.h>
 #include <rdcf2.h>
-#include <sysdefs.h>
 #include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <mmc_hardware.h>
 #include <sys/errno.h>
 
+#define DEVICE_MMC 1
 
 extern struct DRIVE_DESCRIPTION Drive;
 
@@ -24,7 +26,7 @@ extern struct DRIVE_DESCRIPTION Drive;
 // dir listings etc.
 struct rdcf	fcbs [MaxFileBuffers+1];
 
-static uchar allocate_fcb (void)
+static uint8_t allocate_fcb (void)
 {// find free fcb and return it or 0 if none available.
 int	i;
 	for (i=0; i<MaxFileBuffers; i++) {
@@ -145,7 +147,7 @@ static int ioctlDrive (struct _reent *r, int file, int cmd, void *ptr)
 static int initTheDrive (void)
 {
 		// initialize the SPI0 controller.
-	spi1Init();
+	cc3_spi0_init();
 		// init the drive system & software.
 	return initMMCdrive ();
 }

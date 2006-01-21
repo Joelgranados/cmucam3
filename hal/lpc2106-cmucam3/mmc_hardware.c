@@ -37,7 +37,7 @@ uint8_t cmdSetBlock [] = { CMD16, 0, 0, 2, 0, 0xff };
  * the Flash drive.
  *
 ******************************************************/
-void spi0Init (void)
+void cc3_spi0_init (void)
 {// setup basic operation of the SPI0 controller.
   // set pins for SPI0 operation.
   REG(PCB_PINSEL0) = (REG(PCB_PINSEL0) & ~_CC3_SPI_PINMASK) | _CC3_SPI_PINSEL;

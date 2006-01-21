@@ -1,7 +1,7 @@
 include defs.mk
 
 OBJS=interrupt.o cc3.o cc3_hal.o LPC2100.o syscalls.o startup.o serial.o servo.o \
-	rdcf2.o mmc_init.o mmc_hardware.o
+	rdcf2.o mmc_init.o mmc_hardware.o mmc_module.o
 
 
 all: $(HALLIB)
