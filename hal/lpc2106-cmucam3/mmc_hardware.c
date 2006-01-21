@@ -9,6 +9,7 @@
 #include "LPC2100.h"
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <mmc_hardware.h>
 #include "spi.h"
 #include "cc3_pin_defines.h"
@@ -42,11 +43,11 @@ void cc3_spi0_init (void)
   // set pins for SPI0 operation.
   REG(PCB_PINSEL0) = (REG(PCB_PINSEL0) & ~_CC3_SPI_PINMASK) | _CC3_SPI_PINSEL;
   // set clock rate to approx 7.4975 MHz?
-  REG(SPI_SPCCR) = 8;
+  REG(SPI_SPCCR) = 32;
   // just turn on master mode for now.
   // clock is rising edge, pre-drive data bit before clock.
   // Most significant bit shifted out first.
-  REG(SPI_SPCR) = 0x10;   // bit 5 (master mode), all others 0
+  REG(SPI_SPCR) = 0x20;   // bit 5 (master mode), all others 0
 }
 
 /******************************************************
@@ -61,18 +62,24 @@ static unsigned char dummyReader;
 
 static void selectMMC (void)
 {// select SPI target and light the LED.
+  printf("selectMMC\r\n");
+
   REG(GPIO_IOCLR) = _CC3_MMC_CS;   // chip select (neg true)
   cc3_set_led(true);
 }
 
 static void unselectMMC (void)
 {// unselect SPI target and extinguish the LED.
+  printf("unselectMMC\r\n");
+
   REG(GPIO_IOSET) = _CC3_MMC_CS;   // chip select (neg true)
   cc3_set_led(false);
 }
 
 static void spiPutByte(uint8_t inBuf)
 {// spit a byte of data at the MMC.
+  printf("spiPutByte 0x%x\r\n", inBuf);
+
   REG(SPI_SPDR) = SPI_SPDR_MASK & inBuf; 
   while (!(REG(SPI_SPSR) & _CC3_SPI_SPIF));  // wait for bit
 
@@ -82,10 +89,17 @@ static void spiPutByte(uint8_t inBuf)
 
 static uint8_t spiGetByte(void)
 {// read one byte from the MMC card.
-  REG(SPI_SPDR) = SPI_SPDR_MASK & 0xFF;      // fake value, maybe XXX
-  while (!(REG(SPI_SPSR) & _CC3_SPI_SPIF));  // wait for bit
+  uint8_t result;
+  
+  printf("sgb ");
+  //REG(SPI_SPDR) = SPI_SPDR_MASK & 0xFF;      // fake value, maybe XXX
+  //while (!(REG(SPI_SPSR) & _CC3_SPI_SPIF));  // wait for bit
 
-  return (uint8_t) REG(SPI_SPDR) & SPI_SPDR_MASK;
+  result = (uint8_t) REG(SPI_SPDR) & SPI_SPDR_MASK;
+
+  printf("0x%x\r\n", result);
+
+  return result;
 }
 
 /***************************************************************

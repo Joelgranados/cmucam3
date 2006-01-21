@@ -41,21 +41,23 @@ int main ()
     printf ("cc3 timer= %d\n", cc3_timer());
 
 
-    printf("initializing MMC...\n");
+    printf("initializing SPI...\r\n");
     cc3_spi0_init();
+
+    printf("initializing MMC...\r\n");
     if (!initMMCdrive()) {
-      printf("success\n\n");
+      printf("success\r\n");
       
-      printf("IsValid: %d\n"
-	     "SectorsPerFAT: %d\n"
-	     "SectorsPerCluster: %d\n"
-	     "SectorZero: %d\n"
-	     "FirstFatSector: %d\n"
-	     "SecondFatSector: %d\n"
-	     "RootDirSector: %d\n"
-	     "NumberRootDirEntries: %d\n"
-	     "DataStartSector: %d\n"
-	     "MaxDataSector: %d\n",
+      printf("IsValid: %d\r\n"
+	     "SectorsPerFAT: %d\r\n"
+	     "SectorsPerCluster: %d\r\n"
+	     "SectorZero: %d\r\n"
+	     "FirstFatSector: %d\r\n"
+	     "SecondFatSector: %d\r\n"
+	     "RootDirSector: %d\r\n"
+	     "NumberRootDirEntries: %d\r\n"
+	     "DataStartSector: %d\r\n"
+	     "MaxDataSector: %d\r\n",
 	     DriveDesc.IsValid,
 	     DriveDesc.SectorsPerFAT,
 	     DriveDesc.SectorsPerCluster,
@@ -67,7 +69,7 @@ int main ()
 	     DriveDesc.DataStartSector,
 	     DriveDesc.MaxDataSector);
     } else {
-      printf("fail\n");
+      printf("fail\r\n");
     }
     
     cc3_wait_ms(300000);
