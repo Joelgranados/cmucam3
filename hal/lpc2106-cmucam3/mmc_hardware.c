@@ -41,7 +41,7 @@ uint8_t cmdSetBlock [] = { CMD16, 0, 0, 2, 0, 0xff };
 void cc3_spi0_init (void)
 {// setup basic operation of the SPI0 controller.
   // set pins for SPI0 operation.
-  REG(PCB_PINSEL0) = (REG(PCB_PINSEL0) & ~_CC3_SPI_PINMASK) | _CC3_SPI_PINSEL;
+  REG(PCB_PINSEL0) = REG(PCB_PINSEL0) | _CC3_SPI_PINSEL;
   // set clock rate to approx 7.4975 MHz?
   REG(SPI_SPCCR) = 8;
   // just turn on master mode for now.
@@ -78,10 +78,12 @@ static void unselectMMC (void)
 
 static void spiPutByte(uint8_t inBuf)
 {// spit a byte of data at the MMC.
-  printf("spiPutByte 0x%x\r\n", inBuf);
+  printf("spiPutByte 0x%x ", inBuf);
 
   REG(SPI_SPDR) = SPI_SPDR_MASK & inBuf; 
   while (!(REG(SPI_SPSR) & _CC3_SPI_SPIF));  // wait for bit
+
+  printf("(SPI_SPSR 0x%x)\r\n", (uint8_t) REG(SPI_SPSR));
 
   // clear bit
   dummyReader = (uint8_t) REG(SPI_SPDR) & SPI_SPDR_MASK;
@@ -92,9 +94,10 @@ static uint8_t spiGetByte(void)
   uint8_t result;
   
   printf("sgb ");
-  //REG(SPI_SPDR) = SPI_SPDR_MASK & 0xFF;      // fake value, maybe XXX
-  //while (!(REG(SPI_SPSR) & _CC3_SPI_SPIF));  // wait for bit
+  REG(SPI_SPDR) = SPI_SPDR_MASK & 0xFF;      // fake value, maybe XXX
+  while (!(REG(SPI_SPSR) & _CC3_SPI_SPIF));  // wait for bit
 
+  printf("(SPI_SPSR 0x%x) ", (uint8_t) REG(SPI_SPSR));
   result = (uint8_t) REG(SPI_SPDR) & SPI_SPDR_MASK;
 
   printf("0x%x\r\n", result);

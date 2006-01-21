@@ -44,7 +44,6 @@
 #define _CC3_SERVO_3 		0x00100000	
 
 // SPI
-#define _CC3_SPI_PINMASK        0x00003F00
 #define _CC3_SPI_PINSEL         0x00001500
 #define _CC3_SPI_SPIF           0x00000080
 
