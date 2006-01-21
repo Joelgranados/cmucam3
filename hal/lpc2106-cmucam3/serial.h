@@ -1,7 +1,7 @@
 #ifndef SERIAL_H
 #define SERIAL_H
 
-#include "inttypes.h"
+#include <stdint.h>
 #include "LPC2100.h"
 #include "lpc_config.h"
 

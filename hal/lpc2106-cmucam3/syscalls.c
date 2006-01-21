@@ -14,11 +14,31 @@
 
 
 extern int errno;
-extern uint8_t _cc3_uart0_select;
-extern uint8_t _cc3_uart1_select;
-extern cc3_uart_cr_lf_t _cc3_cr_lf_read_mode_uart0;
-extern cc3_uart_cr_lf_t _cc3_cr_lf_read_mode_uart1;
 
+
+/* prototypes */
+int _write (int file, char *ptr, int len);
+int _read (int file, char *ptr, int len);
+int kill(int pid, int sig);
+int _close(int file);
+_off_t _lseek(int file, _off_t ptr, int dir);
+int _fstat(int file, struct stat *st);
+int _system(const char *s);
+int _link(char *old, char *new);
+int _open(const char *name, int flags, int mode);
+int _stat(char *file, struct stat *st);
+int _rename(char *oldpath, char *newpath);
+int _gettimeofday (struct timeval *tp, struct timezone *tzp);
+int _kill(int pid, int sig);
+int _getpid(void);
+int _times(struct tms *buf);
+int _unlink(char *name);
+int _raise(int sig);
+void *_sbrk(int nbytes);
+
+
+
+/* implementation */
 int _write (int file, char *ptr, int len)
 {
   int i = 0;
@@ -71,7 +91,8 @@ int _read (int file, char *ptr, int len)
   return i;
 }
 
-int kill(int pid, int sig)
+int kill(int pid __attribute((unused)), 
+	 int sig __attribute((unused)))
 {
   errno=EINVAL;
   return(-1);
@@ -155,7 +176,8 @@ int _gettimeofday (struct timeval *tp __attribute((unused)),
   return -1;
 }
 
-int _kill(int pid, int sig)
+int _kill(int pid __attribute((unused)), 
+	  int sig __attribute((unused)))
 {
   errno = EINVAL;
   return -1;
@@ -181,7 +203,7 @@ int _unlink(char *name __attribute((unused))) {
   return -1; 
 }
 
-int _raise(int sig) 
+int _raise(int sig __attribute((unused))) 
 {
   return 1;
 }

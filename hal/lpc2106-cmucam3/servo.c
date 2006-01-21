@@ -20,9 +20,9 @@ uint32_t servo_mask;
  */
 uint8_t cc3_servo_set (uint8_t servo, uint32_t pos)
 {
-    if (servo < 0 || servo > MAX_SERVOS)
+    if (servo > MAX_SERVOS)
         return -1;
-    if (pos < 0 || pos > SERVO_RESOLUTION)
+    if (pos > SERVO_RESOLUTION)
         return -1;
     servo_val[servo] = pos;
     return 1;
@@ -112,7 +112,7 @@ void _cc3_servo_lo (uint8_t n)
  * This function disables the servo interrupt and 
  * sets the servo lines low.
  */
-void cc3_disable ()
+void cc3_servo_disable ()
 {
 uint8_t i;
     disable_servo_interrupt ();

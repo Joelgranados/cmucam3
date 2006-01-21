@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include "LPC2100.h"
 #include "cc3.h"
 #include "cc3_pin_defines.h"
@@ -15,7 +16,7 @@ void disable_ext_interrupt (void)
 }
 
 
-enable_ext_interrupt (void)
+void enable_ext_interrupt (void)
 {
     REG (SYSCON_EXTINT) = 0x1;
     // Enable bit 14, which is the external interrupt 0...

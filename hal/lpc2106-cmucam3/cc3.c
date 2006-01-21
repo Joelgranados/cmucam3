@@ -15,9 +15,9 @@ cc3_pixel_t cc3_g_current_pixel;        // global that gets updated with pixbuf 
 cc3_frame_t cc3_g_current_frame;        // global that keeps clip, stride
 
 
-void _cc3_seek_left();
-void _cc3_seek_right_down();
-void _cc3_seek_top();
+static void _cc3_seek_left(void);
+static void _cc3_seek_right_down(void);
+static void _cc3_seek_top(void);
 
 uint8_t  _cc3_uart0_select;
 uint8_t  _cc3_uart1_select;
@@ -67,7 +67,7 @@ void cc3_uart1_init (int32_t rate, uint8_t mode, uint8_t file_sel)
 
 void cc3_pixbuf_load ()
 {
-    unsigned int x, i;
+    unsigned int i;
     //REG(GPIO_IOCLR)=CAM_IE;  
     //while(frame_done!=1);
     cc3_pixbuf_rewind ();
@@ -114,7 +114,6 @@ void _cc3_pixbuf_skip (uint32_t size)
 int cc3_pixbuf_read ()
 {
     int8_t i;
-    int16_t j;
 
     if (cc3_g_current_frame.y_loc < cc3_g_current_frame.y0) {
         // First read into frame
@@ -309,9 +308,8 @@ void cc3_set_led (bool state)
 int cc3_pixbuf_read_rows (cc3_pixel_t *mem, uint32_t width, uint32_t rows)
 {
 
-    int8_t i;
     int16_t j;
-    int16_t r;
+    uint16_t r;
 
     if ( (cc3_g_current_frame.y0+rows) > cc3_g_current_frame.y1)
         return -1;
@@ -366,7 +364,8 @@ for(r=0; r<rows; r++ )
 	    case 3: _cc3_pixbuf_read_3(); 
 		    mem[r*width+j].channel[3]=cc3_g_current_pixel.channel[3];
 		    break;
-
+	    default:
+                    return 0;
         }
         //_CC3_FIFO_READ_INC ();
 
@@ -413,7 +412,7 @@ uint32_t cc3_timer() {
  * This function changes the way data is read from the FIFO.
  * Returns 1 upon success and 0 on an out of bounds failure.
  */
-int cc3_pixbuf_set_roi (uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
+int cc3_pixbuf_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
 {
     if (x0 >= 0
         && x0 <= (cc3_g_current_frame.raw_width / cc3_g_current_frame.x_step)
@@ -459,8 +458,11 @@ return 1;
 int cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
                               uint8_t y_step)
 {
+  // can't be < 0 if unsigned
+  /* 
     if (x_step < 0 || y_step < 0)
         return 0;
+  */
     cc3_g_current_frame.x_step = x_step;
     cc3_g_current_frame.y_step = y_step;
     cc3_g_current_frame.width = cc3_g_current_frame.raw_width / x_step;
@@ -481,7 +483,7 @@ int cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
  */
 int cc3_pixbuf_set_coi (cc3_channel_t chan)
 {
-    if (chan < 0 || chan > 4)
+    if (chan > 4)
         return 0;               // Sanity check on bounds
     cc3_g_current_frame.coi = chan;
     return 1;
@@ -517,6 +519,8 @@ int cc3_camera_init ()
     _cc3_set_register_state ();
 
     cc3_frame_default ();
+
+    return 1;
 }
 
 void cc3_frame_default ()

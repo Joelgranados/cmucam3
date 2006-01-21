@@ -5,7 +5,7 @@
 #include "cc3_pin_defines.h"
 #include "cc3_hal.h"
 #include "serial.h"
-#include "inttypes.h"
+#include <stdint.h>
 #include <stdbool.h>
 #include "interrupt.h" 
 
@@ -79,10 +79,10 @@ typedef struct {
 extern cc3_pixel_t cc3_g_current_pixel;   // global that gets updated with pixbuf calls
 extern cc3_frame_t cc3_g_current_frame;   // global that keeps clip, stride
 
-void cc3_pixbuf_load();
+void cc3_pixbuf_load(void);
 void _cc3_pixbuf_skip(uint32_t size);
 
-void cc3_frame_default();
+void cc3_frame_default(void);
 /**
  * Using the cc3_frame_t reads rows taking into account virtual window and subsampling. 
  */
@@ -92,17 +92,17 @@ int cc3_pixbuf_read_rows(cc3_pixel_t *mem, uint32_t width, uint32_t rows );
  * loads cc3_g_current_pixel from fifo
  * Must adjust for channel, subframe, position in frame etc
  */
-int cc3_pixbuf_read();                              
+int cc3_pixbuf_read(void);                              
 
 /**
  * The following are raw faster, pixel grab routines used by cc3_pixbuf_read_row(). 
  */
-void _cc3_pixbuf_read_all(); 
-void _cc3_pixbuf_read_all_3(); 
-void _cc3_pixbuf_read_0(); 
-void _cc3_pixbuf_read_1(); 
+void _cc3_pixbuf_read_all(void); 
+void _cc3_pixbuf_read_all_3(void); 
+void _cc3_pixbuf_read_0(void); 
+void _cc3_pixbuf_read_1(void); 
 // No read_2() because it is just the second green channel
-void _cc3_pixbuf_read_3(); 
+void _cc3_pixbuf_read_3(void); 
 
 
 /**
@@ -112,7 +112,7 @@ void cc3_pixbuf_rewind(void);
 /**
  * Sets the region of interest in cc3_frame_t for virtual windowing. 
  */
-int cc3_pixbuf_set_roi( uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
+int cc3_pixbuf_set_roi( int16_t x0, int16_t y0, int16_t x1, int16_t y1);
 /**
  * Sets the subsampling step and mode in cc3_frame_t. 
  */
@@ -155,7 +155,7 @@ void cc3_uart1_init(int32_t rate, uint8_t mode, uint8_t file_sel);
 void cc3_uart0_cr_lf(cc3_uart_cr_lf_t mode);
 void cc3_uart1_cr_lf(cc3_uart_cr_lf_t mode);
 
-uint32_t cc3_timer();
+uint32_t cc3_timer(void);
 void cc3_wait_ms(uint32_t delay);
 
 #endif

@@ -83,7 +83,7 @@
 #define SSP_RXRIS		BIT(2)
 #define SSP_TXRIS		BIT(3)
 
-void spi1Init (void);
+void spi0Init(void);
 
 #endif  // INC_SPI_H
 

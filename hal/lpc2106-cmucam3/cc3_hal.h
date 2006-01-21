@@ -3,8 +3,8 @@
 
 #include "cc3_pin_defines.h"
 #include "cc3.h"
-#include "inttypes.h"
-#include "stdbool.h"
+#include <stdint.h>
+#include <stdbool.h>
 
 /*****************************************
 *                                        *

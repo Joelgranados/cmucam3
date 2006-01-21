@@ -118,23 +118,23 @@ void cc3_system_setup(void);
 /* SPI (8 bit data bus) (spec shows 0xE0020000 - 0xE0023FFF) */
 #define SPI_BASE		(0xE0020000)
 #define SPI_SPCR		(0xE0020000)	/* Control Register */
-#define SPI_SPCR_POR		(bit32)0x00000000
-#define SPI_SPCR_MASK		(bit32)0x000000F8
+#define SPI_SPCR_POR		(uint32_t)0x00000000
+#define SPI_SPCR_MASK		(uint32_t)0x000000F8
 #define SPI_SPSR		(0xE0020004)	/* Status Register */
-#define SPI_SPSR_POR		(bit32)0x00000000
-#define SPI_SPSR_MASK		(bit32)0x000000F8
+#define SPI_SPSR_POR		(uint32_t)0x00000000
+#define SPI_SPSR_MASK		(uint32_t)0x000000F8
 #define SPI_SPDR		(0xE0020008)	/* Data Register */
-#define SPI_SPDR_POR		(bit32)0x00000000
-#define SPI_SPDR_MASK		(bit32)0x000000FF
+#define SPI_SPDR_POR		(uint32_t)0x00000000
+#define SPI_SPDR_MASK		(uint32_t)0x000000FF
 #define SPI_SPCCR		(0xE002000C)	/* Clock Counter Register */
-#define SPI_SPCCR_POR		(bit32)0x00000000
-#define SPI_SPCCR_MASK		(bit32)0x000000FE
+#define SPI_SPCCR_POR		(uint32_t)0x00000000
+#define SPI_SPCCR_MASK		(uint32_t)0x000000FE
 #define SPI_SPTCR		(0xE0020010)	/* Test Control Register */
-#define SPI_SPTCR_POR		(bit32)0x00000000
-#define SPI_SPTCR_MASK		(bit32)0x00000001
+#define SPI_SPTCR_POR		(uint32_t)0x00000000
+#define SPI_SPTCR_MASK		(uint32_t)0x00000001
 #define SPI_SPTSR		(0xE0020014)	/* Test Status Register */
-#define SPI_SPTSR_POR		(bit32)0x00000000
-#define SPI_SPTSR_MASK		(bit32)0x000000F8
+#define SPI_SPTSR_POR		(uint32_t)0x00000000
+#define SPI_SPTSR_MASK		(uint32_t)0x000000F8
 #define SPI_SPTOR		(0xE0020018)	/* Test Observe Register */
 
 /* RTC (32 bit data bus) */

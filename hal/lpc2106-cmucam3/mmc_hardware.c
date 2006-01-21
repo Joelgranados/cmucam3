@@ -10,9 +10,12 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <mmc_hardware.h>
-#include <spi.h>
+#include "spi.h"
+#include "cc3_pin_defines.h"
+#include "cc3.h"
+
 #include <time.h>
-#include <rdcf2.h>
+#include "rdcf2.h"
 
 #define MMC_CMD_SIZE 8
 uint8_t MMCCmd[MMC_CMD_SIZE];
@@ -30,21 +33,20 @@ uint8_t cmdSetBlock [] = { CMD16, 0, 0, 2, 0, 0xff };
 
 /******************************************************
  *
- * spi1Init - transport media to communicate with
+ * spi0Init - transport media to communicate with
  * the Flash drive.
  *
 ******************************************************/
-void spi1Init (void)
-{// setup basic operation of the SPI1 controller.
-		// set pins for SPI1 operation.
-	PINSEL1 = (PINSEL1 & ~SSP_PINMASK) | SSP_PINSEL;
-		// set clock rate to approx 3.93MHz (58.98MHz / 15);
-	SSPCPSR = 2;
-		// just turn on master mode for now.
-		// clock is rising edge, pre-drive data bit before clock.
-		// Most significant bit shifted out first.
-	SSPCR0 = (SSP_DATA_SIZE(8) | SSP_FRAME_FORMAT_SPI);
-	SSPCR1 = SSP_SSE;
+void spi0Init (void)
+{// setup basic operation of the SPI0 controller.
+  // set pins for SPI0 operation.
+  REG(PCB_PINSEL0) = (REG(PCB_PINSEL0) & ~_CC3_SPI_PINMASK) | _CC3_SPI_PINSEL;
+  // set clock rate to approx 7.4975 MHz?
+  REG(SPI_SPCCR) = 8;
+  // just turn on master mode for now.
+  // clock is rising edge, pre-drive data bit before clock.
+  // Most significant bit shifted out first.
+  REG(SPI_SPCR) = 0x10;   // bit 5 (master mode), all others 0
 }
 
 /******************************************************
@@ -59,27 +61,31 @@ static unsigned char dummyReader;
 
 static void selectMMC (void)
 {// select SPI target and light the LED.
-	IO0CLR = MMC_CS_BIT;		// set SS = 1 (off)
-	IO1CLR = LED_MMC_BIT;
+  REG(GPIO_IOCLR) = _CC3_MMC_CS;   // chip select (neg true)
+  cc3_set_led(true);
 }
 
 static void unselectMMC (void)
 {// unselect SPI target and extinguish the LED.
-	IO0SET = MMC_CS_BIT;		// set SS = 1 (off)
-	IO1SET = LED_MMC_BIT;
+  REG(GPIO_IOSET) = _CC3_MMC_CS;   // chip select (neg true)
+  cc3_set_led(false);
 }
 
 static void spiPutByte(uint8_t inBuf)
 {// spit a byte of data at the MMC.
-	SSPDR = (REG16) inBuf; while (SSPSR & SSP_BSY);
-		// dummy read clears SPI BSY flag on LPC2xxx processors.
-	dummyReader = (uint8_t) SSPDR;
+  REG(SPI_SPDR) = SPI_SPDR_MASK & inBuf; 
+  while (!(REG(SPI_SPSR) & _CC3_SPI_SPIF));  // wait for bit
+
+  // clear bit
+  dummyReader = (uint8_t) REG(SPI_SPDR) & SPI_SPDR_MASK;
 }
 
 static uint8_t spiGetByte(void)
 {// read one byte from the MMC card.
-	SSPDR = (REG16) 0xff; while (SSPSR & SSP_BSY);
-	return (uint8_t) SSPDR;
+  REG(SPI_SPDR) = SPI_SPDR_MASK & 0xFF;      // fake value, maybe XXX
+  while (!(REG(SPI_SPSR) & _CC3_SPI_SPIF));  // wait for bit
+
+  return (uint8_t) REG(SPI_SPDR) & SPI_SPDR_MASK;
 }
 
 /***************************************************************
@@ -91,19 +97,11 @@ static uint8_t spiGetByte(void)
 ***************************************************************/
 static void SPI_Send(const uint8_t *buf, long Length )
 {
-	uint8_t Dummy;
-	if ( Length == 0 ) return;
-	while ( Length != 0 ) {
-			/* as long as TNF bit's set, TxFIFO isn¿t full, write */
-		while ( !(SSPSR & 0x02) );
-		SSPDR = *buf;
-			/* Wait until the Busy bit is cleared */
-		while ( !(SSPSR & 0x04) );
-		Dummy = SSPDR; /* Flush the RxFIFO */
-		Length--;
-		buf++;
-	}
-	return;
+  while ( Length != 0 ) {
+    spiPutByte(*buf);
+    Length--;
+    buf++;
+  }
 }
 
 /***************************************************************
@@ -115,11 +113,10 @@ static void SPI_Send(const uint8_t *buf, long Length )
 ***************************************************************/
 static void SPI_Read (uint8_t *buf, long Length)
 {
-int	i;
-	for (i=0; i<Length; i++) {
-		SSPDR = (REG16) 0xff; while (SSPSR & SSP_BSY);
-		buf[i] = SSPDR;
-	}
+  int i;
+  for (i=0; i<Length; i++) {
+    buf[i] = spiGetByte();
+  }
 }
 
 
@@ -129,7 +126,7 @@ int	i;
  *
  * get response status byte and see if it matches
  * what we are looking for.
- * return True if we DID get what we wanted.
+ * return true if we DID get what we wanted.
  *
 ******************************************************/
 static bool mmcStatus(uint8_t response)
@@ -147,7 +144,7 @@ uint8_t	resultStatus;
  *
  * condition MMC for operation
  *
- * Returns True if all went well or False if not good.
+ * Returns true if all went well or false if not good.
  *
 ******************************************************/
 bool mmcInit(void)
@@ -158,7 +155,7 @@ bool	result;
 	for (count = 0; count < 10; count++) spiPutByte(0xFF);
 	selectMMC();
 	SPI_Send (cmdReset, 6);
-	if (mmcStatus(StatusIdle) == False) { unselectMMC(); spiGetByte(); return False; }
+	if (mmcStatus(StatusIdle) == false) { unselectMMC(); spiGetByte(); return false; }
 	count = 255;
 	do {
 		SPI_Send (cmdInitCard, 6);
@@ -166,7 +163,7 @@ bool	result;
 	} while ((!mmcStatus(0x00)) && (count > 0));
 	unselectMMC();
 	spiGetByte();
-	if (count == 0) return False;
+	if (count == 0) return false;
 	selectMMC();
 	SPI_Send (cmdSetBlock, 6);
 	result = mmcStatus(0x00);
@@ -182,7 +179,7 @@ bool	result;
  *  sector number to read, target buffer addr
  *  offset into sector and number of bytes read.
  *
- * return True on error, False if all went well.
+ * return true on error, false if all went well.
  *
 ******************************************************/
 bool mmcReadBlock(long sector, uint8_t * buf)
@@ -200,9 +197,9 @@ bool mmcReadBlock(long sector, uint8_t * buf)
 			SPI_Read (buf, RDCF_SECTOR_SIZE);
 				// read off, and discard, CRC bytes.
 			spiGetByte(); spiGetByte();
-		} else { unselectMMC(); spiGetByte(); return True; }
-	} else { unselectMMC(); spiGetByte(); return True; }
-	unselectMMC(); spiGetByte(); return False;
+		} else { unselectMMC(); spiGetByte(); return true; }
+	} else { unselectMMC(); spiGetByte(); return true; }
+	unselectMMC(); spiGetByte(); return false;
 }
 
 /******************************************************
@@ -230,7 +227,7 @@ uint8_t	result = 0;
  *   sector to write and source buffer.
  * this always writes RDCF_SECTOR_SIZE chunks of one sector
  *
- * returns True on error, False if all went well.
+ * returns true on error, false if all went well.
  *
 ******************************************************/
 
@@ -256,18 +253,18 @@ int	result = 0;
 				// something went wrong with block write.
 			unselectMMC();	
 			spiGetByte();
-			return True;
+			return true;
 		}
 	} else {
 			// failed to get "ok" for CMD24.
-		unselectMMC();	spiGetByte(); return True;
+		unselectMMC();	spiGetByte(); return true;
 	}
 		// wait for operation to complete itself.
 		// we wait until the card is no longer busy.
 	result = getWriteResultCode();
 		// no longer busy, proceed.
 	unselectMMC(); spiGetByte();
-	return False;
+	return false;
 }
 
 // vi:nowrap:
