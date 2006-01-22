@@ -43,6 +43,7 @@
 	=> pclk = cclk = 59MHz
 */
 #define VPBDIV_VAL	1
+// FIXME should be 1
 
 /* 
 	SCB

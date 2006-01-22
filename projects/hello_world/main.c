@@ -26,11 +26,11 @@ int main ()
     int32_t val;
     
     cc3_system_setup ();
-    cc3_uart0_init (115200,UART_8N1,UART_STDOUT);
+   /* cc3_uart0_init (115200,UART_8N1,UART_STDOUT);
 
-    cc3_uart1_init (9600,UART_8N1,UART_STDERR);
+ //   cc3_uart1_init (9600,UART_8N1,UART_STDERR);
     cc3_camera_init ();
-    printf ("CMUcam3 Starting up\n");
+   printf ("CMUcam3 Starting up\n");
     cc3_set_led (true);
     
     cc3_wait_ms(500);
@@ -40,12 +40,16 @@ int main ()
     printf ("timer= %d\n", clock());
     printf ("cc3 timer= %d\n", cc3_timer());
 
-
     printf("initializing SPI...\r\n");
-    cc3_spi0_init();
+*/    cc3_spi0_init();
 
-    printf("initializing MMC...\r\n");
+    //printf("initializing MMC...\r\n");
     if (!initMMCdrive()) {
+    } 
+    cc3_uart0_init (115200,UART_8N1,UART_STDOUT);
+    cc3_camera_init ();
+    cc3_set_led (true);
+    cc3_wait_ms(1000);
       printf("success\r\n");
       
       printf("IsValid: %d\r\n"
@@ -68,11 +72,11 @@ int main ()
 	     DriveDesc.NumberRootDirEntries,
 	     DriveDesc.DataStartSector,
 	     DriveDesc.MaxDataSector);
-    } else {
+    /*} else {
       printf("fail\r\n");
-    }
+    }*/
     
-    cc3_wait_ms(300000);
+    cc3_wait_ms(30000);
 
     printf ("Setting up Image Parameters\n");
    // if( cc3_pixbuf_set_roi( 0,0,88,144 )==0 ) printf( "Error Setting region of interest\n" );

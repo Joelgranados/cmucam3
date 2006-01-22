@@ -41,9 +41,11 @@ uint8_t cmdSetBlock [] = { CMD16, 0, 0, 2, 0, 0xff };
 void cc3_spi0_init (void)
 {// setup basic operation of the SPI0 controller.
   // set pins for SPI0 operation.
-  REG(PCB_PINSEL0) = REG(PCB_PINSEL0) | _CC3_SPI_PINSEL;
+ // REG(PCB_PINSEL0) = REG(PCB_PINSEL0) | _CC3_SPI_PINSEL;
+  REG(PCB_PINSEL0) = ((~_CC3_SPI_MASK) & REG(PCB_PINSEL0)) | _CC3_SPI_PINSEL;
+  //REG(PCB_PINSEL0) = 0x5500;
   // set clock rate to approx 7.4975 MHz?
-  REG(SPI_SPCCR) = 8;
+  REG(SPI_SPCCR) = 254;
   // just turn on master mode for now.
   // clock is rising edge, pre-drive data bit before clock.
   // Most significant bit shifted out first.

@@ -12,7 +12,7 @@
  1 0 9 8 | 7 6 5 4 | 3 2 1 0 | 9 8 7 6 | 5 4 3 2 | 1 0 9 8 | 7 6 5 4 | 3 2 1 0
 */
 
-#define _CC3_DEFAULT_PORT_DIR		0x003EFD89
+#define _CC3_DEFAULT_PORT_DIR		0x003EFD99
 //#define DEFAULT_PORT_DIR	0x0 | BUF_WEE | CAM_RESET | BUF_WRST | BUF_RRST | BUF_RCK | BUF_RESET
 
 // I2C Config Constants
@@ -44,7 +44,8 @@
 #define _CC3_SERVO_3 		0x00100000	
 
 // SPI
-#define _CC3_SPI_PINSEL         0x00001500
+#define _CC3_SPI_MASK           0x00003F00
+#define _CC3_SPI_PINSEL         0x00005500
 #define _CC3_SPI_SPIF           0x00000080
 
 // MMC
