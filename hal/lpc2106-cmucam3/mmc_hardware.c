@@ -18,6 +18,7 @@
 #include <time.h>
 #include "rdcf2.h"
 
+#define SPI_RW_TIMEOUT 10000
 #define MMC_CMD_SIZE 8
 uint8_t MMCCmd[MMC_CMD_SIZE];
 
@@ -45,7 +46,7 @@ void cc3_spi0_init (void)
   REG(PCB_PINSEL0) = ((~_CC3_SPI_MASK) & REG(PCB_PINSEL0)) | _CC3_SPI_PINSEL;
   //REG(PCB_PINSEL0) = 0x5500;
   // set clock rate to approx 7.4975 MHz?
-  REG(SPI_SPCCR) = 254;
+  REG(SPI_SPCCR) = 8;
   // just turn on master mode for now.
   // clock is rising edge, pre-drive data bit before clock.
   // Most significant bit shifted out first.
@@ -64,7 +65,7 @@ static unsigned char dummyReader;
 
 static void selectMMC (void)
 {// select SPI target and light the LED.
-  printf("selectMMC\r\n");
+  //printf("selectMMC\r\n");
 
   REG(GPIO_IOCLR) = _CC3_MMC_CS;   // chip select (neg true)
   cc3_set_led(true);
@@ -72,7 +73,7 @@ static void selectMMC (void)
 
 static void unselectMMC (void)
 {// unselect SPI target and extinguish the LED.
-  printf("unselectMMC\r\n");
+  //printf("unselectMMC\r\n");
 
   REG(GPIO_IOSET) = _CC3_MMC_CS;   // chip select (neg true)
   cc3_set_led(false);
@@ -80,12 +81,18 @@ static void unselectMMC (void)
 
 static void spiPutByte(uint8_t inBuf)
 {// spit a byte of data at the MMC.
-  printf("spiPutByte 0x%x ", inBuf);
-
+  //printf("spiPutByte 0x%x ", inBuf);
+uint32_t to;
+  to=0;
   REG(SPI_SPDR) = SPI_SPDR_MASK & inBuf; 
-  while (!(REG(SPI_SPSR) & _CC3_SPI_SPIF));  // wait for bit
+  //while (!(REG(SPI_SPSR) & _CC3_SPI_SPIF));  // wait for bit
+  while (!(REG(SPI_SPSR) & _CC3_SPI_SPIF))  // wait for bit
+  {
+	to++;
+	if(to>SPI_RW_TIMEOUT) return;
+  }
 
-  printf("(SPI_SPSR 0x%x)\r\n", (uint8_t) REG(SPI_SPSR));
+  //printf("(SPI_SPSR 0x%x)\r\n", (uint8_t) REG(SPI_SPSR));
 
   // clear bit
   dummyReader = (uint8_t) REG(SPI_SPDR) & SPI_SPDR_MASK;
@@ -94,15 +101,20 @@ static void spiPutByte(uint8_t inBuf)
 static uint8_t spiGetByte(void)
 {// read one byte from the MMC card.
   uint8_t result;
-  
-  printf("sgb ");
+  uint32_t to;
+   to=0; 
+  //printf("sgb ");
   REG(SPI_SPDR) = SPI_SPDR_MASK & 0xFF;      // fake value, maybe XXX
-  while (!(REG(SPI_SPSR) & _CC3_SPI_SPIF));  // wait for bit
-
-  printf("(SPI_SPSR 0x%x) ", (uint8_t) REG(SPI_SPSR));
+  //while (!(REG(SPI_SPSR) & _CC3_SPI_SPIF));  // wait for bit
+  while (!(REG(SPI_SPSR) & _CC3_SPI_SPIF))  // wait for bit
+   {
+	  to++;
+	  if(to>SPI_RW_TIMEOUT) return;
+   } 
+  //printf("(SPI_SPSR 0x%x) ", (uint8_t) REG(SPI_SPSR));
   result = (uint8_t) REG(SPI_SPDR) & SPI_SPDR_MASK;
 
-  printf("0x%x\r\n", result);
+  //printf("0x%x\r\n", result);
 
   return result;
 }
@@ -150,7 +162,8 @@ static void SPI_Read (uint8_t *buf, long Length)
 ******************************************************/
 static bool mmcStatus(uint8_t response)
 {
-int count = 4000;
+//int count = 4000;
+int count = 100;
 uint8_t	resultStatus;
 	resultStatus = ~response;
 	while (resultStatus != response && --count) resultStatus = spiGetByte();
@@ -174,7 +187,7 @@ bool	result;
 	for (count = 0; count < 10; count++) spiPutByte(0xFF);
 	selectMMC();
 	SPI_Send (cmdReset, 6);
-	if (mmcStatus(StatusIdle) == false) { unselectMMC(); spiGetByte(); return false; }
+	if (mmcStatus(StatusIdle) == false) { unselectMMC(); spiGetByte();  return false; }
 	count = 255;
 	do {
 		SPI_Send (cmdInitCard, 6);

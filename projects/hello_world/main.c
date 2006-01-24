@@ -26,32 +26,39 @@ int main ()
     int32_t val;
     
     cc3_system_setup ();
-   /* cc3_uart0_init (115200,UART_8N1,UART_STDOUT);
+    cc3_uart0_init (115200,UART_8N1,UART_STDOUT);
 
  //   cc3_uart1_init (9600,UART_8N1,UART_STDERR);
     cc3_camera_init ();
    printf ("CMUcam3 Starting up\n");
     cc3_set_led (true);
     
-    cc3_wait_ms(500);
-    fprintf(stderr, "Can you hear the CMUcam?\n" );
+ //   cc3_wait_ms(500);
+//    fprintf(stderr, "Can you hear the CMUcam?\n" );
      
-    cc3_servo_init ();
-    printf ("timer= %d\n", clock());
-    printf ("cc3 timer= %d\n", cc3_timer());
+   // cc3_servo_init ();
+   // printf ("timer= %d\n", clock());
+   // printf ("cc3 timer= %d\n", cc3_timer());
 
     printf("initializing SPI...\r\n");
-*/    cc3_spi0_init();
+   REG (GPIO_IOSET) = _CC3_CAM_RESET; 
+   // cc3_spi0_init();
 
     //printf("initializing MMC...\r\n");
-    if (!initMMCdrive()) {
-    } 
-    cc3_uart0_init (115200,UART_8N1,UART_STDOUT);
-    cc3_camera_init ();
-    cc3_set_led (true);
-    cc3_wait_ms(1000);
+   
+    /*if (!initMMCdrive()) {
       printf("success\r\n");
-      
+      cc3_spi0_init();
+      cc3_wait_ms(1000);
+    } */
+    
+   cc3_spi0_init();
+   while (initMMCdrive()) {
+      printf("retry\r\n");
+      cc3_wait_ms(1000);
+    } 
+     
+    
       printf("IsValid: %d\r\n"
 	     "SectorsPerFAT: %d\r\n"
 	     "SectorsPerCluster: %d\r\n"
@@ -76,7 +83,7 @@ int main ()
       printf("fail\r\n");
     }*/
     
-    cc3_wait_ms(30000);
+    cc3_wait_ms(3000);
 
     printf ("Setting up Image Parameters\n");
    // if( cc3_pixbuf_set_roi( 0,0,88,144 )==0 ) printf( "Error Setting region of interest\n" );
