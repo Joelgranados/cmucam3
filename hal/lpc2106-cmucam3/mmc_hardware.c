@@ -18,7 +18,6 @@
 #include <time.h>
 #include "rdcf2.h"
 
-#define SPI_RW_TIMEOUT 10000
 #define MMC_CMD_SIZE 8
 uint8_t MMCCmd[MMC_CMD_SIZE];
 
@@ -85,12 +84,7 @@ static void spiPutByte(uint8_t inBuf)
 uint32_t to;
   to=0;
   REG(SPI_SPDR) = SPI_SPDR_MASK & inBuf; 
-  //while (!(REG(SPI_SPSR) & _CC3_SPI_SPIF));  // wait for bit
-  while (!(REG(SPI_SPSR) & _CC3_SPI_SPIF))  // wait for bit
-  {
-	to++;
-	if(to>SPI_RW_TIMEOUT) return;
-  }
+  while (!(REG(SPI_SPSR) & _CC3_SPI_SPIF));  // wait for bit
 
   //printf("(SPI_SPSR 0x%x)\r\n", (uint8_t) REG(SPI_SPSR));
 
@@ -105,12 +99,7 @@ static uint8_t spiGetByte(void)
    to=0; 
   //printf("sgb ");
   REG(SPI_SPDR) = SPI_SPDR_MASK & 0xFF;      // fake value, maybe XXX
-  //while (!(REG(SPI_SPSR) & _CC3_SPI_SPIF));  // wait for bit
-  while (!(REG(SPI_SPSR) & _CC3_SPI_SPIF))  // wait for bit
-   {
-	  to++;
-	  if(to>SPI_RW_TIMEOUT) return;
-   } 
+  while (!(REG(SPI_SPSR) & _CC3_SPI_SPIF));  // wait for bit
   //printf("(SPI_SPSR 0x%x) ", (uint8_t) REG(SPI_SPSR));
   result = (uint8_t) REG(SPI_SPDR) & SPI_SPDR_MASK;
 
