@@ -151,8 +151,7 @@ static void SPI_Read (uint8_t *buf, long Length)
 ******************************************************/
 static bool mmcStatus(uint8_t response)
 {
-//int count = 4000;
-int count = 100;
+int count = 4000;
 uint8_t	resultStatus;
 	resultStatus = ~response;
 	while (resultStatus != response && --count) resultStatus = spiGetByte();
