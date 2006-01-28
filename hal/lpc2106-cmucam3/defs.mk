@@ -12,9 +12,11 @@ ifeq ($(strip $(HALDIR)),)
   HALDIR=.
 endif
 
+
+DASH_THUMB=-thumb
 ifeq ($(strip $(thumb)),1)
   THUMB_FLAGS=-mthumb -mthumb-interwork
-  THUMB_SUFFIX=-thumb
+  THUMB_SUFFIX=$(DASH_THUMB)
 endif
 
 LIBS=
