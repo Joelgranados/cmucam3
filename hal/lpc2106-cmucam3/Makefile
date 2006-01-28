@@ -1,15 +1,24 @@
 include defs.mk
 
-OBJS=interrupt.o cc3.o cc3_hal.o LPC2100.o syscalls.o startup.o serial.o servo.o \
-	rdcf2.o mmc_init.o mmc_hardware.o mmc_module.o
+CSOURCES=interrupt.c cc3.c cc3_hal.c LPC2100.c syscalls.c serial.c \
+	servo.c rdcf2.c mmc_init.c mmc_hardware.c mmc_module.c
+INCLUDES=cc3_hal.h devices.h ioctl.h lpc_config.h rdcf2.h servo.h \
+	cc3_pin_defines.h interrupt.h LPC2100.h mmc_hardware.h serial.h spi.h
+ASMSOURCES=startup.s
 
+
+COBJS=$(patsubst %.c, %$(THUMB_SUFFIX).o,$(CSOURCES))
+ASMOBJS=$(patsubst %.s, %$(THUMB_SUFFIX).o,$(ASMSOURCES))
 
 all: $(HALLIB)
 
-startup.o: startup.s
+$(ASMOBJS): %$(THUMB_SUFFIX).o : %.s $(INCLUDES)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-$(HALLIB): $(OBJS)
+$(COBJS): %$(THUMB_SUFFIX).o : %.c $(INCLUDES)
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+$(HALLIB): $(COBJS) $(ASMOBJS)
 	$(AR) rs $@ $^
 
 

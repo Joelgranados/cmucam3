@@ -10,30 +10,30 @@ HALDIR=../../hal/$(hal)
 include $(HALDIR)/defs.mk
 
 
-OBJDIR=build-$(HALNAME)
+OBJDIR=$(HALNAME)_buildfiles
 OBJS=$(patsubst %.c, $(OBJDIR)/%.o,$(CSOURCES))
 
 # targets
 
-all: $(HALNAME)-$(PROJECT).hex
+all: $(PROJECT)_$(HALNAME).hex
 
 $(OBJDIR):
 	mkdir $@
 
-$(HALNAME)-$(PROJECT).hex: $(HALNAME)-$(PROJECT)
+$(PROJECT)_$(HALNAME).hex: $(PROJECT)_$(HALNAME)
 	$(OBJCOPY) -O ihex $< $@
 
-$(HALNAME)-$(PROJECT): $(OBJS) $(HALDIR)/$(HALLIB)
+$(PROJECT)_$(HALNAME): $(OBJS) $(HALDIR)/$(HALLIB)
 	$(CC) -o $@ $(OBJS) -L$(HALDIR) \
-	-Wl,-whole-archive -lhal-$(hal) -Wl,-no-whole-archive $(LDFLAGS)
+	-Wl,-whole-archive -lhal-$(HALNAME) -Wl,-no-whole-archive $(LDFLAGS)
 
 $(OBJS): $(OBJDIR)/%.o : %.c $(INCLUDES) $(OBJDIR)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 clean:
 	$(RM) *.hex
-	$(RM) $(HALNAME)-$(PROJECT)
-	$(RM) $(HALNAME)-$(PROJECT).exe
+	$(RM) $(PROJECT)_$(HALNAME)
+	$(RM) $(PROJECT)_$(HALNAME).exe
 	$(RM) -r $(OBJDIR)
 
 
