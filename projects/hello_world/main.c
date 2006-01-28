@@ -1,3 +1,16 @@
+/*
+ * Hello World!
+ *
+ * This program should be changed to:
+ *  1. Print "Hello, World!\n"
+ *  2. Print the root directory listing of the MMC
+ *  3. Flash 2 LEDs
+ *  4. Cycle through the other 2 servos
+ *  5. Enter a loop waiting for Enter, upon which it prints
+ *     the average brightness of the scene from the camera
+ */
+
+
 #include "LPC2100.h"
 #include "cc3.h"
 #include "interrupt.h"
@@ -26,7 +39,8 @@ int main ()
     uint32_t i = 0;
     uint32_t cnt = 1;
     int32_t val;
-    
+
+    // setup system    
     cc3_system_setup ();
     cc3_uart0_init (115200,UART_8N1,UART_STDOUT);
 
@@ -47,6 +61,10 @@ int main ()
    while(1); 
     printf ("CMUcam3 Starting up\n");
     cc3_set_led (true);
+
+
+
+
     
  //   cc3_wait_ms(500);
 //    fprintf(stderr, "Can you hear the CMUcam?\n" );
