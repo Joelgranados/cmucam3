@@ -15,6 +15,8 @@
 void image_send_direct (int size_x, int size_y);
 void image_touch (int size_x, int size_y);
 void ppm_send_direct (int size_x, int size_y);
+void ppm_send_direct_p6 (int size_x, int size_y);
+void ppm_send_direct_p2 (int size_x, int size_y);
 void ppm_send_mem(int size_x, int size_y, cc3_pixel_t *img);
 
 cc3_pixel_t my_img[144][88];
@@ -30,7 +32,20 @@ int main ()
 
  //   cc3_uart1_init (9600,UART_8N1,UART_STDERR);
     cc3_camera_init ();
-   printf ("CMUcam3 Starting up\n");
+   
+    cc3_set_resolution(CC3_HIGH_RES);
+    cc3_set_colorspace(CC3_YCRCB);
+    //cc3_set_auto_white_balance(true);
+    //cc3_set_auto_exposure(true);
+    cc3_set_brightness(140);
+    cc3_set_contrast(190);
+    cc3_wait_ms(1000);
+    cc3_set_led (true);
+    //ppm_send_direct (cc3_g_current_frame.width, cc3_g_current_frame.height);
+    ppm_send_direct_p2(cc3_g_current_frame.width, cc3_g_current_frame.height);
+    cc3_set_led (false);
+   while(1); 
+    printf ("CMUcam3 Starting up\n");
     cc3_set_led (true);
     
  //   cc3_wait_ms(500);
@@ -52,7 +67,7 @@ int main ()
       cc3_wait_ms(1000);
     } */
     
-   cc3_spi0_init();
+  /* cc3_spi0_init();
    while (initMMCdrive()) {
       printf("retry\r\n");
       cc3_wait_ms(1000);
@@ -79,11 +94,12 @@ int main ()
 	     DriveDesc.NumberRootDirEntries,
 	     DriveDesc.DataStartSector,
 	     DriveDesc.MaxDataSector);
-    /*} else {
+    */
+   /*} else {
       printf("fail\r\n");
     }*/
     
-    cc3_wait_ms(3000);
+    //cc3_wait_ms(3000);
 
     printf ("Setting up Image Parameters\n");
    // if( cc3_pixbuf_set_roi( 0,0,88,144 )==0 ) printf( "Error Setting region of interest\n" );
@@ -95,7 +111,6 @@ int main ()
 
     printf( "width=%d height=%d\n", cc3_g_current_frame.width, cc3_g_current_frame.height);
     ppm_send_direct (cc3_g_current_frame.width, cc3_g_current_frame.height);
-    while(1);
     while (1) {
         scanf ("%d", &val);
 	cc3_pixbuf_load();
@@ -168,7 +183,39 @@ void ppm_send_direct (int size_x, int size_y)
     }
 
 }
+void ppm_send_direct_p6 (int size_x, int size_y)
+{
+    int x, y, val;
+    cc3_pixbuf_load ();
+    printf ("P6 %d %d 255\n", size_x, size_y);
+    for (y = 0; y < size_y; y++) {
+        for (x = 0; x < size_x; x++) {
+            val = cc3_pixbuf_read ();
+            //if(val==0) { printf( "Damn, error in pixbuf_read()...\r\n" ); while(1); }
+            printf ("%c%c%c", cc3_g_current_pixel.channel[CC3_RED],
+                    cc3_g_current_pixel.channel[CC3_GREEN],
+                    cc3_g_current_pixel.channel[CC3_BLUE]);
+        }
+     //printf( "\n" );
+    }
 
+}
+
+void ppm_send_direct_p2 (int size_x, int size_y)
+{
+    int x, y, val;
+    cc3_pixbuf_load ();
+    printf ("P2\n%d %d\n255\n", size_x, size_y);
+    for (y = 0; y < size_y; y++) {
+        for (x = 0; x < size_x; x++) {
+            val = cc3_pixbuf_read ();
+            //if(val==0) { printf( "Damn, error in pixbuf_read()...\r\n" ); while(1); }
+            printf ("%d ", cc3_g_current_pixel.channel[CC3_Y]);
+        }
+     printf( "\n" );
+    }
+
+}
 
 void image_send_direct (int size_x, int size_y)
 {
