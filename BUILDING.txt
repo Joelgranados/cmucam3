@@ -1,0 +1,5 @@
+To build the cc3 system, you need GNU Make and a version of GCC.
+The system is split into 2 main parts, "hal" and "projects".
+
+Inside the hal directory are directories, one each for a particular
+kind of hardware.
