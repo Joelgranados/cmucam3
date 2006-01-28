@@ -1,8 +1,15 @@
+Welcome
+=======
+
 To build the cc3 system, you need GNU Make and a version of GCC.  The
 system is split into 2 main parts, "hal" and "projects".
 
-Inside the hal directory are directories, one each for a particular
-kind of hardware.
+Inside the hal directory are more directories, one each for a
+particular kind of hardware.
+
+
+Compiler
+========
 
 Currently, the only supported hal is "lpc2106-cmucam3". To build using
 this hal, you'll need the arm-none-eabi-* style GCC tools from CodeSourcery.
@@ -16,8 +23,16 @@ thing to change is COMPILER_PREFIX, in case you have a custom compiler
 built under a different name.
 
 
-Once you have the compiler, you need to build the system. From the top level,
-invoking make will build all the hal libraries, and will build a subset
-of items in the "projects" directory. Changing SUBDIRS in projects/Makefile
-will change the default projects built. Invoking make in a particular
-project or hal directory will unconditionally build that directory.
+Building
+========
+
+Once you have the compiler, you need to build the system. From the top
+level, invoking make will build all the hal libraries, and will build
+a subset of items in the "projects" directory. 
+
+Changing SUBDIRS in projects/Makefile will change which projects are
+built. Changing SUBDIRS in hal/Makefile will change which ones are
+built.
+
+Invoking make directly from a particular project or hal directory will
+build that directory, regardless of SUBDIRS.
