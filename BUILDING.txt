@@ -11,14 +11,18 @@ particular kind of hardware.
 Compiler
 ========
 
-Each hal specifies which compiler to use. This allows different hardware
+The compiler choice is left up to the hal. This allows different hardware
 platforms to use different compilers.
 
-Currently, the only supported hal is "lpc2106-cmucam3". To build using
-this hal, you'll need the arm-none-eabi-* style GCC tools from CodeSourcery.
-These can be acquired here:
-  http://www.codesourcery.com/gnu_toolchains/arm/download.html
-Get the "EABI" or "Bare Metal" target. 
+Currently, the only supported hal is "lpc2106-cmucam3", which uses a
+version of GCC optimized for the ARM processor. To build using this
+hal, you'll need the arm-none-eabi-* style GCC tools from
+CodeSourcery.  These can be acquired here:
+
+  http://www.codesourcery.com/gnu_toolchains/arm/download.html 
+
+Get the "EABI" or "Bare Metal" target.
+
 
 If you feel like using a different compiler, simply change the
 variables in hal/lpc2106-cmucam3/defs.mk to something else. A popular
