@@ -7,13 +7,13 @@
 
 #include <errno.h>
 #undef errno
+extern int errno;
 
 // register char *stack_ptr asm ("sp");
 // The above line can be used to check the stack pointer
 // uart0_write_hex(stack_ptr);
 
 
-extern int errno;
 
 
 /* prototypes */
