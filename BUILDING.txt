@@ -82,3 +82,15 @@ and build the hals. Otherwise, you will get an error like this:
  No rule to make target `../../hal/lpc2106-cmucam3/libhal-lpc2106-cmucam3.a'
 
 If this happens, go into the hal directory and run make.
+
+
+Environment
+===========
+
+The cc3 system is build upon a standard C99 environment. For the 
+lpc2106-cmucam3 hal, we use Newlib. Information about Newlib is here:
+
+ http://sources.redhat.com/newlib/
+
+Newlib provides all the features a C programmer expects: malloc, free,
+printf, scanf, open, close, read, write, and friends.
