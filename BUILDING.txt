@@ -7,6 +7,8 @@ system is split into 2 main parts, "hal" and "projects".
 Inside the hal directory are more directories, one each for a
 particular kind of hardware.
 
+Currently, there is only one hal.
+
 
 Compiler
 ========
@@ -38,7 +40,7 @@ level, invoking make will build all the hal libraries, and will build
 a subset of items in the "projects" directory. 
 
 Changing SUBDIRS in projects/Makefile will change which projects are
-built. Changing SUBDIRS in hal/Makefile will change which ones are
+built. Changing SUBDIRS in hal/Makefile will change which hals are
 built.
 
 Invoking make directly from a particular project or hal directory will
