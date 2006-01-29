@@ -7,7 +7,7 @@ system is split into 2 main parts, "hal" and "projects".
 Inside the hal directory are more directories, one each for a
 particular kind of hardware.
 
-Currently, there is only one hal.
+Currently, there is only one hal, "lpc2106-cmucam3".
 
 
 Compiler
@@ -39,9 +39,46 @@ Once you have the compiler, you need to build the system. From the top
 level, invoking make will build all the hal libraries, and will build
 a subset of items in the "projects" directory. 
 
+Make sure you've built a hal before trying to build any projects!
+
 Changing SUBDIRS in projects/Makefile will change which projects are
 built. Changing SUBDIRS in hal/Makefile will change which hals are
 built.
 
 Invoking make directly from a particular project or hal directory will
 build that directory, regardless of SUBDIRS.
+
+
+Projects
+========
+
+There are a few projects in the projects directory to get you started.
+The "hello_world" project should be a nice introduction to LEDs, MMC access,
+servos, camera use, and serial communication.
+
+If you want to create a project, duplicate the hello_world directory,
+change the PROJECT variable in Makefile, and start editing code!
+
+
+Makefiles in Projects
+=====================
+
+When using the cc3 build system, you'll be using a Makefile in your
+project directory. See projects/hello_world/Makefile for a description
+of how to use the file for your own projects.
+
+
+Hal vs. Projects
+================
+
+Generally, you will not need to make any changes to anything in hal, unless
+you modify or create new hardware, or if the hal you are using is missing
+some important functionality.
+
+Make sure you've built a hal before trying to build any projects! If you
+are inside the projects directory, make does not know how to go up
+and build the hals. Otherwise, you will get an error like this:
+
+ No rule to make target `../../hal/lpc2106-cmucam3/libhal-lpc2106-cmucam3.a'
+
+If this happens, go into the hal directory and run make.
