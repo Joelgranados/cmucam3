@@ -3,7 +3,9 @@
 #include <sys/unistd.h>
 #include <sys/time.h>
 #include <sys/times.h>
+
 #include "serial.h"
+#include "devices.h"
 
 #include <errno.h>
 #undef errno
@@ -14,6 +16,7 @@ extern int errno;
 // uart0_write_hex(stack_ptr);
 
 
+extern DEVICE_TABLE_ENTRY mmc_driver;
 
 
 /* prototypes */

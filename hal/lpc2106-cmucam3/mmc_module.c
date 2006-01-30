@@ -6,14 +6,16 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <devices.h>
-#include <spi.h>
 #include <ioctl.h>
-#include <rdcf2.h>
+
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <mmc_hardware.h>
+
+#include "devices.h"
+#include "spi.h"
+#include "rdcf2.h"
+#include "mmc_hardware.h"
 
 #include <errno.h>
 #undef errno
