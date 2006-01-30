@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
@@ -6,6 +7,7 @@
 
 #include "serial.h"
 #include "devices.h"
+#include "mmc_ioctl.h"
 
 #include <errno.h>
 #undef errno
@@ -48,22 +50,30 @@ int _write (int file, char *ptr, int len)
 
   //uart0_write("in _write\r\n");
 
-  if (file == UART0OUT_FILENO) {
+  switch (file) {
+  case UART0OUT_FILENO:
     for (i = 0; i < len; i++) {
-        if(_cc3_uart0_select==UART_STDOUT) uart0_putc(*ptr++);
-      	else uart1_putc(*ptr++);
+      if(_cc3_uart0_select==UART_STDOUT) uart0_putc(*ptr++);
+      else uart1_putc(*ptr++);
     }
-  } else if (file == UART1OUT_FILENO) {
+    return i;
+
+  case UART1OUT_FILENO:
     for (i = 0; i < len; i++) {
       if(_cc3_uart1_select==UART_STDOUT) uart0_putc(*ptr++);
-      	else uart1_putc(*ptr++);
+      else uart1_putc(*ptr++);
     }
-  } else {
-    errno = EBADF;
-    return -1;
-  }
+    return i;
 
-  return i;
+  default:
+    // MMC?
+    if (DEVICE_TYPE(file) == mmc_driver.device_type) {
+      return mmc_driver.write(file, ptr, len);
+    } else {
+      errno = EBADF;
+      return -1;
+    }
+  }
 }
 
 int _read (int file, char *ptr, int len)
@@ -72,71 +82,94 @@ int _read (int file, char *ptr, int len)
   char c;
 
   //uart0_write("in _read\r\n");
-  if (file == UART0IN_FILENO) {
+  switch (file) {
+  case UART0IN_FILENO:
     for (i = 0; i < len; i++) {
       if(_cc3_uart0_select==UART_STDOUT) c = uart0_getc();
       else c = uart1_getc();
-	if(_cc3_cr_lf_read_mode_uart0==CC3_UART_CR_OR_LF) if(c=='\r') c='\n';
-	if((*ptr++ = c)=='\n') { i++; break; }
+      if(_cc3_cr_lf_read_mode_uart0==CC3_UART_CR_OR_LF) if(c=='\r') c='\n';
+      if((*ptr++ = c)=='\n') { i++; break; }
     }
-  } else if (file == UART1IN_FILENO) {
+    return i;
+
+  case UART1IN_FILENO:
     for (i = 0; i < len; i++) {
       if(_cc3_uart1_select==UART_STDOUT) c = uart0_getc();
       else c = uart1_getc();
-	if(_cc3_cr_lf_read_mode_uart1==CC3_UART_CR_OR_LF) if(c=='\r') c='\n';
-	if((*ptr++ = c)=='\n') { i++; break; }
+      if(_cc3_cr_lf_read_mode_uart1==CC3_UART_CR_OR_LF) if(c=='\r') c='\n';
+      if((*ptr++ = c)=='\n') { i++; break; }
     }
-  } else {
-    errno = EBADF;
-    return -1;
-  }
+    return i;
 
-  return i;
+  default:
+    // MMC?
+    if (DEVICE_TYPE(file) == mmc_driver.device_type) {
+      return mmc_driver.read(file, ptr, len);
+    } else {
+      errno = EBADF;
+      return -1;
+    }
+  }
 }
 
 int kill(int pid __attribute((unused)), 
 	 int sig __attribute((unused)))
 {
-  errno=EINVAL;
+  errno = EINVAL;
   return(-1);
 }
 
 void _exit(int status __attribute((unused)))
 {
+  // XXX: should call cc3_power_down
   while(1);
 }
 
-int _close(int file __attribute((unused)))
+int _close(int file)
 {
-  //uart_0write("in _close\r\n");
-  //uart_0write(" returning\r\n");
-  return 0;
+  // MMC?
+  if (DEVICE_TYPE(file) == mmc_driver.device_type) {
+    return mmc_driver.close(file);
+  } else {
+    return 0;
+  }
 }
 
-_off_t _lseek(int file __attribute((unused)), 
-	      _off_t ptr __attribute((unused)), 
-	      int dir __attribute((unused)))
+_off_t _lseek(int file, _off_t ptr, int dir)
 {
-  //uart_0write("in _lseek\r\n");
-  //uart_0write(" returning\r\n");
-  return 0;
+  // MMC?
+  if (DEVICE_TYPE(file) == mmc_driver.device_type) {
+    struct ioctl_seek seeker;
+
+    seeker.pos = &ptr;
+    seeker.whence = &dir;
+    return mmc_driver.ioctl(file, IOCTL_MMC_SEEK, &seeker);
+  } else {
+    return 0;
+  }
 }
 
-int _fstat(int file __attribute((unused)), 
-	   struct stat *st __attribute((unused)))
+int _fstat(int file, struct stat *st)
 {
-  //uart_0write("in _fstat\r\n");
-  st->st_mode = S_IFCHR;	
-  //uart_0write(" returning\r\n");
-  return 0;
+  if (file == UART0IN_FILENO
+      || file == UART0OUT_FILENO
+      || file == UART1IN_FILENO
+      || file == UART1OUT_FILENO) {
+    st->st_mode = S_IFCHR;	
+    return 0;
+  } else {
+    errno = EIO;
+    return -1;
+  }
 }
 
 
-int isatty (int fd __attribute((unused))) 
+int isatty (int file) 
 {
-  //uart_0write("in isatty\r\n");
-  //uart_0write(" returning\r\n");
-  return 1;
+return file == UART0IN_FILENO
+  || file == UART0OUT_FILENO
+  || file == UART1IN_FILENO
+  || file == UART1OUT_FILENO;
 }
 
 int _system(const char *s) 
@@ -150,9 +183,31 @@ int _system(const char *s)
 }
 
 int _link(char *old __attribute((unused)), 
-	  char *new __attribute((unused))){
-  errno = EMLINK;
+	  char *new __attribute((unused))) {
+  // we do not support hard links
+  errno = EPERM;
   return -1;
+}
+
+
+
+
+static bool is_mmc_filename(const char *name) {
+  // filename starts with "c:/"
+  return name[0] == 'C' && name[1] == ':' && name[2] == '/';
+}
+
+static void normalize_mmc_filename(char *name) {
+  // make all caps, and change '\' to '/'
+  int i = 0;
+  char c;
+  while ((c = name[i]) != '\0') {
+    if (c == '\\') {
+      name[i] = '/';
+    } else {
+      name[i] = toupper(c);
+    }
+  }
 }
 
 int _open(const char *name __attribute((unused)), 
