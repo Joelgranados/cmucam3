@@ -66,6 +66,7 @@ static void selectMMC (void)
 {// select SPI target and light the LED.
   //printf("selectMMC\r\n");
 
+  REG(GPIO_IODIR) |= _CC3_MMC_CS;  // switch chip select to output
   REG(GPIO_IOCLR) = _CC3_MMC_CS;   // chip select (neg true)
   cc3_set_led(true);
 }
@@ -75,6 +76,7 @@ static void unselectMMC (void)
   //printf("unselectMMC\r\n");
 
   REG(GPIO_IOSET) = _CC3_MMC_CS;   // chip select (neg true)
+  REG(GPIO_IODIR) &= ~_CC3_MMC_CS; // switch chip select to input
   cc3_set_led(false);
 }
 

@@ -1,5 +1,6 @@
-#include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
 #include <sys/time.h>
@@ -19,7 +20,17 @@ extern int errno;
 
 
 extern DEVICE_TABLE_ENTRY mmc_driver;
+static bool mmc_initialized = false;
 
+static void init_mmc(void) {
+  if (mmc_initialized) {
+    return;
+  }
+
+  mmc_initialized = true;
+
+  mmc_driver.init();
+}
 
 /* prototypes */
 int _write (int file, char *ptr, int len);
@@ -31,7 +42,6 @@ int _fstat(int file, struct stat *st);
 int _system(const char *s);
 int _link(char *old, char *new);
 int _open(const char *name, int flags, int mode);
-int _stat(char *file, struct stat *st);
 int _rename(char *oldpath, char *newpath);
 int _gettimeofday (struct timeval *tp, struct timezone *tzp);
 int _kill(int pid, int sig);
@@ -68,6 +78,7 @@ int _write (int file, char *ptr, int len)
   default:
     // MMC?
     if (DEVICE_TYPE(file) == mmc_driver.device_type) {
+      init_mmc();
       return mmc_driver.write(file, ptr, len);
     } else {
       errno = EBADF;
@@ -104,6 +115,7 @@ int _read (int file, char *ptr, int len)
   default:
     // MMC?
     if (DEVICE_TYPE(file) == mmc_driver.device_type) {
+      init_mmc();
       return mmc_driver.read(file, ptr, len);
     } else {
       errno = EBADF;
@@ -129,6 +141,7 @@ int _close(int file)
 {
   // MMC?
   if (DEVICE_TYPE(file) == mmc_driver.device_type) {
+    init_mmc();
     return mmc_driver.close(file);
   } else {
     return 0;
@@ -143,6 +156,9 @@ _off_t _lseek(int file, _off_t ptr, int dir)
 
     seeker.pos = &ptr;
     seeker.whence = &dir;
+
+    init_mmc();
+
     return mmc_driver.ioctl(file, IOCTL_MMC_SEEK, &seeker);
   } else {
     return 0;
@@ -207,26 +223,67 @@ static void normalize_mmc_filename(char *name) {
     } else {
       name[i] = toupper(c);
     }
+    i++;
   }
 }
 
-int _open(const char *name __attribute((unused)), 
-	  int flags __attribute((unused)), 
-	  int mode __attribute((unused))){
-  errno = ENOENT;
-  return -1;
+int _open(const char *name, int flags, int mode){
+  int result = -1;
+  char *norm = strdup(name);
+
+  if (norm == NULL) {
+    errno = ENOMEM;
+    return -1;
+  }
+
+  normalize_mmc_filename(norm);
+
+  if (is_mmc_filename(norm)) {
+    // skip "c:/" part
+    init_mmc();
+    result = mmc_driver.open(&norm[3], flags, mode);
+  } else {
+    errno = ENOENT;
+  }
+
+  free(norm);
+  return result;
 }
 
-int _stat(char *file __attribute((unused)), 
-	  struct stat *st) {
-  st->st_mode = S_IFCHR;
-  return 0;
-}
+int _rename(char *oldpath, char *newpath) { 
+  int result = -1;
+  char *n_oldpath;
+  char *n_newpath;
 
-int _rename(char *oldpath __attribute((unused)), 
-	    char *newpath __attribute((unused))) {
-  errno = EINVAL;
-  return -1;
+  n_oldpath = strdup(oldpath);
+  if (n_oldpath == NULL) {
+    errno = ENOMEM;
+    return -1;
+  }
+  n_newpath = strdup(newpath);
+  if (n_newpath == NULL) {
+    free(n_oldpath);
+    errno = ENOMEM;
+    return -1;
+  }
+
+  normalize_mmc_filename(n_oldpath);
+  normalize_mmc_filename(n_newpath);
+
+  if (is_mmc_filename(n_oldpath) && is_mmc_filename(n_newpath)) {
+    struct ioctl_rename renamer;
+    renamer.oldname = &n_oldpath[3];  // skip "c:/"
+    renamer.newname = n_newpath;
+
+    init_mmc();
+    result = mmc_driver.ioctl(0, IOCTL_MMC_RENAME, &renamer);
+  } else {
+    errno = EINVAL;
+  }
+
+  free(n_oldpath);
+  free(n_newpath);
+  return result;
 }
 
 int _gettimeofday (struct timeval *tp __attribute((unused)), 
@@ -256,9 +313,28 @@ int _times(struct tms *buf) {
   return ticks;
 }
 
-int _unlink(char *name __attribute((unused))) {
-  errno = ENOENT;
-  return -1; 
+int _unlink(char *name) {
+  int result = -1;
+  char *norm = strdup(name);
+
+  if (norm == NULL) {
+    errno = ENOMEM;
+    return -1;
+  }
+
+  normalize_mmc_filename(norm);
+
+  if (is_mmc_filename(norm)) {
+    long ptr = (long) &norm[3];  // skip "c:/"
+
+    init_mmc();
+    result = mmc_driver.ioctl(0, IOCTL_MMC_UNLINK, &ptr);
+  } else {
+    errno = ENOENT;
+  }
+  
+  free(norm);
+  return result;
 }
 
 int _raise(int sig __attribute((unused))) 

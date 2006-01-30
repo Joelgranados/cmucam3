@@ -732,3 +732,10 @@ int cc3_set_contrast (uint8_t level)
     _cc3_set_register_state (); // XXX Don't reset all of them, this is just quick and dirty...
     return 1;
 }
+
+
+bool cc3_read_button (void)
+{
+  bool result = !(REG (GPIO_IOPIN) & _CC3_BUTTON);
+  return result;
+}

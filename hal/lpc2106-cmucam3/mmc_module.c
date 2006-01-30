@@ -45,6 +45,7 @@ static int openFileOnDrive (const char *name, int flags,
 {
   int	result;
   int	handle;
+  
   // is a drive still there?
   if (!DriveDesc.IsValid) { errno = ENODEV; return -1; }
   // find a buffer to use.
