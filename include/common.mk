@@ -20,7 +20,7 @@ all: $(PROJECT)_$(HALNAME).hex
 $(PROJECT)_$(HALNAME).hex: $(PROJECT)_$(HALNAME)
 	@echo "  OBJCOPY $@"
 	@$(OBJCOPY) -O ihex $< $@
-	@$(SIZE) $< $@
+	@$(SIZE) $<
 
 $(PROJECT)_$(HALNAME): $(OBJS) $(HALDIR)/$(HALLIB)
 	@echo "  CC      $@"
