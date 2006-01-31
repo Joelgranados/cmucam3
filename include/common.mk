@@ -17,18 +17,22 @@ OBJS=$(patsubst %.c, $(OBJDIR)/%.o,$(CSOURCES))
 
 all: $(PROJECT)_$(HALNAME).hex
 
-$(OBJDIR):
-	mkdir $@
-
 $(PROJECT)_$(HALNAME).hex: $(PROJECT)_$(HALNAME)
-	$(OBJCOPY) -O ihex $< $@
+	@echo "  OBJCOPY $@"
+	@$(OBJCOPY) -O ihex $< $@
+	@$(SIZE) $< $@
 
 $(PROJECT)_$(HALNAME): $(OBJS) $(HALDIR)/$(HALLIB)
-	$(CC) -o $@ $(OBJS) -L$(HALDIR) \
+	@echo "  CC      $@"
+	@$(CC) -o $@ $(OBJS) -L$(HALDIR) \
 	-Wl,-whole-archive -lhal-$(HALNAME) -Wl,-no-whole-archive $(LDFLAGS)
 
-$(OBJS): $(OBJDIR)/%.o : %.c $(INCLUDES) $(OBJDIR)
-	$(CC) $(CFLAGS) -o $@ -c $<
+$(OBJS): $(OBJDIR)/%.o : %.c $(INCLUDES)
+	@if [ ! -d $(OBJDIR) ]; then $(RM) $(OBJDIR); \
+                                     echo "  MKDIR   $(OBJDIR)"; \
+                                     mkdir $(OBJDIR); fi
+	@echo "  CC      $@"
+	@$(CC) $(CFLAGS) -o $@ -c $<
 
 clean:
 	$(RM) *.hex
