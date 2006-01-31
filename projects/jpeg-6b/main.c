@@ -19,9 +19,9 @@ int main(void) {
 
   cc3_camera_init ();
    
-  cc3_set_colorspace(CC3_YCRCB);
+//  cc3_set_colorspace(CC3_YCRCB);
   cc3_set_resolution(CC3_HIGH_RES);
-
+ // cc3_pixbuf_set_pixel_mode( CC3_DROP_2ND_GREEN );
   cc3_wait_ms(1000);
 
   // init jpeg
@@ -51,7 +51,8 @@ int main(void) {
 
 static struct jpeg_compress_struct cinfo;
 static struct jpeg_error_mgr jerr;
-static cc3_pixel_t *row;
+//static cc3_pixel_t *row;
+uint8_t *row;
 
 void init_jpeg(void) {
   cinfo.err = jpeg_std_error(&jerr);
@@ -61,16 +62,19 @@ void init_jpeg(void) {
   cinfo.image_width = cc3_g_current_frame.width;
   cinfo.image_height = cc3_g_current_frame.height;
   cinfo.input_components = 3;
-  cinfo.in_color_space = JCS_YCbCr;
+ // cinfo.in_color_space = JCS_YCbCr;
+  cinfo.in_color_space = JCS_RGB;
 
   // set image quality, etc.
   jpeg_set_defaults(&cinfo);
 
   // allocate memory for 1 row
-  row = malloc(sizeof(cc3_pixel_t) * cc3_g_current_frame.width);
+  //row = malloc(sizeof(cc3_pixel_t) * cc3_g_current_frame.width);
+  row = malloc(3 * cc3_g_current_frame.width);
 }
 
 void capture_current_jpeg(FILE *f) {
+  int i;
   JSAMPROW row_pointer[1];
   row_pointer[0] = row;
 
@@ -83,7 +87,14 @@ void capture_current_jpeg(FILE *f) {
   // read and compress
   jpeg_start_compress(&cinfo, TRUE);
   while (cinfo.next_scanline < cinfo.image_height) {
-    cc3_pixbuf_read_rows(row, cinfo.image_width, 1);
+       for(i=0; i<(cinfo.image_width*3); i+=3 )
+       {
+	cc3_pixbuf_read();
+	row[i]=cc3_g_current_pixel.channel[CC3_RED];
+	row[i+1]=cc3_g_current_pixel.channel[CC3_GREEN];
+	row[i+2]=cc3_g_current_pixel.channel[CC3_BLUE];
+       } 
+	  //cc3_pixbuf_read_rows(row, cinfo.image_width, 1);
     jpeg_write_scanlines(&cinfo, row_pointer, 1);
   }
   
