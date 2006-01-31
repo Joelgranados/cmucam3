@@ -95,4 +95,5 @@ void capture_current_jpeg(FILE *f) {
 
 void destroy_jpeg(void) {
   jpeg_destroy_compress(&cinfo);
+  free(row);
 }
