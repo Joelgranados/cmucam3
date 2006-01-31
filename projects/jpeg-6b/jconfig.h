@@ -17,7 +17,6 @@
  * EDIT A COPY NAMED JCONFIG.H.
  */
 
-
 /*
  * These symbols indicate the properties of your machine or compiler.
  * #define the symbol if yes, #undef it if no.

@@ -19,7 +19,7 @@ int main(void) {
 
   cc3_camera_init ();
    
-//  cc3_set_colorspace(CC3_YCRCB);
+ // cc3_set_colorspace(CC3_YCRCB);
   cc3_set_resolution(CC3_HIGH_RES);
  // cc3_pixbuf_set_pixel_mode( CC3_DROP_2ND_GREEN );
   cc3_wait_ms(1000);
@@ -70,11 +70,12 @@ void init_jpeg(void) {
 
   // allocate memory for 1 row
   //row = malloc(sizeof(cc3_pixel_t) * cc3_g_current_frame.width);
-  row = malloc(3 * cc3_g_current_frame.width);
+  row = malloc( 3 * cc3_g_current_frame.width);
+  if(row==NULL) printf( "FUCK, out of memory!\n" );
 }
 
 void capture_current_jpeg(FILE *f) {
-  int i;
+  uint32_t i;
   JSAMPROW row_pointer[1];
   row_pointer[0] = row;
 
@@ -95,6 +96,7 @@ void capture_current_jpeg(FILE *f) {
 	row[i+2]=cc3_g_current_pixel.channel[CC3_BLUE];
        } 
 	  //cc3_pixbuf_read_rows(row, cinfo.image_width, 1);
+
     jpeg_write_scanlines(&cinfo, row_pointer, 1);
   }
   
