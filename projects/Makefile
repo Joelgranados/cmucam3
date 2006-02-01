@@ -1,4 +1,4 @@
-SUBDIRS=cmucam2 hello_world
+SUBDIRS=cmucam2 hello_world jpeg-6b
 
 # Build rules
 all:
