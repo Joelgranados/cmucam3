@@ -64,14 +64,14 @@ int _write (int file, char *ptr, int len)
   case UART0OUT_FILENO:
     for (i = 0; i < len; i++) {
       if(_cc3_uart0_select==UART_STDOUT) uart0_putc(*ptr++);
-      else uart1_putc(*ptr++);
+      else uart0_putc(*ptr++);
     }
     return i;
 
   case UART1OUT_FILENO:
     for (i = 0; i < len; i++) {
       if(_cc3_uart1_select==UART_STDOUT) uart0_putc(*ptr++);
-      else uart1_putc(*ptr++);
+      else uart0_putc(*ptr++);
     }
     return i;
 
@@ -134,6 +134,7 @@ int kill(int pid __attribute((unused)),
 void _exit(int status __attribute((unused)))
 {
   // XXX: should call cc3_power_down
+  printf( "We are now leaving...\n" );
   while(1);
 }
 

@@ -68,7 +68,6 @@ void hello ()
     cc3_set_led (false);
 
 
-
     printf("initializing MMC...\r\n");
    
     mmc_driver.init();
