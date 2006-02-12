@@ -67,6 +67,7 @@ void init_jpeg(void) {
   cinfo.in_color_space = JCS_RGB;
 
   // set image quality, etc.
+  jpeg_set_quality(&cinfo, 100, true);
   jpeg_set_defaults(&cinfo);
 
   // allocate memory for 1 row

@@ -2,10 +2,10 @@
 
 
 # C files to compile
-CSOURCES=main.c
+CSOURCES=main.c hello.c
 
 # header files
-INCLUDES=
+INCLUDES=hello.h
 
 # the name of this project
 PROJECT=hello_world

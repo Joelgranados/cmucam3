@@ -1,3 +1,16 @@
+/*
+ * Hello World!
+ *
+ * This program should be changed to:
+ *  1. Print "Hello, World!\n"
+ *  2. Print the root directory listing of the MMC
+ *  3. Flash 2 LEDs
+ *  4. Cycle through the other 2 servos
+ *  5. Enter a loop waiting for Enter, upon which it prints
+ *     the average brightness of the scene from the camera
+ */
+
+
 #include "LPC2100.h"
 #include "cc3.h"
 #include "interrupt.h"
@@ -24,11 +37,10 @@ static void ppm_send_mem(int size_x, int size_y, cc3_pixel_t *img);
 static cc3_pixel_t my_img[144][88];
 
 extern DEVICE_TABLE_ENTRY mmc_driver;
-/* very simple hello world, showing features and compiling with 
-   separate files */
-int main ()
+
+void hello ()
 {
-  uint32_t i = 0;
+    uint32_t i = 0;
     uint32_t cnt = 1;
     int32_t val;
 
@@ -45,9 +57,10 @@ int main ()
    
     cc3_set_colorspace(CC3_RGB);
     cc3_set_resolution(CC3_HIGH_RES);
-    cc3_set_auto_white_balance(true);
-    cc3_set_auto_exposure(true);
-    
+    //cc3_set_auto_white_balance(true);
+    //cc3_set_auto_exposure(true);
+    cc3_set_brightness(140);
+    cc3_set_contrast(190);
     cc3_wait_ms(1000);
     cc3_set_led (true);
     //ppm_send_direct (cc3_g_current_frame.width, cc3_g_current_frame.height);
@@ -158,10 +171,7 @@ int main ()
 	
 	//ppm_send_direct (cc3_g_current_frame.width, cc3_g_current_frame.height);
     }
-  return 0;
 }
-
-
 
 void image_touch (int size_x, int size_y)
 {
@@ -274,4 +284,3 @@ void image_send_direct (int size_x, int size_y)
     }
     putchar (3);
 }
-
