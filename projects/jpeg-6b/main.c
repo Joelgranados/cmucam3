@@ -29,7 +29,9 @@ int main(void) {
 
   i = 0;
   while(true) {
+    cc3_clr_led(1);
     while(!cc3_read_button());
+    cc3_set_led(1);
     
     char filename[16];
     snprintf(filename, 16, "c:/img%.5d.jpg", i);

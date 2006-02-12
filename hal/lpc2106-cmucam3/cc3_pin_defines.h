@@ -1,7 +1,8 @@
 #ifndef CC3_PIN_DEFINES_H
 #define CC3_PIN_DEFINES_H
 
-#define CMUCAM_BOARD_VERSION   1_0
+#define CMUCAM_BOARD_VERSION_1
+//#define CMUCAM_BOARD_VERSION_0_9
 /*
  1 = output 0 = input
 
@@ -9,7 +10,7 @@
  3 3 2 2 | 2 2 2 2 | 2 2 2 2 | 1 1 1 1 | 1 1 1 1 | 1 1     |         |
  1 0 9 8 | 7 6 5 4 | 3 2 1 0 | 9 8 7 6 | 5 4 3 2 | 1 0 9 8 | 7 6 5 4 | 3 2 1 0
 */
-#ifdef CMUCAM_BOARD_VERSION==1_0
+#ifdef CMUCAM_BOARD_VERSION_1
 /* PIN DEF for version 1.0  */
 
 //#define _CC3_DEFAULT_PORT_DIR		0x003EFD99
@@ -38,12 +39,16 @@
 #define _CC3_BUF_RESET		0x8
 
 // IO pins
-#define _CC3_LED	        0x20	
+	
 
 #define _CC3_SERVO_0 		0x00020000	
 #define _CC3_SERVO_1 		0x00040000	
 #define _CC3_SERVO_2 		0x00080000	
 #define _CC3_SERVO_3 		0x00100000	
+
+#define _CC3_LED_0	        0x20	
+#define _CC3_LED_1	        _CC3_SERVO_2 
+#define _CC3_LED_2	       	_CC3_SERVO_3 
 
 #define _CC3_BUTTON             0x00004000
 
@@ -57,8 +62,9 @@
 
 #endif
 
-#ifdef CMUCAM_BOARD_VERSION==0_9
-/* PIN DEF for version 0.9+  */
+#ifdef CMUCAM_BOARD_VERSION_0_9
+
+// PIN DEF for version 0.9+  
 //#define _CC3_DEFAULT_PORT_DIR		0x003EFD99
 #define _CC3_DEFAULT_PORT_DIR		0x003EBD89
 //#define DEFAULT_PORT_DIR	0x0 | BUF_WEE | CAM_RESET | BUF_WRST | BUF_RRST | BUF_RCK | BUF_RESET
@@ -84,7 +90,10 @@
 #define _CC3_BUF_RESET		0x8
 
 // IO pins
-#define _CC3_LED		0x8000
+#define _CC3_LED_0	        0x8000	
+#define _CC3_LED_1	        _CC3_LED_0
+#define _CC3_LED_2	        _CC3_LED_0	
+
 
 #define _CC3_SERVO_0 		0x00020000	
 #define _CC3_SERVO_1 		0x00040000	
@@ -100,7 +109,9 @@
 
 // MMC
 #define _CC3_MMC_CS             0x00004000
+
 #endif
+
 
 #endif
 

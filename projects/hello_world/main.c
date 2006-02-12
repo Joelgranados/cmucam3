@@ -47,12 +47,14 @@ int main ()
     cc3_set_resolution(CC3_HIGH_RES);
     cc3_set_auto_white_balance(true);
     cc3_set_auto_exposure(true);
-    
+   
+     
     cc3_wait_ms(1000);
-    cc3_set_led (true);
+    cc3_set_led (0);
+    cc3_set_led (1);
+    cc3_set_led (2);
     //ppm_send_direct (cc3_g_current_frame.width, cc3_g_current_frame.height);
     //ppm_send_direct_p2(cc3_g_current_frame.width, cc3_g_current_frame.height);
-    cc3_set_led (false);
 
 
     printf("initializing MMC...\r\n");

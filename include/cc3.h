@@ -125,8 +125,8 @@ int cc3_pixbuf_set_coi( cc3_channel_t chan );
 
 int cc3_pixbuf_set_pixel_mode( cc3_pixel_mode_t mode);
 
-void cc3_set_led(bool);
-
+void cc3_set_led(uint8_t select);
+void cc3_clr_led (uint8_t select);
 /**
  * 1) Enable Camera & FIFO Power
  * 2) Reset Camera
