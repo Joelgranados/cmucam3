@@ -29,15 +29,25 @@ int main(void) {
 
   i = 0;
   while(true) {
+    char filename[16];
     cc3_clr_led(1);
     while(!cc3_read_button());
     cc3_set_led(1);
-    
-    char filename[16];
-    snprintf(filename, 16, "c:/img%.5d.jpg", i);
+  
+   // Check if files exist, if they do then skip over them 
+    do { 
+    	snprintf(filename, 16, "c:/img%.5d.jpg", i);
+    	f = fopen(filename, "r");
+    	if(f!=NULL ) { 
+		printf( "%s already exists...\n",filename ); 
+		i++; 
+		fclose(f);
+		}
+    } while(f!=NULL);
+
+    // print file that you are going to write to stderr
     fprintf(stderr,"%s\r\n", filename);
     f = fopen(filename, "w");
-
     capture_current_jpeg(f);
 
     fclose(f);
@@ -69,8 +79,8 @@ void init_jpeg(void) {
   cinfo.in_color_space = JCS_RGB;
 
   // set image quality, etc.
-  jpeg_set_quality(&cinfo, 100, true);
   jpeg_set_defaults(&cinfo);
+  jpeg_set_quality(&cinfo, 100, true);
 
   // allocate memory for 1 row
   //row = malloc(sizeof(cc3_pixel_t) * cc3_g_current_frame.width);
