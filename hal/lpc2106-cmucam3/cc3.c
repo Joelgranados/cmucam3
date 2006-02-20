@@ -292,6 +292,8 @@ void _cc3_pixbuf_cond_read_4 (bool b0, bool b1, bool b2, bool b3)
 
     break;
   }
+
+  _cc3_second_green_valid = true;
 }
 
 /**
