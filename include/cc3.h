@@ -23,14 +23,12 @@ typedef enum  {
 } cc3_camera_resolution_t;
 
 typedef enum {
-   CC3_GREEN=0,
-   CC3_RED=1,
-   CC3_GREEN2=2,
-   CC3_BLUE=3,
+   CC3_RED=0,
+   CC3_GREEN=1,
+   CC3_BLUE=2,
    CC3_Y=0,
    CC3_CR=1,
-   CC3_Y2=2,
-   CC3_CB=3,
+   CC3_CB=2,
    CC3_ALL
 } cc3_channel_t;
 
@@ -45,27 +43,20 @@ typedef enum {
    CC3_RANDOM
 } cc3_subsample_mode_t ;
 
-typedef enum {
-   CC3_DROP_2ND_GREEN,
-   CC3_BUILD_2ND_PIXEL,
-   CC3_BAYER
-} cc3_pixel_mode_t;
-
 typedef struct {
-    uint16_t raw_width, raw_height;  // raw image width and height
-    uint16_t width, height;  // subsampled and bound width and height
-    uint16_t x0,y0,x1,y1;   // bounding box in frame
-    uint16_t x_loc,y_loc;   // current position in frame
-    uint8_t x_step, y_step;  // subsampling step
-    cc3_channel_t coi;
-    cc3_subsample_mode_t subsample_mode;
-    cc3_pixel_mode_t pixel_mode;
+  uint16_t raw_width, raw_height;  // raw image width and height
+  uint16_t width, height;  // subsampled and bound width and height
+  uint16_t x0,y0,x1,y1;   // bounding box in frame
+  uint16_t x_loc,y_loc;   // current position in frame
+  uint8_t x_step, y_step;  // subsampling step
+  cc3_channel_t coi;
+  cc3_subsample_mode_t subsample_mode;
 } cc3_frame_t;
 
 
 
 typedef struct {
-    uint8_t channel[4];  // index with cc3_channel_t 
+    uint8_t channel[3];  // index with cc3_channel_t 
 } cc3_pixel_t;   
 
 
@@ -86,7 +77,7 @@ void cc3_frame_default(void);
 /**
  * Using the cc3_frame_t reads rows taking into account virtual window and subsampling. 
  */
-int cc3_pixbuf_read_rows(cc3_pixel_t *mem, uint32_t width, uint32_t rows );
+int cc3_pixbuf_read_rows(void *mem, uint32_t width, uint32_t rows );
 
 /**
  * loads cc3_g_current_pixel from fifo
@@ -95,14 +86,9 @@ int cc3_pixbuf_read_rows(cc3_pixel_t *mem, uint32_t width, uint32_t rows );
 int cc3_pixbuf_read(void);                              
 
 /**
- * The following are raw faster, pixel grab routines used by cc3_pixbuf_read_row(). 
+ * advance the fifo by 4, conditionally reading each byte
  */
-void _cc3_pixbuf_read_all(void); 
-void _cc3_pixbuf_read_all_3(void); 
-void _cc3_pixbuf_read_0(void); 
-void _cc3_pixbuf_read_1(void); 
-// No read_2() because it is just the second green channel
-void _cc3_pixbuf_read_3(void); 
+void _cc3_pixbuf_cond_read_4(bool b0, bool b1, bool b2, bool b3); 
 
 
 /**
@@ -122,8 +108,6 @@ int cc3_pixbuf_set_subsample( cc3_subsample_mode_t, uint8_t x_step, uint8_t y_st
  * Sets the channel of interest 1 or all
  */
 int cc3_pixbuf_set_coi( cc3_channel_t chan );
-
-int cc3_pixbuf_set_pixel_mode( cc3_pixel_mode_t mode);
 
 void cc3_set_led(uint8_t select);
 void cc3_clr_led (uint8_t select);
