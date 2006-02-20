@@ -27,6 +27,7 @@ int main(void) {
   // init jpeg
   init_jpeg();
 
+  cc3_set_led(1);
   i = 0;
   while(true) {
     char filename[16];
@@ -48,6 +49,11 @@ int main(void) {
     // print file that you are going to write to stderr
     fprintf(stderr,"%s\r\n", filename);
     f = fopen(filename, "w");
+    if(f==NULL || i>200 )
+    {
+	cc3_set_led(3);
+	while(1);
+    }
     capture_current_jpeg(f);
 
     fclose(f);

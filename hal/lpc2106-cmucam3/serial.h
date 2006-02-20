@@ -7,8 +7,9 @@
 
 #define UART0IN_FILENO   0       // stdin
 #define UART0OUT_FILENO  1       // stdout
-#define UART1IN_FILENO   3       // ?
 #define UART1OUT_FILENO  2       // stderr
+#define UART1IN_FILENO   3       // ?
+#define MMC_FILENO	 4
 
 typedef enum {
 	CC3_UART_CR_LF_NORMAL,

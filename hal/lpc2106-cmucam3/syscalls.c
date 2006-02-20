@@ -219,7 +219,7 @@ static void normalize_mmc_filename(char *name) {
   int i = 0;
   char c;
   while ((c = name[i]) != '\0') {
-    if (c == '\\') {
+    if (c == '\\' ) {
       name[i] = '/';
     } else {
       name[i] = toupper(c);

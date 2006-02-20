@@ -20,6 +20,7 @@ int main ()
     //uart0_write("CMUcam3 v2 Starting up...\r");
     //system_setup ();
     cc3_uart0_init (115200,UART_8N1,UART_STDOUT);
+   // cc3_uart1_init (115200,UART_8N1,UART_STDOUT|UART_STDERR|UART_STDIN);
    // cc3_camera_init ();
    //
    val=setvbuf(stdout, NULL, _IONBF, 0 );
