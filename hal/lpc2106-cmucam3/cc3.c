@@ -22,10 +22,10 @@ static void _cc3_advance_x_loc(void);
 
 static void _cc3_pixbuf_read_from_fifo(void);
 
-static uint8_t  _cc3_uart0_select;
-static uint8_t  _cc3_uart1_select;
-static cc3_uart_cr_lf_t _cc3_cr_lf_read_mode_uart0;
-static cc3_uart_cr_lf_t _cc3_cr_lf_read_mode_uart1;
+uint8_t  _cc3_uart0_select;
+uint8_t  _cc3_uart1_select;
+cc3_uart_cr_lf_t _cc3_cr_lf_read_mode_uart0;
+cc3_uart_cr_lf_t _cc3_cr_lf_read_mode_uart1;
 
 static uint8_t _cc3_second_green;
 static bool _cc3_second_green_valid;
