@@ -71,7 +71,7 @@ void init_jpeg(void) {
   jpeg_create_compress(&cinfo);
 
   // parameters for jpeg image
-  cinfo.image_width = cc3_g_current_frame.width*2;
+  cinfo.image_width = cc3_g_current_frame.width;
   cinfo.image_height = cc3_g_current_frame.height;
   printf( "image width=%d image height=%d\n",cc3_g_current_frame.width, cc3_g_current_frame.height );
   cinfo.input_components = 3;
@@ -83,13 +83,11 @@ void init_jpeg(void) {
   jpeg_set_quality(&cinfo, 100, true);
 
   // allocate memory for 1 row
-  //row = malloc(sizeof(cc3_pixel_t) * cc3_g_current_frame.width);
-  row = malloc( 2* 3 * cc3_g_current_frame.width);
+  row = malloc(3 * cc3_g_current_frame.width);
   if(row==NULL) printf( "FUCK, out of memory!\n" );
 }
 
 void capture_current_jpeg(FILE *f) {
-  uint32_t i;
   JSAMPROW row_pointer[1];
   row_pointer[0] = row;
 
@@ -102,18 +100,7 @@ void capture_current_jpeg(FILE *f) {
   // read and compress
   jpeg_start_compress(&cinfo, TRUE);
   while (cinfo.next_scanline < cinfo.image_height) {
-       for(i=0; i<(cinfo.image_width*3); i+=6 )
-       {
-	cc3_pixbuf_read();
-	row[i]=cc3_g_current_pixel.channel[CC3_RED];
-	row[i+1]=cc3_g_current_pixel.channel[CC3_GREEN];
-	row[i+2]=cc3_g_current_pixel.channel[CC3_BLUE];
-	row[i+3]=cc3_g_current_pixel.channel[CC3_RED];
-	row[i+4]=cc3_g_current_pixel.channel[CC3_GREEN2];
-	row[i+5]=cc3_g_current_pixel.channel[CC3_BLUE];
-       } 
-	  //cc3_pixbuf_read_rows(row, cinfo.image_width, 1);
-
+    cc3_pixbuf_read_rows(row, cinfo.image_width, 1);
     jpeg_write_scanlines(&cinfo, row_pointer, 1);
   }
   
