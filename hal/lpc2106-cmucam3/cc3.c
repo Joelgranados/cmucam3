@@ -372,7 +372,7 @@ int cc3_pixbuf_read_rows (void *mem, uint32_t width, uint32_t rows)
       
       for(j=0; j<cc3_g_current_frame.width; j++ )
 	{ 
-	  uint8_t *p = ((uint8_t *) mem) + (r * width + j);
+	  uint8_t *p = ((uint8_t *) mem) + (r * width + j * 3);
 
 	  // read the pixel
 	  _cc3_pixbuf_read_from_fifo();
