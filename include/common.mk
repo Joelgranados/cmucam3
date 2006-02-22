@@ -36,7 +36,7 @@ LIBARGS=$(foreach lib,$(LIBS),-l$(lib)_$(HALNAME))
 $(PROJECT)_$(HALNAME): $(OBJS) $(HALDIR)/$(HALLIB) $(LIBFILES)
 	@echo "  CC      $@"
 	@$(CC) -o $@ $(OBJS) -L$(HALDIR) \
-	$(LIBDIRS) \
+	$(foreach ldir,$(LIBDIRS),-L$(ldir)) \
 	-Wl,-whole-archive -lhal-$(HALNAME) \
 	$(LIBARGS) \
 	-Wl,-no-whole-archive $(LDFLAGS)
@@ -46,7 +46,7 @@ $(OBJS): $(OBJDIR)/%.o : %.c $(INCLUDES)
                                      echo "  MKDIR   $(OBJDIR)"; \
                                      mkdir $(OBJDIR); fi
 	@echo "  CC      $@"
-	@$(CC) $(CFLAGS) $(foreach ldir,$(LIBDIRS),-L$(ldir)) -o $@ -c $<
+	@$(CC) $(CFLAGS) $(foreach ldir,$(LIBDIRS),-I$(ldir)) -o $@ -c $<
 
 
 # if LIB = something

@@ -173,7 +173,7 @@ void image_touch (int size_x, int size_y)
     for (y = 0; y < size_y; y++) {
         for (x = 0; x < size_x; x++) {
             //val=cc3_pixbuf_read ();
-            _cc3_pixbuf_read_all ();
+            //_cc3_pixbuf_read_all ();
             //putchar (cc3_g_current_pixel.channel[CC3_RED]);
             //putchar (cc3_g_current_pixel.channel[CC3_GREEN]);
             //putchar (cc3_g_current_pixel.channel[CC3_BLUE]);
