@@ -1,5 +1,7 @@
 
-all: libs
+all: hal libs
+
+hal:
 	$(MAKE) -f hal.mk 
 	$(MAKE) -f hal.mk thumb=1
 
@@ -13,4 +15,4 @@ clean:
 
 
 
-.PHONY: clean all libs
+.PHONY: clean all libs hal

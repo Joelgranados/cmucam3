@@ -60,10 +60,12 @@ typedef struct {
 } cc3_pixel_t;   
 
 
+/*
 typedef struct {
     uint16_t width, height;
     cc3_pixel_t* pix;
 } cc3_image_t;
+*/
 
 
 // Globals used by CMUcam functions
