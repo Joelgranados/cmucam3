@@ -1,4 +1,4 @@
-SUBDIRS=cc3_ilp jpeg-6b
+SUBDIRS=cc3_ilp jpeg-6b lua51
 
 # Build rules
 all:

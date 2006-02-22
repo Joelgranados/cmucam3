@@ -17,7 +17,8 @@ OBJS=$(patsubst %.c, $(OBJDIR)/%.o,$(CSOURCES))
 ifneq ($(strip $(PROJECT)),)
  item=$(PROJECT)_$(HALNAME).hex
 else
- item=lib$(LIB)_$(HALNAME).a
+ PROJECT=$(LIB)
+ item=lib$(PROJECT)_$(HALNAME).a
 endif
 
 
@@ -50,7 +51,7 @@ $(OBJS): $(OBJDIR)/%.o : %.c $(INCLUDES)
 
 
 # if LIB = something
-lib$(LIB)_$(HALNAME).a: $(OBJS)
+lib$(PROJECT)_$(HALNAME).a: $(OBJS)
 	@echo "  AR      $@"
 	@$(AR) rs $@ $^
 

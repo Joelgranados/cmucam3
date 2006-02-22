@@ -12,6 +12,7 @@ libs:
 clean:
 	$(RM) *.a *.o
 	$(MAKE) -C ../../lib clean 
+	$(MAKE) -C ../../lib clean thumb=1
 
 
 
