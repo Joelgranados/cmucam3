@@ -1,6 +1,9 @@
 #ifndef CC3_ILP_H
 #define CC3_ILP_H
 
+#include <stdint.h>
+#include "cc3.h"
+
 typedef struct {
     uint16_t width, height;
     uint8_t channels;

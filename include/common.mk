@@ -13,31 +13,54 @@ include $(HALDIR)/defs.mk
 OBJDIR=$(HALNAME)_buildfiles
 OBJS=$(patsubst %.c, $(OBJDIR)/%.o,$(CSOURCES))
 
-# targets
+# decide if we are building a project or a lib
+ifneq ($(strip $(PROJECT)),)
+ item=$(PROJECT)_$(HALNAME).hex
+else
+ item=lib$(LIB)_$(HALNAME).a
+endif
 
-all: $(PROJECT)_$(HALNAME).hex
+
+# targets
+all: $(item)
 
 $(PROJECT)_$(HALNAME).hex: $(PROJECT)_$(HALNAME)
 	@echo "  OBJCOPY $@"
 	@$(OBJCOPY) -O ihex $< $@
 	@$(SIZE) $<
 
-$(PROJECT)_$(HALNAME): $(OBJS) $(HALDIR)/$(HALLIB)
+LIBFILES=$(foreach lib,$(LIBS),../../lib/$(lib)/lib$(lib)_$(HALNAME).a)
+LIBDIRS=$(foreach lib,$(LIBS),../../lib/$(lib))
+LIBARGS=$(foreach lib,$(LIBS),-l$(lib)_$(HALNAME))
+
+$(PROJECT)_$(HALNAME): $(OBJS) $(HALDIR)/$(HALLIB) $(LIBFILES)
 	@echo "  CC      $@"
 	@$(CC) -o $@ $(OBJS) -L$(HALDIR) \
-	-Wl,-whole-archive -lhal-$(HALNAME) -Wl,-no-whole-archive $(LDFLAGS)
+	$(LIBDIRS) \
+	-Wl,-whole-archive -lhal-$(HALNAME) \
+	$(LIBARGS) \
+	-Wl,-no-whole-archive $(LDFLAGS)
 
 $(OBJS): $(OBJDIR)/%.o : %.c $(INCLUDES)
 	@if [ ! -d $(OBJDIR) ]; then $(RM) $(OBJDIR); \
                                      echo "  MKDIR   $(OBJDIR)"; \
                                      mkdir $(OBJDIR); fi
 	@echo "  CC      $@"
-	@$(CC) $(CFLAGS) -o $@ -c $<
+	@$(CC) $(CFLAGS) $(foreach ldir,$(LIBDIRS),-L$(ldir)) -o $@ -c $<
+
+
+# if LIB = something
+lib$(LIB)_$(HALNAME).a: $(OBJS)
+	@echo "  AR      $@"
+	@$(AR) rs $@ $^
+
+
 
 clean:
 	$(RM) *.hex
 	$(RM) $(PROJECT)_$(HALNAME)
 	$(RM) $(PROJECT)_$(HALNAME).exe
+	$(RM) lib$(PROJECT)_$(HALNAME).a
 	$(RM) -r $(OBJDIR)
 
 
