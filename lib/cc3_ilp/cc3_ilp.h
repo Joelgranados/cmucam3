@@ -16,10 +16,11 @@ typedef struct {
     uint32_t num_pixels;
     uint32_t int_density;
     uint8_t noise_filter;
-    cc3_pixel_t *upper_bound;
-    cc3_pixel_t *lower_bound;
+    cc3_pixel_t upper_bound;
+    cc3_pixel_t lower_bound;
 } cc3_track_pkt_t;
 
+void cc3_send_image_direct(void);
 void cc3_get_pixel(cc3_image_t *img, uint16_t x, uint16_t y, cc3_pixel_t *out_pix);
 void cc3_set_pixel(cc3_image_t *img, uint16_t x, uint16_t y, cc3_pixel_t *in_pix);
 

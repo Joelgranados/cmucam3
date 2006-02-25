@@ -153,7 +153,6 @@ int uart1_getc_nb()
 }
 
 
-
 void uart0_write (char *str)
 {
   while (*str != '\0') {

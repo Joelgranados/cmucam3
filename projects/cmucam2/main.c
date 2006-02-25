@@ -1,74 +1,266 @@
-#include "LPC2100.h"
-#include "cc3.h"
-#include "interrupt.h"
+#include <cc3.h>
+#include <cc3_ilp.h>
+#include <servo.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include "serial.h"
+#include <string.h>
+#include <ctype.h>
+#include <stdlib.h>
 
-void image_send_direct (int size_x, int size_y);
+#define MAX_ARGS     10
+#define MAX_LINE     128 
+#define VERSION_BANNER "CMUcam2 v1.00 c6"
 
+typedef enum {
+	RETURN,
+	RESET,
+	TRACK_COLOR,
+	SEND_FRAME,
+	FRAME_DIFF,
+	GET_VERSION,
+	GET_MEAN,
+	SET_SERVO,
+	CAMERA_REG,
+	POLL_MODE,
+	VIRTUAL_WINDOW,
+	DOWN_SAMPLE,
+	CMUCAM2_CMD_END // Must be last entry so array sizes are correct
+} cmucam2_command_t;
 
-int main ()
+char *cmucam2_cmds[CMUCAM2_CMD_END];
+
+//int32_t cmucam2_get_command(cmucam2_command_t *cmd, int32_t *arg_list);
+int32_t cmucam2_get_command(int32_t *cmd, int32_t *arg_list);
+void set_cmucam2_commands(void);
+void print_ACK(void);
+void print_NCK(void);
+void cmucam2_write_t_packet(cc3_track_pkt_t *pkt);
+
+int main (void)
 {
-    unsigned int i = 0;
-    int val;
+int32_t command;
+int32_t val,n;
+uint32_t arg_list[MAX_ARGS];
+uint8_t error,poll_mode;
+cc3_track_pkt_t t_pkt;
+    
+    set_cmucam2_commands();
+
+    cmucam2_start: 
+    poll_mode=0;
     cc3_system_setup ();
 
-
-    //disable_ext_interrupt ();
-    //uart0_write("CMUcam3 v2 Starting up...\r");
-    //system_setup ();
     cc3_uart0_init (115200,UART_8N1,UART_STDOUT);
-   // cc3_uart1_init (115200,UART_8N1,UART_STDOUT|UART_STDERR|UART_STDIN);
-   // cc3_camera_init ();
-   //
-   val=setvbuf(stdout, NULL, _IONBF, 0 );
-    //fprintf( stderr, "This is a test...\n" );
-    printf ("CMUcam3 Starting up\r\n");
-    cc3_set_led (true);
+    val=setvbuf(stdout, NULL, _IONBF, 0 );
+    
+    cc3_camera_init ();
+   
+    printf ("%s\r",VERSION_BANNER);
+    //cc3_set_led (true);
 
-val=0;
-while(val!=2106)
-{
-    printf( "Type a number, or 2106 to break...\r\n");
-    scanf( "%d",&val );
-    printf( "You typed %d\r\n",val);
-}
-   /* for (i = 0; i < 50; i++) {
-    	printf ("Try load\r\n");
-        cc3_pixbuf_load ();
-    	printf ("loaded..\r\n");
-    }*/
-    printf ("Sending Image\r\n");
-    while (1) {
-        image_send_direct (cc3_g_current_frame.width,
-                           cc3_g_current_frame.height);
+    cc3_uart0_cr_lf(CC3_UART_CR_OR_LF); 
+  
+    cc3_servo_init(); 
+    cc3_pixbuf_set_subsample( CC3_NEAREST, 2, 1 ); 
+    
+   while (1) {
+    printf( ":" );
+    error=0;
+    n=cmucam2_get_command(&command, arg_list );	
+    if(n!=-1)
+    {
+    switch(command)
+    {
+
+    	case RESET: 
+	    if(n!=0) { error=1; break; } else print_ACK();
+	    printf( "\r" );
+	    goto cmucam2_start;
+	    break; 
+	case GET_VERSION:
+	    if(n!=0) { error=1; break; } else print_ACK();
+	    printf( "%s\r",VERSION_BANNER );	
+	    break;
+	case POLL_MODE:
+	    if(n!=1) { error=1; break; } else print_ACK();
+	    if(arg_list[0]==1 ) poll_mode=1;
+	    else poll_mode=0;
+	    break;
+	case SEND_FRAME:
+	    if(n==1 && arg_list[0]>4) { error=1; break; } 
+	    else if(n>1) { error=1; break; } else print_ACK();
+	    cc3_send_image_direct();
+	    break;
+	case CAMERA_REG:
+	    if(n%2!=0 ||  n<2) { error=1; break; } else print_ACK();
+	    for(int i=0; i<n; i+=2)
+	    	cc3_set_raw_register(arg_list[i], arg_list[i+1] );
+	    break;
+	case VIRTUAL_WINDOW:
+	    if(n!=4) { error=1; break; } else print_ACK();
+	    cc3_pixbuf_set_roi( arg_list[0], arg_list[1], arg_list[2], arg_list[3] );
+	    break;
+	case DOWN_SAMPLE:
+	    if(n!=2) { error=1; break; } else print_ACK();
+	    cc3_pixbuf_set_subsample( CC3_NEAREST, arg_list[0]+1, arg_list[1]);
+	    break; 
+	case TRACK_COLOR:
+	    if(n!=0 && n!=6) { error=1; break; } else print_ACK();
+	    if(n==6)
+	    {
+	    t_pkt.lower_bound.channel[0]=arg_list[0];
+	    t_pkt.upper_bound.channel[0]=arg_list[1];
+	    t_pkt.lower_bound.channel[1]=arg_list[2];
+	    t_pkt.upper_bound.channel[1]=arg_list[3];
+	    t_pkt.lower_bound.channel[2]=arg_list[4];
+	    t_pkt.upper_bound.channel[2]=arg_list[5];
+	    }
+	    do 
+	    {
+	    	cc3_track_color(&t_pkt);
+	    	cmucam2_write_t_packet(&t_pkt);
+		if(uart0_getc_nb()!=-1 ) break;
+	    } while(poll_mode!=1);
+	    break;
+	case SET_SERVO:
+	    if(n!=2) { error=1; break; } else print_ACK();
+	    cc3_servo_set(arg_list[0], arg_list[1] ); 
+	    break;
+	default:
+	    print_ACK();
+	    break;
+    }
+    
+    }
+    else error=1;
+    
+    if(error==1) print_NCK(); 
+
     }
 
 
     return 0;
 }
 
-
-void image_send_direct (int size_x, int size_y)
+void cmucam2_write_t_packet(cc3_track_pkt_t *pkt)
 {
-    int x, y;
-    cc3_pixbuf_load ();
-    putchar (1);
-    putchar (size_x);
-    if (size_y > 255)
-        size_y = 255;
-    putchar (size_y);
-    for (y = 0; y < size_y; y++) {
-        putchar (2);
-        for (x = 0; x < size_x; x++) {
-            cc3_pixbuf_read ();
-            putchar (cc3_g_current_pixel.channel[CC3_RED]);
-            putchar (cc3_g_current_pixel.channel[CC3_GREEN]);
-            putchar (cc3_g_current_pixel.channel[CC3_BLUE]);
-        }
-    }
-    putchar (3);
-    fflush (stdout);
+if(pkt->centroid_x>255) pkt->centroid_x=255;
+if(pkt->centroid_y>255) pkt->centroid_y=255;
+if(pkt->x0>255) pkt->x0=255;
+if(pkt->x1>255) pkt->x1=255;
+if(pkt->y1>255) pkt->y1=255;
+if(pkt->y0>255) pkt->y0=255;
+if(pkt->num_pixels>255) pkt->num_pixels=255;
+if(pkt->int_density>255) pkt->int_density=255;
+
+if( pkt->num_pixels==0 ) printf( "T 0 0 0 0 0 0 0 0\r" );
+else
+printf( "T %d %d %d %d %d %d %d %d\r", pkt->centroid_x, pkt->centroid_y,
+		pkt->x0, pkt->y0, pkt->x1, pkt->y1, pkt->num_pixels, pkt->int_density );
+
 }
+
+
+void print_ACK()
+{
+printf( "ACK\r" );
+}
+
+void print_NCK()
+{
+printf( "NCK\r" );
+}
+
+
+void set_cmucam2_commands(void)
+{
+cmucam2_cmds[RETURN]="**"; 
+cmucam2_cmds[RESET]="RS"; 
+cmucam2_cmds[TRACK_COLOR]="TC"; 
+cmucam2_cmds[SEND_FRAME]="SF";  
+cmucam2_cmds[FRAME_DIFF]="FD";  
+cmucam2_cmds[GET_VERSION]="GV";
+cmucam2_cmds[CAMERA_REG]="CR";  
+cmucam2_cmds[POLL_MODE]="PM"; 
+cmucam2_cmds[GET_MEAN]="GM"; 
+cmucam2_cmds[SET_SERVO]="SV"; 
+cmucam2_cmds[VIRTUAL_WINDOW]="VW"; 
+cmucam2_cmds[DOWN_SAMPLE]="DS"; 
+}
+
+//int32_t cmucam2_get_command(cmucam2_command_t *cmd, int32_t *arg_list)
+int32_t cmucam2_get_command(int32_t *cmd, int32_t *arg_list)
+{
+char line_buf[MAX_LINE];
+char c;
+char *token;
+int32_t fail,length,argc;
+uint32_t i;
+
+fail=0;
+length=0;
+*cmd=0;
+c=0;
+while(c!='\r' &&  c!='\n' )
+{
+c=getchar();
+if(length<(MAX_LINE-1)) 
+	{
+	line_buf[length]=c;
+	length++;
+	}
+else fail=1;
+}
+// wait until a return and then fail
+if(fail==1) return -1;
+line_buf[length]='\0';
+
+if(line_buf[0]=='\r' || line_buf[0]=='\n' )
+	{
+	*cmd=RETURN;
+	return 0;
+	}
+
+token = strtok( line_buf, " \r\n" );
+
+if(token==NULL ) return -1;
+for(i=0; i<strlen(token); i++ )
+	token[i]=toupper(token[i]);
+fail=1;
+for(i=0; i<CMUCAM2_CMD_END; i++ )
+	{
+	if(strcmp(token, cmucam2_cmds[i])==0 ) 
+		{
+		fail=0;
+		*cmd=i;
+		break;
+		}
+	
+	}
+if(fail==1) return -1;
+argc=0;
+while (1)
+        {
+                /* extract string from string sequence */
+                token = strtok(NULL, " \r\n");
+                /* check if there is nothing else to extract */
+                if (token==NULL )
+                {
+                       // printf("Tokenizing complete\n");
+                        return argc; 
+                }
+		for(i=0; i<strlen(token); i++ )
+		{
+		if(!isdigit(token[i])) return -1;
+		}
+		arg_list[argc]=atoi(token);
+                argc++; 
+        }
+
+return -1;
+
+
+}
+
+
