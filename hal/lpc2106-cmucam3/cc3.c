@@ -2,12 +2,14 @@
 *  Initial CMUcam3 (cc3) data types and functions.
 *
 **************************************************************************************/
+#include <stdbool.h>
+
 #include "cc3.h"
 #include "cc3_pin_defines.h"
 #include "cc3_hal.h"
-#include <stdbool.h>
-#include <stdio.h>
 #include "serial.h"
+#include "devices.h"
+#include "interrupt.h"
 
 
 // Globals used by CMUCam functions
@@ -22,54 +24,8 @@ static void _cc3_advance_x_loc(void);
 
 static void _cc3_pixbuf_read_from_fifo(void);
 
-uint8_t  _cc3_uart0_select;
-uint8_t  _cc3_uart1_select;
-cc3_uart_cr_lf_t _cc3_cr_lf_read_mode_uart0;
-cc3_uart_cr_lf_t _cc3_cr_lf_read_mode_uart1;
-
 static uint8_t _cc3_second_green;
 static bool _cc3_second_green_valid;
-
-
-void cc3_uart0_cr_lf(cc3_uart_cr_lf_t mode)
-{
-  _cc3_cr_lf_read_mode_uart0=mode;
-}
-
-void cc3_uart1_cr_lf(cc3_uart_cr_lf_t mode)
-{
-  _cc3_cr_lf_read_mode_uart1=mode;
-}
-
-
-void cc3_uart0_init (int32_t rate, uint8_t mode, uint8_t file_sel)
-{
-  uint8_t val;
-  _cc3_uart0_setup (UART_BAUD (rate), mode, UART_FIFO_8);
-  
-  _cc3_uart0_select=file_sel;
-  // Make it so that it does not buffer until return character 
-  if(file_sel==UART_STDOUT) val=setvbuf(stdout, NULL, _IONBF, 0 );
-  else val=setvbuf(stderr, NULL, _IONBF, 0 );
-  cc3_uart0_cr_lf(CC3_UART_CR_LF_NORMAL);
-  
-}
-
-
-void cc3_uart1_init (int32_t rate, uint8_t mode, uint8_t file_sel)
-{
-  uint8_t val;
-  
-  _cc3_uart1_setup (UART_BAUD (rate), UART_8N1, UART_FIFO_8);
-
-  _cc3_uart1_select=file_sel;  
-  // Make it so that it does not buffer until return character 
-  if(file_sel==UART_STDOUT) val=setvbuf(stdout, NULL, _IONBF, 0 );
-  else val=setvbuf(stderr, NULL, _IONBF, 0 );
-  cc3_uart1_cr_lf(CC3_UART_CR_LF_NORMAL);
-  
-}
-
 
 void cc3_pixbuf_load ()
 {

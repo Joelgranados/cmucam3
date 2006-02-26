@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "LPC2100.h"
+#include "interrupt.h"
 #include "cc3.h"
 #include "cc3_pin_defines.h"
 #include "serial.h"

@@ -6,14 +6,14 @@
  *
  *
 ******************************************************/
-#include "LPC2100.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <mmc_hardware.h>
+#include "LPC2100.h"
 #include "spi.h"
 #include "cc3_pin_defines.h"
 #include "cc3.h"
+#include "mmc_hardware.h"
 
 #include <time.h>
 #include "rdcf2.h"

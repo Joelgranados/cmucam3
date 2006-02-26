@@ -61,17 +61,25 @@ int _write (int file, char *ptr, int len)
   //uart0_write("in _write\r\n");
 
   switch (file) {
-  case UART0OUT_FILENO:
+  case 1:   // non-redirected stdout
+  case 2:   // non-redirected stderr
+  case DEVICE(UART_DEVICE) | 0:
     for (i = 0; i < len; i++) {
-      if(_cc3_uart0_select==UART_STDOUT) uart0_putc(*ptr++);
-      else uart0_putc(*ptr++);
+      if (_cc3_uart0_binmode == CC3_UART_BINMODE_TEXT
+	  && *ptr == '\n') {
+	uart0_putc('\r');
+      }
+      uart0_putc(*ptr++);
     }
     return i;
 
-  case UART1OUT_FILENO:
+  case DEVICE(UART_DEVICE) | 1:
     for (i = 0; i < len; i++) {
-      if(_cc3_uart1_select==UART_STDOUT) uart0_putc(*ptr++);
-      else uart0_putc(*ptr++);
+      if (_cc3_uart1_binmode == CC3_UART_BINMODE_TEXT
+	  && *ptr == '\n') {
+	uart1_putc('\r');
+      }
+      uart1_putc(*ptr++);
     }
     return i;
 
@@ -94,21 +102,32 @@ int _read (int file, char *ptr, int len)
 
   //uart0_write("in _read\r\n");
   switch (file) {
-  case UART0IN_FILENO:
+  case 0:   // non-redirected stdin
+  case DEVICE(UART_DEVICE) | 0:
     for (i = 0; i < len; i++) {
-      if(_cc3_uart0_select==UART_STDOUT) c = uart0_getc();
-      else c = uart1_getc();
-      if(_cc3_cr_lf_read_mode_uart0==CC3_UART_CR_OR_LF) if(c=='\r') c='\n';
-      if((*ptr++ = c)=='\n') { i++; break; }
+      c = uart0_getc();
+      if (_cc3_uart0_binmode == CC3_UART_BINMODE_TEXT
+	  && c == '\r') {
+	c = '\n';
+      }
+      if ((*ptr++ = c) == '\n') { 
+	i++; 
+	break; 
+      }
     }
     return i;
 
-  case UART1IN_FILENO:
+  case DEVICE(UART_DEVICE) | 1:
     for (i = 0; i < len; i++) {
-      if(_cc3_uart1_select==UART_STDOUT) c = uart0_getc();
-      else c = uart1_getc();
-      if(_cc3_cr_lf_read_mode_uart1==CC3_UART_CR_OR_LF) if(c=='\r') c='\n';
-      if((*ptr++ = c)=='\n') { i++; break; }
+      c = uart1_getc();
+      if (_cc3_uart1_binmode == CC3_UART_BINMODE_TEXT
+	  && c == '\r') {
+	c = '\n';
+      }
+      if ((*ptr++ = c) == '\n') { 
+	i++; 
+	break; 
+      }
     }
     return i;
 
@@ -168,10 +187,7 @@ _off_t _lseek(int file, _off_t ptr, int dir)
 
 int _fstat(int file, struct stat *st)
 {
-  if (file == UART0IN_FILENO
-      || file == UART0OUT_FILENO
-      || file == UART1IN_FILENO
-      || file == UART1OUT_FILENO) {
+  if (file == DEVICE_TYPE(UART_DEVICE)) {
     st->st_mode = S_IFCHR;	
     return 0;
   } else {
@@ -183,10 +199,7 @@ int _fstat(int file, struct stat *st)
 
 int isatty (int file) 
 {
-return file == UART0IN_FILENO
-  || file == UART0OUT_FILENO
-  || file == UART1IN_FILENO
-  || file == UART1OUT_FILENO;
+  return file == DEVICE_TYPE(UART_DEVICE);
 }
 
 int _system(const char *s) 
@@ -214,7 +227,20 @@ static bool is_mmc_filename(const char *name) {
   return name[0] == 'C' && name[1] == ':' && name[2] == '/';
 }
 
-static void normalize_mmc_filename(char *name) {
+static int process_uart_filename(const char *name) {
+  int uart;
+  int result;
+  char buf[2];
+
+  result = sscanf(name, "COM%3d:%c", &uart, buf);
+  if (result != 1) {
+    return -1;
+  }
+
+  return uart;
+}
+
+static void normalize_filename(char *name) {
   // make all caps, and change '\' to '/'
   int i = 0;
   char c;
@@ -228,21 +254,30 @@ static void normalize_mmc_filename(char *name) {
   }
 }
 
-int _open(const char *name, int flags, int mode){
+int _open(const char *name, int flags, int mode)
+{
   int result = -1;
+  int uart_num;
   char *norm = strdup(name);
 
   if (norm == NULL) {
     errno = ENOMEM;
-    return -1;
+    return result;
   }
 
-  normalize_mmc_filename(norm);
+  normalize_filename(norm);
 
   if (is_mmc_filename(norm)) {
     // skip "c:/" part
     init_mmc();
     result = mmc_driver.open(&norm[3], flags, mode);
+  } else if ((uart_num = process_uart_filename(norm)) != -1) {
+    // extract from "COMxx:"
+    if (uart_num < cc3_get_uart_count()) {
+      result = DEVICE(UART_DEVICE) | uart_num;
+    } else {
+      errno = ENODEV;
+    }
   } else {
     errno = ENOENT;
   }
@@ -268,8 +303,8 @@ int _rename(char *oldpath, char *newpath) {
     return -1;
   }
 
-  normalize_mmc_filename(n_oldpath);
-  normalize_mmc_filename(n_newpath);
+  normalize_filename(n_oldpath);
+  normalize_filename(n_newpath);
 
   if (is_mmc_filename(n_oldpath) && is_mmc_filename(n_newpath)) {
     struct ioctl_rename renamer;
@@ -323,7 +358,7 @@ int _unlink(char *name) {
     return -1;
   }
 
-  normalize_mmc_filename(norm);
+  normalize_filename(norm);
 
   if (is_mmc_filename(norm)) {
     long ptr = (long) &norm[3];  // skip "c:/"

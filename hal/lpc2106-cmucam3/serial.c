@@ -1,8 +1,9 @@
+#include <stdio.h>
 #include <stdbool.h>
 
 #include "LPC2100.h"
-#include "serial.h"
 #include "cc3.h"
+#include "serial.h"
 
 #define PINSEL_BITPIN0  0
 #define PINSEL_BITPIN1  2
@@ -17,6 +18,11 @@
 
 // REG(UART0__LCR devisor latch bit 
 #define UART0_LCR_DLAB  7
+
+
+cc3_uart_binmode_t _cc3_uart0_binmode;
+cc3_uart_binmode_t _cc3_uart1_binmode;
+
 
 /*    baudrate divisor - use UART_BAUD macro
  *    mode - see typical modes (uart.h)
@@ -72,6 +78,107 @@ void _cc3_uart1_setup(uint16_t baud, uint8_t mode, uint8_t fmode)
   REG(UART1_FCR) = fmode;
 }
 
+uint8_t cc3_get_uart_count(void) 
+{
+  return 2;
+}
+
+
+
+bool cc3_uart_init (uint8_t uart, 
+		    cc3_uart_rate_t rate, 
+		    cc3_uart_mode_t mode,
+		    cc3_uart_binmode_t binmode)
+{
+  static bool started;
+
+  uint16_t rate_bits = UART_BAUD(rate);
+  uint8_t mode_bits;
+
+  if (!started) {
+    // C stuff
+    setbuf(stdout, NULL);
+    started = true;
+  }
+
+  if (uart >= cc3_get_uart_count()) {
+    return false;
+  }
+
+  switch (mode) {
+  default:
+  case CC3_UART_MODE_8N1:
+    mode_bits = UART_8N1;
+    break;
+  case CC3_UART_MODE_7N1:
+    mode_bits = UART_7N1;
+    break;
+  case CC3_UART_MODE_8N2:
+    mode_bits = UART_8N2;
+    break;
+  case CC3_UART_MODE_7N2:
+    mode_bits = UART_7N2;
+    break;
+  case CC3_UART_MODE_8E1:
+    mode_bits = UART_8E1;
+    break;
+  case CC3_UART_MODE_7E1:
+    mode_bits = UART_7E1;
+    break;
+  case CC3_UART_MODE_8E2:
+    mode_bits = UART_8E2;
+    break;
+  case CC3_UART_MODE_7E2:
+    mode_bits = UART_7E2;
+    break;
+  case CC3_UART_MODE_8O1:
+    mode_bits = UART_8O1;
+    break;
+  case CC3_UART_MODE_7O1:
+    mode_bits = UART_7O1;
+    break;
+  case CC3_UART_MODE_8O2:
+    mode_bits = UART_8O2;
+    break;
+  case CC3_UART_MODE_7O2:
+    mode_bits = UART_7O2;
+    break;
+  }
+
+  switch (uart) {
+  case 0:
+    _cc3_uart0_setup (rate_bits, mode_bits, UART_FIFO_8);
+    _cc3_uart0_binmode = binmode;
+    break;
+  case 1:
+    _cc3_uart1_setup (rate_bits, mode_bits, UART_FIFO_8);
+    _cc3_uart1_binmode = binmode;
+    break;
+  }
+
+  return true;
+}
+
+FILE *cc3_fopen_uart(uint8_t uart, const char *mode)
+{
+  char buf[8];  // safe, because uint8_t
+
+  snprintf(buf, 8, "COM%d:", uart);
+  return fopen(buf, mode);
+}
+
+bool cc3_uart_has_data(uint8_t uart)
+{
+  switch (uart) {
+  case 0:
+    return ((REG (UART0_LSR) & LSR_RBR_EMPTY) != 0);
+  case 1:
+    return ((REG (UART1_LSR) & LSR_RBR_EMPTY) != 0);
+  default:
+    return false;
+  }
+  
+}
 
 
 char uart0_putc(const char c)

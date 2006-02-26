@@ -4,17 +4,10 @@
 #include <stdint.h>
 #include "LPC2100.h"
 #include "lpc_config.h"
+#include "cc3.h"
 
-#define UART0IN_FILENO   0       // stdin
-#define UART0OUT_FILENO  1       // stdout
-#define UART1OUT_FILENO  2       // stderr
-#define UART1IN_FILENO   3       // ?
-#define MMC_FILENO	 4
-
-typedef enum {
-	CC3_UART_CR_LF_NORMAL,
-	CC3_UART_CR_OR_LF,
-} cc3_uart_cr_lf_t;
+// as in "devices.h"
+#define UART_DEVICE    2
 
 /******************************************************************************
  * based on software from:
@@ -152,14 +145,8 @@ void _cc3_uart1_setup(uint16_t baud, uint8_t mode, uint8_t fmode);
 #define LSR_RBR_EMPTY           (uint32_t)0x00000001
 
 
-// Use this if you want to quickly swap between uart0 or uart1 being stdout or error
-#define UART_STDOUT	1
-#define UART_STDERR	0
-
-extern uint8_t _cc3_uart0_select;
-extern uint8_t _cc3_uart1_select;
-extern cc3_uart_cr_lf_t _cc3_cr_lf_read_mode_uart0;
-extern cc3_uart_cr_lf_t _cc3_cr_lf_read_mode_uart1;
+extern cc3_uart_binmode_t _cc3_uart0_binmode;
+extern cc3_uart_binmode_t _cc3_uart1_binmode;
 
 char uart0_putc(const char c);
 char uart1_putc(const char c);

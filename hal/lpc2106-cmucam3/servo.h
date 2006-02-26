@@ -14,11 +14,6 @@
 
 
 
-// Sets up the servo timers and begins servicing the servos
-void cc3_servo_init (void);
-
-void cc3_servo_mask(uint32_t mask);
-
 // Interrupt called from interrupt.c when the servo needs to be serviced
 void _cc3_servo_int (void);
 
@@ -27,12 +22,6 @@ void _cc3_servo_lo (uint8_t n);
 
 // Set all pins high at the start of the servo cycle
 void _cc3_servo_hi_all (void);
-
-// User function to set a servo
-uint8_t cc3_servo_set (uint8_t servo, uint32_t pos);
-
-// User function to disable servos to conserve power
-void cc3_servo_disable (void);
 
 
 #endif

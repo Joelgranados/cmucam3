@@ -1,9 +1,9 @@
 #include <stdio.h>
-#include <rdcf2.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include <mmc_hardware.h>
+#include "rdcf2.h"
+#include "mmc_hardware.h"
 
 #define SIZEOF_DIR_ENTRY	32
 

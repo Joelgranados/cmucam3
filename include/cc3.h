@@ -1,14 +1,9 @@
 #ifndef CC3_H
 #define CC3_H
 
-#include "LPC2100.h"
-#include "cc3_pin_defines.h"
-#include "cc3_hal.h"
-#include "serial.h"
 #include <stdint.h>
 #include <stdbool.h>
-#include "interrupt.h" 
-
+#include <stdio.h>
 
 /*******************************************************************************
 *  Initial CMUcam3 (cc3) data types and functions.
@@ -43,6 +38,42 @@ typedef enum {
    CC3_RANDOM
 } cc3_subsample_mode_t ;
 
+typedef enum {
+  CC3_UART_RATE_300    = 300,
+  CC3_UART_RATE_600    = 600,
+  CC3_UART_RATE_1200   = 1200,
+  CC3_UART_RATE_2400   = 2400,
+  CC3_UART_RATE_4800   = 4800,
+  CC3_UART_RATE_9600   = 9600,
+  CC3_UART_RATE_14400  = 14400,
+  CC3_UART_RATE_19200  = 19200,
+  CC3_UART_RATE_38400  = 38400,
+  CC3_UART_RATE_57600  = 57600,
+  CC3_UART_RATE_115200 = 115200,
+  CC3_UART_RATE_230400 = 230400
+} cc3_uart_rate_t ;
+
+typedef enum {
+  CC3_UART_MODE_8N1,
+  CC3_UART_MODE_7N1,
+  CC3_UART_MODE_8N2,
+  CC3_UART_MODE_7N2,
+  CC3_UART_MODE_8E1,
+  CC3_UART_MODE_7E1,
+  CC3_UART_MODE_8E2,
+  CC3_UART_MODE_7E2,
+  CC3_UART_MODE_8O1,
+  CC3_UART_MODE_7O1,
+  CC3_UART_MODE_8O2,
+  CC3_UART_MODE_7O2
+} cc3_uart_mode_t ;
+
+typedef enum {
+  CC3_UART_BINMODE_BINARY,
+  CC3_UART_BINMODE_TEXT,
+} cc3_uart_binmode_t;
+
+
 typedef struct {
   uint16_t raw_width, raw_height;  // raw image width and height
   uint16_t width, height;  // subsampled and bound width and height
@@ -58,14 +89,6 @@ typedef struct {
 typedef struct {
     uint8_t channel[3];  // index with cc3_channel_t 
 } cc3_pixel_t;   
-
-
-/*
-typedef struct {
-    uint16_t width, height;
-    cc3_pixel_t* pix;
-} cc3_image_t;
-*/
 
 
 // Globals used by CMUcam functions
@@ -107,6 +130,11 @@ int cc3_pixbuf_set_roi( int16_t x0, int16_t y0, int16_t x1, int16_t y1);
 int cc3_pixbuf_set_subsample( cc3_subsample_mode_t, uint8_t x_step, uint8_t y_step );
 
 /**
+ * Initialize the board. MUST be called for things to happen!
+ */
+void cc3_system_setup(void);
+
+/**
  * Sets the channel of interest 1 or all
  */
 int cc3_pixbuf_set_coi( cc3_channel_t chan );
@@ -136,14 +164,35 @@ int cc3_set_brightness( uint8_t level);
 int cc3_set_contrast( uint8_t level);
 int cc3_set_raw_register( uint8_t address, uint8_t value);
 
-void cc3_uart0_init(int32_t rate, uint8_t mode, uint8_t file_sel);
-void cc3_uart1_init(int32_t rate, uint8_t mode, uint8_t file_sel);
-void cc3_uart0_cr_lf(cc3_uart_cr_lf_t mode);
-void cc3_uart1_cr_lf(cc3_uart_cr_lf_t mode);
+uint8_t cc3_get_uart_count(void);
+bool cc3_uart_init(uint8_t uart, 
+		   cc3_uart_rate_t rate, 
+		   cc3_uart_mode_t mode,
+		   cc3_uart_binmode_t binmode);
+FILE *cc3_fopen_uart(uint8_t uart, const char *mode);
+bool cc3_uart_has_data(uint8_t uart);
+
 
 uint32_t cc3_timer(void);
 void cc3_wait_ms(uint32_t delay);
 
 bool cc3_read_button(void);
+
+
+
+// Sets up the servo timers and begins servicing the servos
+void cc3_servo_init (void);
+
+// Set the servo mask
+void cc3_servo_mask(uint32_t mask);
+
+// User function to set a servo
+uint8_t cc3_servo_set (uint8_t servo, uint32_t pos);
+
+// User function to disable servos to conserve power
+void cc3_servo_disable (void);
+
+
+
 
 #endif

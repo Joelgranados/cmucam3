@@ -6,12 +6,12 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <ioctl.h>
 
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "ioctl.h"
 #include "devices.h"
 #include "spi.h"
 #include "rdcf2.h"

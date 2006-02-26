@@ -1,6 +1,5 @@
-#include <cc3.h>
-#include <cc3_ilp.h>
-#include <servo.h>
+#include "cc3.h"
+#include "cc3_ilp.h"
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -51,7 +50,10 @@ cc3_track_pkt_t t_pkt;
     poll_mode=0;
     cc3_system_setup ();
 
-    cc3_uart0_init (115200,UART_8N1,UART_STDOUT);
+    cc3_uart_init (0, 
+		   CC3_UART_RATE_115200,
+		   CC3_UART_MODE_8N1,
+		   CC3_UART_BINMODE_BINARY);
     val=setvbuf(stdout, NULL, _IONBF, 0 );
     
     cc3_camera_init ();
@@ -59,8 +61,6 @@ cc3_track_pkt_t t_pkt;
     printf ("%s\r",VERSION_BANNER);
     //cc3_set_led (true);
 
-    cc3_uart0_cr_lf(CC3_UART_CR_OR_LF); 
-  
     cc3_servo_init(); 
     cc3_pixbuf_set_subsample( CC3_NEAREST, 2, 1 ); 
     
@@ -120,7 +120,7 @@ cc3_track_pkt_t t_pkt;
 	    {
 	    	cc3_track_color(&t_pkt);
 	    	cmucam2_write_t_packet(&t_pkt);
-		if(uart0_getc_nb()!=-1 ) break;
+		if(!cc3_uart_has_data(0) ) break;
 	    } while(poll_mode!=1);
 	    break;
 	case SET_SERVO:
