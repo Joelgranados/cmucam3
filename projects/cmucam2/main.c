@@ -204,7 +204,7 @@ length=0;
 c=0;
 while(c!='\r' &&  c!='\n' )
 {
-c=getchar();
+c=fgetc(stdin);
 if(length<(MAX_LINE-1)) 
 	{
 	line_buf[length]=c;
