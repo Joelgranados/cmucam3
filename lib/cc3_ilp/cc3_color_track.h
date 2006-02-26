@@ -15,7 +15,7 @@ typedef struct {
     uint32_t num_pixels;
     uint32_t int_density;
     uint8_t noise_filter;
-    uint32_t binary_scanline[MAX_BINARY_WIDTH];
+    uint8_t binary_scanline[MAX_BINARY_WIDTH];
     cc3_pixel_t upper_bound;
     cc3_pixel_t lower_bound;
     uint16_t scratch_x,scratch_y;

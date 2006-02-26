@@ -23,6 +23,7 @@ typedef enum {
 	SET_SERVO,
 	CAMERA_REG,
 	POLL_MODE,
+	LINE_MODE,
 	VIRTUAL_WINDOW,
 	DOWN_SAMPLE,
 	CMUCAM2_CMD_END // Must be last entry so array sizes are correct
@@ -36,7 +37,6 @@ void set_cmucam2_commands(void);
 void print_ACK(void);
 void print_NCK(void);
 void cmucam2_write_t_packet(cc3_track_pkt_t *pkt);
-
 
 int main (void)
 {
@@ -89,6 +89,16 @@ cc3_track_pkt_t t_pkt;
 	    if(n!=1) { error=1; break; } else print_ACK();
 	    if(arg_list[0]==1 ) poll_mode=1;
 	    else poll_mode=0;
+	    break;
+	case LINE_MODE:
+	    if(n!=2) { error=1; break; } else print_ACK();
+	    // FIXME: Make bitmasks later
+	    if(arg_list[0]==0 ) 
+	    {
+		if(arg_list[1]==1)
+		    line_mode=1;
+	    	else line_mode=0;
+	    }
 	    break;
 	case SEND_FRAME:
 	    if(n==1 && arg_list[0]>4) { error=1; break; } 
@@ -157,14 +167,51 @@ uint16_t i;
 	    {
 	     	cc3_pixbuf_load();
      		if(cc3_track_color_scanline_start(t_pkt)!=0 )
-		{	
+		{
+		uint8_t lm_width,lm_height;
+		uint8_t *lm;
+		lm_width=0;
+		lm_height=0;
+		if(line_mode==1)
+		{
+				lm=&t_pkt->binary_scanline;
+				lm_width=cc3_g_current_frame.width/8;
+				if(cc3_g_current_frame.width%8!=0 ) lm_width++;
+				putchar(0xAA);
+				if(cc3_g_current_frame.height>255)
+					lm_height=255;
+				else
+					lm_height=cc3_g_current_frame.height;
+				
+				//putchar(lm_width);
+				putchar(cc3_g_current_frame.width);
+				putchar(lm_height);
+
+		}	
 			for(i=0; i<cc3_g_current_frame.height; i++ )
 			{
 			cc3_pixbuf_read_rows(img.pix, img.width, 1);	
 			cc3_track_color_scanline(&img, t_pkt);
+			if(line_mode==1)
+				{
+				
+				for(int j=0; j<lm_width; j++ )
+					{
+				//	printf( "%d ",lm[j] );
+					if(lm[j]==0xAA ) putchar(0xAB);
+					else
+						putchar( lm[j] );
+					}
+				}
 			}
-			cc3_track_color_scanline_finish(t_pkt);	     
-	    		cmucam2_write_t_packet(t_pkt);
+			cc3_track_color_scanline_finish(t_pkt);
+	    	if(line_mode==1)
+		{
+			putchar(0xAA);
+			putchar(0xAA);
+		}	
+			
+			cmucam2_write_t_packet(t_pkt);
 		}
 		if(!cc3_uart_has_data(0) ) break;
 	    } while(poll_mode!=1);
@@ -217,6 +264,7 @@ cmucam2_cmds[GET_MEAN]="GM";
 cmucam2_cmds[SET_SERVO]="SV"; 
 cmucam2_cmds[VIRTUAL_WINDOW]="VW"; 
 cmucam2_cmds[DOWN_SAMPLE]="DS"; 
+cmucam2_cmds[LINE_MODE]="LM"; 
 }
 
 //int32_t cmucam2_get_command(cmucam2_command_t *cmd, int32_t *arg_list)

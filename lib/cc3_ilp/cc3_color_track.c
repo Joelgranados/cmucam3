@@ -139,8 +139,18 @@ for(x=0; x<img->width; x++ )
 	   	cp.channel[cc3_g_current_frame.coi]<=pkt->upper_bound.channel[cc3_g_current_frame.coi] ) pixel_good=1; 
 	}
 
-	if(pixel_good)
+/*	pkt->binary_scanline[0]=0x01020304; 
+	pkt->binary_scanline[1]=0x05060708; 
+	pkt->binary_scanline[2]=0x090A0B0C; 
+	pkt->binary_scanline[3]=0x0D0E0F10; 
+	pkt->binary_scanline[4]=0x11121314; 
+*/	if(pixel_good)
 	{
+	uint8_t block,offset;
+	block=x/8;
+	offset=x%8;
+	offset=7-offset;
+	pkt->binary_scanline[block] |= (1<<offset);
 	pkt->num_pixels++;
 	if(pkt->x0 > x ) pkt->x0=x;	
 	if(pkt->y0 > y ) pkt->y0=y;	
@@ -153,7 +163,7 @@ for(x=0; x<img->width; x++ )
 
 pkt->scratch_y=y;
 
-
+return 1;
 }
 
 
