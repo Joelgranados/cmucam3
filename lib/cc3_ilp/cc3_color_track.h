@@ -5,8 +5,8 @@
 #include "cc3.h"
 #include "cc3_ilp.h"
 
-// MAX_BINARY_WIDTH * 32 (bits/int)
-#define MAX_BINARY_WIDTH  20 
+// MAX_BINARY_WIDTH * 8 (bits/int)
+#define MAX_BINARY_WIDTH  80 
 
 
 typedef struct {
