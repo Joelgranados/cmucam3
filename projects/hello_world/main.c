@@ -1,18 +1,11 @@
-#include "LPC2100.h"
-#include "cc3.h"
-#include "interrupt.h"
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "rdcf2.h"
-#include "devices.h"
-#include "mmc_hardware.h"
-#include "spi.h"
-#include "serial.h"
-#include "servo.h"
+
+#include "cc3.h"
 
 static void image_send_direct (int size_x, int size_y);
 static void image_touch (int size_x, int size_y);
@@ -23,10 +16,9 @@ static void ppm_send_mem(int size_x, int size_y, cc3_pixel_t *img);
 
 static cc3_pixel_t my_img[144][88];
 
-extern DEVICE_TABLE_ENTRY mmc_driver;
 /* very simple hello world, showing features and compiling with 
    separate files */
-int main ()
+int main (void)
 {
   uint32_t i = 0;
     uint32_t cnt = 1;
@@ -38,7 +30,7 @@ int main ()
 
     // setup system    
     cc3_system_setup ();
-    cc3_uart0_init (115200,UART_8N1,UART_STDOUT);
+    cc3_uart_init (0, CC3_UART_RATE_115200,CC3_UART_MODE_8N1,CC3_UART_BINMODE_BINARY);
 
  //   cc3_uart1_init (9600,UART_8N1,UART_STDERR);
     cc3_camera_init ();
@@ -56,7 +48,7 @@ int main ()
     //ppm_send_direct (cc3_g_current_frame.width, cc3_g_current_frame.height);
     //ppm_send_direct_p2(cc3_g_current_frame.width, cc3_g_current_frame.height);
 
-
+    /*
     printf("initializing MMC...\r\n");
    
     mmc_driver.init();
@@ -82,7 +74,7 @@ int main ()
 	     DriveDesc.NumberRootDirEntries,
 	     DriveDesc.DataStartSector,
 	     DriveDesc.MaxDataSector);
-    
+    */
     //cc3_wait_ms(3000);
 
       /*

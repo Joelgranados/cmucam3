@@ -15,7 +15,10 @@ int main(void) {
 
   // setup system    
   cc3_system_setup ();
-  cc3_uart0_init (115200,UART_8N1,UART_STDOUT);
+  cc3_uart_init (0, 
+		 CC3_UART_RATE_115200,
+		 CC3_UART_MODE_8N1,
+		 CC3_UART_BINMODE_BINARY);
 
   cc3_camera_init ();
    
