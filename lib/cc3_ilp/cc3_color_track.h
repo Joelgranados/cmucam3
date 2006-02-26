@@ -11,13 +11,14 @@
 
 typedef struct {
     uint16_t x0,y0,x1,y1;
-    uint16_t centroid_x, centroid_y;
+    uint32_t centroid_x, centroid_y;
     uint32_t num_pixels;
     uint32_t int_density;
     uint8_t noise_filter;
     uint32_t binary_scanline[MAX_BINARY_WIDTH];
     cc3_pixel_t upper_bound;
     cc3_pixel_t lower_bound;
+    uint16_t scratch_x,scratch_y;
 } cc3_track_pkt_t;
 
 uint8_t cc3_track_color_scanline_start(cc3_track_pkt_t *pkt);

@@ -171,9 +171,9 @@ bool cc3_uart_has_data(uint8_t uart)
 {
   switch (uart) {
   case 0:
-    return ((REG (UART0_LSR) & LSR_RBR_EMPTY) != 0);
+    return ((REG (UART0_LSR) & LSR_RBR_EMPTY)==0 );
   case 1:
-    return ((REG (UART1_LSR) & LSR_RBR_EMPTY) != 0);
+    return ((REG (UART1_LSR) & LSR_RBR_EMPTY)==0 );
   default:
     return false;
   }

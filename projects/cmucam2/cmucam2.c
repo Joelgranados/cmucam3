@@ -30,7 +30,7 @@ typedef enum {
 
 char *cmucam2_cmds[CMUCAM2_CMD_END];
 
-//int32_t cmucam2_get_command(cmucam2_command_t *cmd, int32_t *arg_list);
+void cmucam2_track_color(cc3_track_pkt_t *t_pkt, uint8_t poll_mode, uint8_t line_mode  );
 int32_t cmucam2_get_command(int32_t *cmd, int32_t *arg_list);
 void set_cmucam2_commands(void);
 void print_ACK(void);
@@ -42,13 +42,14 @@ int main (void)
 int32_t command;
 int32_t val,n;
 uint32_t arg_list[MAX_ARGS];
-uint8_t error,poll_mode;
+uint8_t error,poll_mode,line_mode;
 cc3_track_pkt_t t_pkt;
     
     set_cmucam2_commands();
 
     cmucam2_start: 
     poll_mode=0;
+    line_mode=0;
     cc3_system_setup ();
 
     cc3_uart_init (0, 
@@ -107,6 +108,7 @@ cc3_track_pkt_t t_pkt;
 	    cc3_pixbuf_set_subsample( CC3_NEAREST, arg_list[0]+1, arg_list[1]);
 	    break; 
 	case TRACK_COLOR:
+	    {
 	    if(n!=0 && n!=6) { error=1; break; } else print_ACK();
 	    if(n==6)
 	    {
@@ -117,16 +119,12 @@ cc3_track_pkt_t t_pkt;
 	    t_pkt.lower_bound.channel[2]=arg_list[4];
 	    t_pkt.upper_bound.channel[2]=arg_list[5];
 	    }
-	    do 
-	    {
-	    	cc3_track_color(&t_pkt);
-	    	cmucam2_write_t_packet(&t_pkt);
-		if(!cc3_uart_has_data(0) ) break;
-	    } while(poll_mode!=1);
+	    cmucam2_track_color(&t_pkt, poll_mode, line_mode  );
 	    break;
 	case SET_SERVO:
 	    if(n!=2) { error=1; break; } else print_ACK();
 	    cc3_servo_set(arg_list[0], arg_list[1] ); 
+	    }
 	    break;
 	default:
 	    print_ACK();
@@ -143,6 +141,36 @@ cc3_track_pkt_t t_pkt;
 
     return 0;
 }
+
+
+
+void cmucam2_track_color(cc3_track_pkt_t *t_pkt, uint8_t poll_mode, uint8_t line_mode  )
+{
+cc3_image_t img;
+uint16_t i;
+	    img.channels=3;
+	    img.width=cc3_g_current_frame.width;
+	    img.height=1;  // image will hold just 1 row for scanline processing
+	    img.pix = malloc(3 * img.width);
+	    do 
+	    {
+	     	cc3_pixbuf_load();
+     		if(cc3_track_color_scanline_start(t_pkt)!=0 )
+		{	
+			for(i=0; i<cc3_g_current_frame.height; i++ )
+			{
+			cc3_pixbuf_read_rows(img.pix, img.width, 1);	
+			cc3_track_color_scanline(&img, t_pkt);
+			}
+			cc3_track_color_scanline_finish(t_pkt);	     
+	    		cmucam2_write_t_packet(t_pkt);
+		}
+		if(!cc3_uart_has_data(0) ) break;
+	    } while(poll_mode!=1);
+ 	    
+	    free(img.pix); 
+}
+
 
 void cmucam2_write_t_packet(cc3_track_pkt_t *pkt)
 {
