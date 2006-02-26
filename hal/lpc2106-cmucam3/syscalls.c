@@ -110,7 +110,9 @@ int _read (int file, char *ptr, int len)
 	  && c == '\r') {
 	c = '\n';
       }
-      if ((*ptr++ = c) == '\n') { 
+
+      *ptr++ = c;
+      if (c == '\n' || c == '\r') {
 	i++; 
 	break; 
       }
@@ -124,7 +126,9 @@ int _read (int file, char *ptr, int len)
 	  && c == '\r') {
 	c = '\n';
       }
-      if ((*ptr++ = c) == '\n') { 
+
+      *ptr++ = c;
+      if (c == '\n' || c == '\r') {
 	i++; 
 	break; 
       }
