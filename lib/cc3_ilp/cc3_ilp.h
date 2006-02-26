@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include "cc3.h"
-#include "cc3_color_track.h"
 
 typedef struct {
     uint16_t width, height;

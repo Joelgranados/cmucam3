@@ -21,7 +21,7 @@ typedef struct {
 } cc3_track_pkt_t;
 
 uint8_t cc3_track_color_scanline_start(cc3_track_pkt_t *pkt);
-uint8_t cc3_track_color_scanline(cc3_track_pkt_t *pkt);
+uint8_t cc3_track_color_scanline(cc3_image_t *img, cc3_track_pkt_t *pkt);
 uint8_t cc3_track_color_scanline_finish(cc3_track_pkt_t *pkt);
 
 uint8_t cc3_track_color(cc3_track_pkt_t *pkt);

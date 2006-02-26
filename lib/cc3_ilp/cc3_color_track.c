@@ -1,5 +1,6 @@
 #include "cc3.h"
 #include "cc3_ilp.h"
+#include "cc3_color_track.h"
 #include <stdbool.h>
 #include <stdio.h>
 
