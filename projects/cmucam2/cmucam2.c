@@ -25,6 +25,7 @@ typedef enum {
 	CAMERA_REG,
 	POLL_MODE,
 	LINE_MODE,
+	SEND_JPEG,
 	VIRTUAL_WINDOW,
 	DOWN_SAMPLE,
 	CMUCAM2_CMD_END // Must be last entry so array sizes are correct
@@ -103,6 +104,12 @@ cc3_color_info_pkt_t s_pkt;
 		    line_mode=1;
 	    	else line_mode=0;
 	    }
+	    break;
+	case SEND_JPEG:
+	    if(n!=0 && n!=1) { error=1; break; } else print_ACK();
+	    //init_jpeg(); 
+
+
 	    break;
 	case SEND_FRAME:
 	    if(n==1 && arg_list[0]>4) { error=1; break; } 
@@ -304,6 +311,7 @@ cmucam2_cmds[SET_SERVO]="SV";
 cmucam2_cmds[VIRTUAL_WINDOW]="VW"; 
 cmucam2_cmds[DOWN_SAMPLE]="DS"; 
 cmucam2_cmds[LINE_MODE]="LM"; 
+cmucam2_cmds[SEND_JPEG]="SJ"; 
 }
 
 //int32_t cmucam2_get_command(cmucam2_command_t *cmd, int32_t *arg_list)
@@ -379,5 +387,3 @@ return -1;
 
 
 }
-
-
