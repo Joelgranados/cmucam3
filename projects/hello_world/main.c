@@ -64,10 +64,6 @@ int main (void)
     // sample showing how to use timer
     printf( "It took you %dms to press the button\n",cc3_timer()-start_time );
    
-    // stdio actually works... 
-    printf( "Type in a number followed by return to test scanf: " );
-    scanf( "%d", &val );
-    printf( "You typed %d\n",val );
 
 
     // setup an image structure
@@ -123,8 +119,13 @@ int main (void)
     if(!cc3_uart_has_data(0) ) break; 
     }
     free(img.pix);  // don't forget to free!
-
     printf( "You pressed %c to escape\n",fgetc(stdin) );
+
+    // stdio actually works... 
+    printf( "Type in a number followed by return to test scanf: " );
+    scanf( "%d", &val );
+    printf( "You typed %d\n",val );
+    
     printf( "Good work, now try something on your own...\n" );
     while(1);
 

@@ -1,8 +1,8 @@
 #ifndef CC3_PIN_DEFINES_H
 #define CC3_PIN_DEFINES_H
 
-#define CMUCAM_BOARD_VERSION_1
-//#define CMUCAM_BOARD_VERSION_0_9
+//#define CMUCAM_BOARD_VERSION_1
+#define CMUCAM_BOARD_VERSION_0_9
 /*
  1 = output 0 = input
 
