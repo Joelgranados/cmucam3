@@ -7,6 +7,9 @@ CSOURCES=main.c
 # header files
 INCLUDES=
 
+# header files
+LIBS=cc3_ilp
+
 # the name of this project
 PROJECT=hello_world
 
