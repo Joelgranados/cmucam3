@@ -1,6 +1,7 @@
 #include <cc3.h>
 #include <cc3_ilp.h>
 #include <cc3_color_track.h>
+#include <cc3_color_info.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -31,6 +32,8 @@ typedef enum {
 
 char *cmucam2_cmds[CMUCAM2_CMD_END];
 
+void cmucam2_get_mean(cc3_color_info_pkt_t *t_pkt, uint8_t poll_mode, uint8_t line_mode  );
+void cmucam2_write_s_packet(cc3_color_info_pkt_t *pkt);
 void cmucam2_track_color(cc3_track_pkt_t *t_pkt, uint8_t poll_mode, uint8_t line_mode  );
 int32_t cmucam2_get_command(int32_t *cmd, int32_t *arg_list);
 void set_cmucam2_commands(void);
@@ -45,6 +48,7 @@ int32_t val,n;
 uint32_t arg_list[MAX_ARGS];
 uint8_t error,poll_mode,line_mode;
 cc3_track_pkt_t t_pkt;
+cc3_color_info_pkt_t s_pkt;
     
     set_cmucam2_commands();
 
@@ -119,7 +123,6 @@ cc3_track_pkt_t t_pkt;
 	    cc3_pixbuf_set_subsample( CC3_NEAREST, arg_list[0]+1, arg_list[1]);
 	    break; 
 	case TRACK_COLOR:
-	    {
 	    if(n!=0 && n!=6) { error=1; break; } else print_ACK();
 	    if(n==6)
 	    {
@@ -132,10 +135,14 @@ cc3_track_pkt_t t_pkt;
 	    }
 	    cmucam2_track_color(&t_pkt, poll_mode, line_mode  );
 	    break;
+
+	case GET_MEAN:
+ 		if(n!=0) { error=1; break; } else print_ACK();
+	    	cmucam2_get_mean(&s_pkt, poll_mode, line_mode  );
+	    break;
 	case SET_SERVO:
 	    if(n!=2) { error=1; break; } else print_ACK();
 	    cc3_servo_set(arg_list[0], arg_list[1] ); 
-	    }
 	    break;
 	default:
 	    print_ACK();
@@ -153,7 +160,32 @@ cc3_track_pkt_t t_pkt;
     return 0;
 }
 
-
+void cmucam2_get_mean(cc3_color_info_pkt_t *s_pkt, uint8_t poll_mode, uint8_t line_mode  )
+{
+cc3_image_t img;
+uint16_t i;
+	    img.channels=3;
+	    img.width=cc3_g_current_frame.width;
+	    img.height=1;  // image will hold just 1 row for scanline processing
+	    img.pix = malloc(3 * img.width);
+	    do 
+	    {
+	     	cc3_pixbuf_load();
+     		if(cc3_color_info_scanline_start(s_pkt)!=0 )
+		{
+			for(i=0; i<cc3_g_current_frame.height; i++ )
+			{
+			cc3_pixbuf_read_rows(img.pix, img.width, 1);	
+			cc3_color_info_scanline(&img, s_pkt);
+			}
+			cc3_color_info_scanline_finish(s_pkt);
+			cmucam2_write_s_packet(s_pkt);
+		}
+		if(!cc3_uart_has_data(0) ) break;
+	    } while(poll_mode!=1);
+ 	    
+	    free(img.pix); 
+}
 
 void cmucam2_track_color(cc3_track_pkt_t *t_pkt, uint8_t poll_mode, uint8_t line_mode  )
 {
@@ -238,6 +270,13 @@ printf( "T %d %d %d %d %d %d %d %d\r", pkt->centroid_x, pkt->centroid_y,
 
 }
 
+void cmucam2_write_s_packet(cc3_color_info_pkt_t *pkt)
+{
+printf( "S %d %d %d %d %d %d\r", pkt->mean.channel[0], pkt->mean.channel[1],
+		pkt->mean.channel[2], pkt->deviation.channel[0], pkt->deviation.channel[1], 
+		pkt->deviation.channel[2]);
+
+}
 
 void print_ACK()
 {
