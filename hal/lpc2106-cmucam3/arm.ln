@@ -70,7 +70,7 @@ SECTIONS
   PROVIDE (etext = .);
 
   /* .data section which is used for initialized data */
-  .data : AT (_etext)
+  .data :
   {
     _data = .;
     *(.data)
@@ -79,7 +79,7 @@ SECTIONS
 	SORT(CONSTRUCTORS) /* mt 4/2005 */
 	. = ALIGN(4);
 	*(.fastrun)
-  } > RAM
+  } > RAM  AT > ROM
  
   . = ALIGN(4);
   _edata = . ;
