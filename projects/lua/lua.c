@@ -384,6 +384,13 @@ static int pmain (lua_State *L) {
 int main (int argc, char **argv) {
   int status;
   struct Smain s;
+
+  cc3_system_setup();
+  cc3_uart_init(0,
+                CC3_UART_RATE_115200,
+                CC3_UART_MODE_8N1,
+                CC3_UART_BINMODE_TEXT);
+
   lua_State *L = lua_open();  /* create state */
   if (L == NULL) {
     l_message(argv[0], "cannot create state: not enough memory");
