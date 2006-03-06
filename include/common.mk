@@ -38,9 +38,11 @@ $(PROJECT)_$(HALNAME): $(OBJS) $(HALDIR)/$(HALLIB) $(LIBFILES)
 	@echo "  CC      $@"
 	@$(CC) -o $@ $(OBJS) -L$(HALDIR) \
 	$(foreach ldir,$(LIBDIRS),-L$(ldir)) \
-	-Wl,-whole-archive -lhal-$(HALNAME) \
 	$(LIBARGS) \
-	-Wl,-no-whole-archive $(LDFLAGS)
+	-Wl,-whole-archive \
+	-lhal-$(HALNAME) \
+	-Wl,-no-whole-archive \
+	$(LDFLAGS)
 
 $(OBJS): $(OBJDIR)/%.o : %.c $(INCLUDES)
 	@if [ ! -d $(OBJDIR) ]; then $(RM) $(OBJDIR); \
