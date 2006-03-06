@@ -1,6 +1,6 @@
 PROJECT = lua
 
-CSOURCES = min.c
+CSOURCES = lua.c
 
 INCLUDES = 
 

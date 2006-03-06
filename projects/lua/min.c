@@ -6,6 +6,8 @@
 
 #include <stdio.h>
 
+#include "cc3.h"
+
 #include "lua.h"
 #include "lauxlib.h"
 
@@ -31,9 +33,16 @@ static int print(lua_State *L)
 
 int main(void)
 {
- lua_State *L=lua_open();
- lua_register(L,"print",print);
- if (luaL_dofile(L,NULL)!=0) fprintf(stderr,"%s\n",lua_tostring(L,-1));
- lua_close(L);
- return 0;
+  cc3_system_setup();
+  cc3_uart_init(0,
+		CC3_UART_RATE_115200,
+		CC3_UART_MODE_8N1,
+		CC3_UART_BINMODE_TEXT);
+  cc3_camera_init();
+
+  lua_State *L=lua_open();
+  lua_register(L,"print",print);
+  if (luaL_dofile(L,NULL)!=0) fprintf(stderr,"%s\n",lua_tostring(L,-1));
+  lua_close(L);
+  return 0;
 }
