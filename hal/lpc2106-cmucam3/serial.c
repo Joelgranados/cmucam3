@@ -98,6 +98,7 @@ bool cc3_uart_init (uint8_t uart,
   if (!started) {
     // C stuff
     setbuf(stdout, NULL);
+    setbuf(stdin, NULL);
     started = true;
   }
 
