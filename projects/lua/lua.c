@@ -120,12 +120,53 @@ static int incomplete (lua_State *L, int status) {
 }
 
 
+// crappy fake reading thing
+static int my_readline(lua_State *L __attribute((unused)), 
+		       char *buf, const char *prmt) {
+  int c;
+  int i = 0;
+
+  // print prompt
+  fputs(prmt, stdout);
+  fflush(stdout);
+
+  // get characters, handling BS (and emulate fgets)
+  while ((c = getchar()) != EOF && i < LUA_MAXINPUT-1) {
+    if (c == 010) {
+      // backspace
+
+      if (i > 0) {
+	fputs("\010 \010", stdout);
+	fflush(stdout);
+
+	buf--;
+	i--;
+      }
+
+      continue;
+    }
+
+    *buf++ = c;
+    putchar(c);
+    fflush(stdout);
+    i++;
+
+    if (c == '\n') {
+      break;
+    }
+  }
+
+  *buf = '\0';
+
+  return i > 0;       // did we read any bytes?
+}
+
 static int pushline (lua_State *L, int firstline) {
   char buffer[LUA_MAXINPUT];
   char *b = buffer;
   size_t l;
   const char *prmt = get_prompt(L, firstline);
-  if (lua_readline(L, b, prmt) == 0)
+  if (my_readline(L, b, prmt) == 0)
     return 0;  /* no input */
   l = strlen(b);
   if (l > 0 && b[l-1] == '\n')  /* line ends with newline? */
