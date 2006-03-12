@@ -18,7 +18,7 @@ int main(void) {
   cc3_uart_init (0, 
 		 CC3_UART_RATE_115200,
 		 CC3_UART_MODE_8N1,
-		 CC3_UART_BINMODE_BINARY);
+		 CC3_UART_BINMODE_TEXT);
 
   cc3_camera_init ();
    
