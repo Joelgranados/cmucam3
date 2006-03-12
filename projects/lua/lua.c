@@ -381,25 +381,37 @@ static int pmain (lua_State *L) {
 }
 
 
-int main (int argc, char **argv) {
+int main (void) {
   int status;
   struct Smain s;
+
+  int argc = 1;
+  char *argv[] = {"cc3"};
 
   cc3_system_setup();
   cc3_uart_init(0,
                 CC3_UART_RATE_115200,
                 CC3_UART_MODE_8N1,
                 CC3_UART_BINMODE_TEXT);
+  cc3_camera_init();
+
+  l_message(argv[0], "about to start lua");
 
   lua_State *L = lua_open();  /* create state */
   if (L == NULL) {
     l_message(argv[0], "cannot create state: not enough memory");
     return EXIT_FAILURE;
   }
+
+  l_message(argv[0], "lua opened");
+
   s.argc = argc;
   s.argv = argv;
   status = lua_cpcall(L, &pmain, &s);
   report(L, status);
+
+  l_message(argv[0], "lua going to close");
+
   lua_close(L);
   return (status || s.status) ? EXIT_FAILURE : EXIT_SUCCESS;
 }
