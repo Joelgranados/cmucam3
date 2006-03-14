@@ -90,6 +90,9 @@ static int docall (lua_State *L, int narg, int clear) {
   return status;
 }
 
+static void print_banner (void) {
+  l_message(NULL, "Welcome to the cc3 interactive environment");
+}
 
 static void print_version (void) {
   l_message(NULL, LUA_VERSION "  " LUA_COPYRIGHT);
@@ -232,8 +235,8 @@ struct Smain {
 
 static const luaL_Reg my_lualibs[] = {
   {"", luaopen_base},
-  {LUA_LOADLIBNAME, luaopen_package},
-  //  {LUA_TABLIBNAME, luaopen_table},
+  //  {LUA_LOADLIBNAME, luaopen_package},
+  {LUA_TABLIBNAME, luaopen_table},
   {LUA_IOLIBNAME, luaopen_io},
   //  {LUA_OSLIBNAME, luaopen_os},
   //  {LUA_STRLIBNAME, luaopen_string},
@@ -263,6 +266,7 @@ static int pmain (lua_State *L) {
 
   if (lua_stdin_is_tty()) {
     print_version();
+    print_banner();
     dotty(L);
   }
 
