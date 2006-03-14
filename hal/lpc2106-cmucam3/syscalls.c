@@ -157,7 +157,6 @@ int kill(int pid __attribute((unused)),
 void _exit(int status __attribute((unused)))
 {
   // XXX: should call cc3_power_down
-  printf( "We are now leaving...\n" );
   while(1);
 }
 
