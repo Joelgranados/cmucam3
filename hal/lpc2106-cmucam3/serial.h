@@ -88,7 +88,7 @@
 #define UMSR_DCD            (1 << 7)    // Data Carrier Detect
 
 
-#define UART_BAUD(baud) (uint16_t)(((FOSC*PLL_M/VPBDIV_VAL) / ((baud) * 16.0)) + 0.5)
+#define UART_BAUD(baud) (uint16_t)(((2*(((FOSC*PLL_M/VPBDIV_VAL) / ((baud) * 16))))+1)/2)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Definitions for typical UART 'baud' settings
