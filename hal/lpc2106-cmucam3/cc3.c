@@ -27,6 +27,8 @@ static inline void _cc3_pixbuf_read_from_fifo(void);
 static inline void _cc3_pixbuf_skip(uint32_t size);
 
 static inline void _cc3_pixbuf_cond_read_4 (bool b0, bool b1, bool b2, bool b3);
+// Move to the next byte in the FIFO 
+static inline void _cc3_fifo_read_inc(void);
 
 static uint8_t _cc3_second_green;
 static bool _cc3_second_green_valid;
@@ -59,6 +61,11 @@ void cc3_pixbuf_load ()
 //  REG(GPIO_IOCLR)=_CC3_BUF_WEE;  //BUF_WEE=0return 1;
 }
 
+void _cc3_fifo_read_inc(void) 
+{
+  REG(GPIO_IOSET)=_CC3_BUF_RCK; 
+  REG(GPIO_IOCLR)=_CC3_BUF_RCK;
+}
 
 void _cc3_pixbuf_skip (uint32_t size)
 {
@@ -210,22 +217,22 @@ void _cc3_pixbuf_cond_read_4 (bool b0, bool b1, bool b2, bool b3)
     if (b0) {
       cc3_g_current_pixel.channel[CC3_Y] = REG (GPIO_IOPIN) >> 24;
     }
-    _CC3_FIFO_READ_INC ();
+    _cc3_fifo_read_inc ();
 
     if (b1) {
       cc3_g_current_pixel.channel[CC3_CR] = REG (GPIO_IOPIN) >> 24;
     }
-    _CC3_FIFO_READ_INC ();
+    _cc3_fifo_read_inc ();
 
     if (b2) {
       _cc3_second_green = REG (GPIO_IOPIN) >> 24;
     }
-    _CC3_FIFO_READ_INC ();
+    _cc3_fifo_read_inc ();
 
     if (b3) {
       cc3_g_current_pixel.channel[CC3_CB] = REG (GPIO_IOPIN) >> 24;
     }
-    _CC3_FIFO_READ_INC ();
+    _cc3_fifo_read_inc ();
 
     break;
   case CC3_RGB:
@@ -233,22 +240,22 @@ void _cc3_pixbuf_cond_read_4 (bool b0, bool b1, bool b2, bool b3)
     if (b0) {
       cc3_g_current_pixel.channel[CC3_GREEN] = REG (GPIO_IOPIN) >> 24;
     }
-    _CC3_FIFO_READ_INC ();
+    _cc3_fifo_read_inc ();
 
     if (b1) {
       cc3_g_current_pixel.channel[CC3_RED] = REG (GPIO_IOPIN) >> 24;
     }
-    _CC3_FIFO_READ_INC ();
+    _cc3_fifo_read_inc ();
 
     if (b2) {
       _cc3_second_green = REG (GPIO_IOPIN) >> 24;
     }
-    _CC3_FIFO_READ_INC ();
+    _cc3_fifo_read_inc ();
 
     if (b3) {
       cc3_g_current_pixel.channel[CC3_BLUE] = REG (GPIO_IOPIN) >> 24;
     }
-    _CC3_FIFO_READ_INC ();
+    _cc3_fifo_read_inc ();
 
     break;
   }
