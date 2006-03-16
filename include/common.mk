@@ -39,6 +39,8 @@ $(PROJECT)_$(HALNAME): $(OBJS) $(HALDIR)/$(HALLIB) $(LIBFILES)
 	@$(CC) -o $@ $(OBJS) -L$(HALDIR) \
 	$(foreach ldir,$(LIBDIRS),-L$(ldir)) \
 	$(LIBARGS) \
+	-Wl,-Map=$(PROJECT)_$(HALNAME).map \
+	-Wl,--cref \
 	-Wl,-whole-archive \
 	-lhal-$(HALNAME) \
 	-Wl,-no-whole-archive \
@@ -61,6 +63,7 @@ lib$(PROJECT)_$(HALNAME).a: $(OBJS)
 
 clean:
 	$(RM) *.hex
+	$(RM) *.map
 	$(RM) $(PROJECT)_$(HALNAME)
 	$(RM) $(PROJECT)_$(HALNAME).exe
 	$(RM) lib$(PROJECT)_$(HALNAME).a
