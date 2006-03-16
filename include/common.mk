@@ -34,6 +34,8 @@ LIBFILES=$(foreach lib,$(LIBS),../../lib/$(lib)/lib$(lib)_$(HALNAME).a)
 LIBDIRS=$(foreach lib,$(LIBS),../../lib/$(lib))
 LIBARGS=$(foreach lib,$(LIBS),-l$(lib)_$(HALNAME))
 
+# the whole-archive stuff is needed, because we need to include
+# the syscalls -- gc-sections will eliminate useless symbols
 $(PROJECT)_$(HALNAME): $(OBJS) $(HALDIR)/$(HALLIB) $(LIBFILES)
 	@echo "  CC      $@"
 	@$(CC) -o $@ $(OBJS) -L$(HALDIR) \
@@ -41,6 +43,7 @@ $(PROJECT)_$(HALNAME): $(OBJS) $(HALDIR)/$(HALLIB) $(LIBFILES)
 	$(LIBARGS) \
 	-Wl,-Map=$(PROJECT)_$(HALNAME).map \
 	-Wl,--cref \
+	-Wl,--gc-sections \
 	-Wl,-whole-archive \
 	-lhal-$(HALNAME) \
 	-Wl,-no-whole-archive \
