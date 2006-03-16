@@ -164,7 +164,7 @@ FILE *cc3_fopen_uart(uint8_t uart, const char *mode)
 {
   char buf[8];  // safe, because uint8_t
 
-  sniprintf(buf, 8, "COM%d:", uart);
+  snprintf(buf, 8, "COM%d:", uart);
   return fopen(buf, mode);
 }
 
