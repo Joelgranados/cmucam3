@@ -96,7 +96,6 @@ extern cc3_pixel_t cc3_g_current_pixel;   // global that gets updated with pixbu
 extern cc3_frame_t cc3_g_current_frame;   // global that keeps clip, stride
 
 void cc3_pixbuf_load(void);
-void _cc3_pixbuf_skip(uint32_t size);
 
 void cc3_frame_default(void);
 /**
@@ -109,12 +108,6 @@ int cc3_pixbuf_read_rows(void *mem, uint32_t width, uint32_t rows );
  * Must adjust for channel, subframe, position in frame etc
  */
 int cc3_pixbuf_read(void);                              
-
-/**
- * advance the fifo by 4, conditionally reading each byte
- */
-void _cc3_pixbuf_cond_read_4(bool b0, bool b1, bool b2, bool b3); 
-
 
 /**
  * Rewinds the fifo 

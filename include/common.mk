@@ -4,6 +4,8 @@ ifeq ($(strip $(hal)),)
   hal=lpc2106-cmucam3
 endif
 
+INCLUDES += ../../include/cc3.h
+
 HALDIR=../../hal/$(hal)
 
 # include definitions (compiler, options, etc)

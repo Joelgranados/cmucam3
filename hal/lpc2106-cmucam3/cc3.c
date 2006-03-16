@@ -17,12 +17,16 @@ cc3_pixel_t cc3_g_current_pixel;        // global that gets updated with pixbuf 
 cc3_frame_t cc3_g_current_frame;        // global that keeps clip, stride
 
 
-static void _cc3_seek_left(void);
-static void _cc3_seek_right_down(void);
-static void _cc3_seek_top(void);
-static void _cc3_advance_x_loc(void);
+static inline void _cc3_seek_left(void);
+static inline void _cc3_seek_right_down(void);
+static inline void _cc3_seek_top(void);
+static inline void _cc3_advance_x_loc(void);
 
-static void _cc3_pixbuf_read_from_fifo(void);
+static inline void _cc3_pixbuf_read_from_fifo(void);
+
+static inline void _cc3_pixbuf_skip(uint32_t size);
+
+static inline void _cc3_pixbuf_cond_read_4 (bool b0, bool b1, bool b2, bool b3);
 
 static uint8_t _cc3_second_green;
 static bool _cc3_second_green_valid;
