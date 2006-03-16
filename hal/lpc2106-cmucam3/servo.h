@@ -17,11 +17,4 @@
 // Interrupt called from interrupt.c when the servo needs to be serviced
 void _cc3_servo_int (void);
 
-// Set a particular servo pin low
-void _cc3_servo_lo (uint8_t n);
-
-// Set all pins high at the start of the servo cycle
-void _cc3_servo_hi_all (void);
-
-
 #endif

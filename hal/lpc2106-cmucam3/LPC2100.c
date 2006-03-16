@@ -1,8 +1,9 @@
+#include "cc3.h"
 #include "LPC2100.h"
 #include "lpc_config.h"
 
 void
-cc3_system_setup ()
+cc3_system_setup (void)
 {
 
   // --- enable and connect the PLL (Phase Locked Loop) ---

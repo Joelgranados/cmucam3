@@ -4,9 +4,16 @@
 #include "interrupt.h"
 #include <stdio.h>
 
-uint32_t servo_val[MAX_SERVOS];
-uint32_t servo_tmp[MAX_SERVOS];
-uint32_t servo_mask;
+// Set a particular servo pin low
+static void _cc3_servo_lo (uint8_t n);
+
+// Set all pins high at the start of the servo cycle
+static void _cc3_servo_hi_all (void);
+
+
+static uint32_t servo_val[MAX_SERVOS];
+static uint32_t servo_tmp[MAX_SERVOS];
+static uint32_t servo_mask;
 
 /**
  * cc3_servo_set()
