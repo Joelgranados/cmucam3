@@ -53,7 +53,7 @@ int main (void)
 
     new_time = cc3_timer();
     if (new_time - last_time > 5000) {
-      printf("%d: %e fps\n", new_time, i / 5.0);
+      printf("%d: %g fps\n", new_time, i / 5.0);
       
       last_time = new_time;
       i = 0;
