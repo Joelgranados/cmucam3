@@ -6,12 +6,14 @@
 
 #include <cc3.h>
 
+static const int print_increment = 100;
 
 int main (void)
 {
   void *buf;
-  uint32_t last_time, new_time;
+  uint32_t last_time;
   int i;
+  int next_print;
   
   // setup system    
   cc3_system_setup ();
@@ -35,8 +37,11 @@ int main (void)
     exit(1);
   }
 
-  last_time = cc3_timer();
+  printf("Running benchmark...\n");
+
   i = 0;
+  next_print = print_increment;
+  last_time = cc3_timer();
 
   while(true) {
     int y = 0;
@@ -51,12 +56,12 @@ int main (void)
     
     i++;
 
-    new_time = cc3_timer();
-    if (new_time - last_time > 5000) {
-      printf("%d: %g fps\n", new_time, i / 5.0);
+    if (i >= next_print) {
+      double fps = print_increment / ((cc3_timer() - last_time) / 1000.0);
+      printf("%d frames, %g fps\n", i, fps);
       
-      last_time = new_time;
-      i = 0;
+      next_print += print_increment;
+      last_time = cc3_timer();
     }
   }
 
