@@ -17,86 +17,88 @@ cc3_pixel_t cc3_g_current_pixel;        // global that gets updated with pixbuf 
 cc3_frame_t cc3_g_current_frame;        // global that keeps clip, stride
 
 
-static inline void _cc3_seek_left(void);
-static inline void _cc3_seek_right_down(void);
-static inline void _cc3_seek_top(void);
-static inline void _cc3_advance_x_loc(void);
+static inline void _cc3_seek_left (void);
+static inline void _cc3_seek_right_down (void);
+static inline void _cc3_seek_top (void);
+static inline void _cc3_advance_x_loc (void);
 
-static inline void _cc3_pixbuf_read_from_fifo(void);
+static inline void _cc3_pixbuf_read_from_fifo (void);
 
-static inline void _cc3_pixbuf_skip(uint32_t size);
+static inline void _cc3_pixbuf_skip (uint32_t size);
 
-static inline void _cc3_pixbuf_cond_read_4 (bool b0, bool b1, bool b2, bool b3);
+static inline void _cc3_pixbuf_cond_read_4 (bool b0, bool b1, bool b2,
+                                            bool b3);
 // Move to the next byte in the FIFO 
-static inline void _cc3_fifo_read_inc(void);
+static inline void _cc3_fifo_read_inc (void);
 
 static uint8_t _cc3_second_green;
 static bool _cc3_second_green_valid;
 
 void cc3_pixbuf_load ()
 {
-    unsigned int i;
-    //REG(GPIO_IOCLR)=CAM_IE;  
-    //while(frame_done!=1);
-    cc3_pixbuf_rewind ();
-    _cc3_pixbuf_write_rewind ();
-    while (!(REG (GPIO_IOPIN) & _CC3_CAM_VSYNC));       //while(CAM_VSYNC);
-    while (REG (GPIO_IOPIN) & _CC3_CAM_VSYNC);  //while(!CAM_VSYNC);
+  unsigned int i;
+  //REG(GPIO_IOCLR)=CAM_IE;  
+  //while(frame_done!=1);
+  cc3_pixbuf_rewind ();
+  _cc3_pixbuf_write_rewind ();
+  while (!(REG (GPIO_IOPIN) & _CC3_CAM_VSYNC)); //while(CAM_VSYNC);
+  while (REG (GPIO_IOPIN) & _CC3_CAM_VSYNC);    //while(!CAM_VSYNC);
 
-    REG (GPIO_IOSET) = _CC3_BUF_WEE;
+  REG (GPIO_IOSET) = _CC3_BUF_WEE;
 
-    // wait for vsync to finish
-    while (!(REG (GPIO_IOPIN) & _CC3_CAM_VSYNC));       //while(CAM_VSYNC);
+  // wait for vsync to finish
+  while (!(REG (GPIO_IOPIN) & _CC3_CAM_VSYNC)); //while(CAM_VSYNC);
 
-    enable_ext_interrupt ();
-    for (i = 0; i < 3; i++) {
-        while (!(REG (GPIO_IOPIN) & _CC3_CAM_HREF));
-        while (REG (GPIO_IOPIN) & _CC3_CAM_HREF);
-    }
-    cc3_g_current_frame.x_loc = 0;
-    cc3_g_current_frame.y_loc = 0;
-    //while (REG (GPIO_IOPIN) & _CC3_CAM_VSYNC);
-    //REG (GPIO_IOCLR) = _CC3_BUF_WEE;
+  enable_ext_interrupt ();
+  for (i = 0; i < 3; i++) {
+    while (!(REG (GPIO_IOPIN) & _CC3_CAM_HREF));
+    while (REG (GPIO_IOPIN) & _CC3_CAM_HREF);
+  }
+  cc3_g_current_frame.x_loc = 0;
+  cc3_g_current_frame.y_loc = 0;
+  //while (REG (GPIO_IOPIN) & _CC3_CAM_VSYNC);
+  //REG (GPIO_IOCLR) = _CC3_BUF_WEE;
 //      delay();
 //  REG(GPIO_IOCLR)=_CC3_BUF_WEE;  //BUF_WEE=0return 1;
 }
 
-void _cc3_fifo_read_inc(void) 
+void _cc3_fifo_read_inc (void)
 {
-  REG(GPIO_IOSET)=_CC3_BUF_RCK; 
-  REG(GPIO_IOCLR)=_CC3_BUF_RCK;
+  REG (GPIO_IOSET) = _CC3_BUF_RCK;
+  REG (GPIO_IOCLR) = _CC3_BUF_RCK;
 }
 
 void _cc3_pixbuf_skip (uint32_t size)
 {
-    uint32_t i;
-    for (i = 0; i < size; i++) {
-      _cc3_pixbuf_cond_read_4(false, false, false, false);
-    }
+  uint32_t i;
+  for (i = 0; i < size; i++) {
+    _cc3_pixbuf_cond_read_4 (false, false, false, false);
+  }
 
-    _cc3_second_green_valid = false;
+  _cc3_second_green_valid = false;
 }
 
-void _cc3_pixbuf_read_from_fifo()
+void _cc3_pixbuf_read_from_fifo ()
 {
   // read the pixel: GRGB or YCrYCb
   if (cc3_g_current_frame.coi == CC3_ALL) {
-    _cc3_pixbuf_cond_read_4(true, true, true, true);
-  } else {
+    _cc3_pixbuf_cond_read_4 (true, true, true, true);
+  }
+  else {
     switch (_cc3_g_current_camera_state.colorspace) {
     case CC3_YCRCB:
       // YCrYCb
-      _cc3_pixbuf_cond_read_4(cc3_g_current_frame.coi == CC3_Y,
-			      cc3_g_current_frame.coi == CC3_CR,
-			      cc3_g_current_frame.coi == CC3_Y,
-			      cc3_g_current_frame.coi == CC3_CB);
+      _cc3_pixbuf_cond_read_4 (cc3_g_current_frame.coi == CC3_Y,
+                               cc3_g_current_frame.coi == CC3_CR,
+                               cc3_g_current_frame.coi == CC3_Y,
+                               cc3_g_current_frame.coi == CC3_CB);
       break;
     case CC3_RGB:
       // GRGB
-      _cc3_pixbuf_cond_read_4(cc3_g_current_frame.coi == CC3_GREEN,
-			      cc3_g_current_frame.coi == CC3_RED,
-			      cc3_g_current_frame.coi == CC3_GREEN,
-			      cc3_g_current_frame.coi == CC3_BLUE);
+      _cc3_pixbuf_cond_read_4 (cc3_g_current_frame.coi == CC3_GREEN,
+                               cc3_g_current_frame.coi == CC3_RED,
+                               cc3_g_current_frame.coi == CC3_GREEN,
+                               cc3_g_current_frame.coi == CC3_BLUE);
       break;
     }
   }
@@ -111,30 +113,30 @@ void _cc3_pixbuf_read_from_fifo()
 
 int cc3_pixbuf_read ()
 {
-  _cc3_seek_top();
-  _cc3_seek_right_down(); 
-  _cc3_seek_left(); 
-  
+  _cc3_seek_top ();
+  _cc3_seek_right_down ();
+  _cc3_seek_left ();
+
   if (cc3_g_current_frame.y_loc > cc3_g_current_frame.y1) {
     return 0;
   }
-  
-  _cc3_pixbuf_read_from_fifo();
-  _cc3_advance_x_loc();
+
+  _cc3_pixbuf_read_from_fifo ();
+  _cc3_advance_x_loc ();
   return 1;
 }
 
 void _cc3_seek_top ()
 {
-    int8_t i;
+  int8_t i;
 
-    // Skip top
-    for (cc3_g_current_frame.y_loc = 0;
-	 cc3_g_current_frame.y_loc < cc3_g_current_frame.y0;
-	 cc3_g_current_frame.y_loc++)
-      for (i = 0; i < cc3_g_current_frame.y_step; i++)
-	_cc3_pixbuf_skip (cc3_g_current_frame.raw_width);
-    cc3_g_current_frame.x_loc = 0;
+  // Skip top
+  for (cc3_g_current_frame.y_loc = 0;
+       cc3_g_current_frame.y_loc < cc3_g_current_frame.y0;
+       cc3_g_current_frame.y_loc++)
+    for (i = 0; i < cc3_g_current_frame.y_step; i++)
+      _cc3_pixbuf_skip (cc3_g_current_frame.raw_width);
+  cc3_g_current_frame.x_loc = 0;
 }
 
 
@@ -142,8 +144,7 @@ void _cc3_seek_left ()
 {
   // Skip left 
   if (cc3_g_current_frame.x_loc < cc3_g_current_frame.x0) {
-    _cc3_pixbuf_skip (cc3_g_current_frame.x0 *
-		      cc3_g_current_frame.x_step);
+    _cc3_pixbuf_skip (cc3_g_current_frame.x0 * cc3_g_current_frame.x_step);
     cc3_g_current_frame.x_loc = cc3_g_current_frame.x0;
   }
 }
@@ -158,8 +159,7 @@ void _cc3_seek_right_down ()
 
   // Skip right and down 
   _cc3_pixbuf_skip (cc3_g_current_frame.raw_width -
-		    (cc3_g_current_frame.x_loc *
-		     cc3_g_current_frame.x_step));
+                    (cc3_g_current_frame.x_loc * cc3_g_current_frame.x_step));
   cc3_g_current_frame.x_loc = 0;
   cc3_g_current_frame.y_loc++;
   if (cc3_g_current_frame.y_step > 1) {
@@ -169,13 +169,13 @@ void _cc3_seek_right_down ()
   }
 }
 
-void _cc3_advance_x_loc()
+void _cc3_advance_x_loc ()
 {
   cc3_g_current_frame.x_loc++;
   // skip horizontally for next read
   if (cc3_g_current_frame.x_step > 1) {
     if (cc3_g_current_frame.raw_width >
-	(cc3_g_current_frame.x_loc + cc3_g_current_frame.x_step)) {
+        (cc3_g_current_frame.x_loc + cc3_g_current_frame.x_step)) {
       // skip pixel
       _cc3_pixbuf_skip (cc3_g_current_frame.x_step - 1);
     }
@@ -196,14 +196,14 @@ void _cc3_pixbuf_cond_read_4 (bool b0, bool b1, bool b2, bool b3)
     if (b2) {
       switch (_cc3_g_current_camera_state.colorspace) {
       case CC3_YCRCB:
-	// YCrYCb
-	cc3_g_current_pixel.channel[CC3_Y] = _cc3_second_green;
-	break;
+        // YCrYCb
+        cc3_g_current_pixel.channel[CC3_Y] = _cc3_second_green;
+        break;
 
       case CC3_RGB:
-	// GRGB
-	cc3_g_current_pixel.channel[CC3_GREEN] = _cc3_second_green;
-	break;
+        // GRGB
+        cc3_g_current_pixel.channel[CC3_GREEN] = _cc3_second_green;
+        break;
       }
     }
 
@@ -272,24 +272,29 @@ void _cc3_pixbuf_cond_read_4 (bool b0, bool b1, bool b2, bool b3)
  */
 void cc3_pixbuf_rewind ()
 {
-    REG (GPIO_IOCLR) = _CC3_BUF_RRST;
-    REG (GPIO_IOCLR) = _CC3_BUF_RCK;
-    REG (GPIO_IOSET) = _CC3_BUF_RCK;
-    REG (GPIO_IOCLR) = _CC3_BUF_RCK;
-    REG (GPIO_IOSET) = _CC3_BUF_RRST;
+  REG (GPIO_IOCLR) = _CC3_BUF_RRST;
+  REG (GPIO_IOCLR) = _CC3_BUF_RCK;
+  REG (GPIO_IOSET) = _CC3_BUF_RCK;
+  REG (GPIO_IOCLR) = _CC3_BUF_RCK;
+  REG (GPIO_IOSET) = _CC3_BUF_RRST;
 
-    _cc3_second_green_valid = false;
+  _cc3_second_green_valid = false;
 }
 
 
 void cc3_clr_led (uint8_t select)
 {
-    switch(select)
-    {
-	case 0: REG (GPIO_IOCLR) = _CC3_LED_0; break;
-	case 1: REG (GPIO_IOCLR) = _CC3_LED_1; break;
-	case 2: REG (GPIO_IOCLR) = _CC3_LED_2; break;
-    }
+  switch (select) {
+  case 0:
+    REG (GPIO_IOCLR) = _CC3_LED_0;
+    break;
+  case 1:
+    REG (GPIO_IOCLR) = _CC3_LED_1;
+    break;
+  case 2:
+    REG (GPIO_IOCLR) = _CC3_LED_2;
+    break;
+  }
 
 }
 
@@ -297,12 +302,17 @@ void cc3_clr_led (uint8_t select)
 void cc3_set_led (uint8_t select)
 {
 
-    switch(select)
-    {
-	case 0: REG (GPIO_IOSET) = _CC3_LED_0; break;
-	case 1: REG (GPIO_IOSET) = _CC3_LED_1; break;
-	case 2: REG (GPIO_IOSET) = _CC3_LED_2; break;
-    }
+  switch (select) {
+  case 0:
+    REG (GPIO_IOSET) = _CC3_LED_0;
+    break;
+  case 1:
+    REG (GPIO_IOSET) = _CC3_LED_1;
+    break;
+  case 2:
+    REG (GPIO_IOSET) = _CC3_LED_2;
+    break;
+  }
 }
 
 /**
@@ -317,45 +327,45 @@ void cc3_set_led (uint8_t select)
  */
 int cc3_pixbuf_read_rows (void *mem, uint32_t width, uint32_t rows)
 {
-  
+
   int16_t j;
   uint16_t r;
-  
-  if ( (cc3_g_current_frame.y0+rows) > cc3_g_current_frame.y1)
+
+  if ((cc3_g_current_frame.y0 + rows) > cc3_g_current_frame.y1)
     return -1;
-  
-  if( cc3_g_current_frame.width!=width ) return -2;
-  
+
+  if (cc3_g_current_frame.width != width)
+    return -2;
+
   // First read into frame
   _cc3_seek_top ();
-  
-  for(r=0; r<rows; r++ )
-    {
-      // First read after line
-      _cc3_seek_right_down (); 
-      
-      // First read into line
-      _cc3_seek_left(); 
-      
-      for(j=0; j<cc3_g_current_frame.width; j++ )
-	{ 
-	  uint8_t *p = ((uint8_t *) mem) + (r * width + j * 3);
 
-	  // read the pixel
-	  _cc3_pixbuf_read_from_fifo();
+  for (r = 0; r < rows; r++) {
+    // First read after line
+    _cc3_seek_right_down ();
 
-	  // save into memory
-	  if (cc3_g_current_frame.coi == CC3_ALL) {
-	    *(p + 0) = cc3_g_current_pixel.channel[0];
-	    *(p + 1) = cc3_g_current_pixel.channel[1];
-	    *(p + 2) = cc3_g_current_pixel.channel[2];
-	  } else {
-	    *p = cc3_g_current_pixel.channel[cc3_g_current_frame.coi];
-	  }		
-	  
-	  _cc3_advance_x_loc();
-	}
+    // First read into line
+    _cc3_seek_left ();
+
+    for (j = 0; j < cc3_g_current_frame.width; j++) {
+      uint8_t *p = ((uint8_t *) mem) + (r * width + j * 3);
+
+      // read the pixel
+      _cc3_pixbuf_read_from_fifo ();
+
+      // save into memory
+      if (cc3_g_current_frame.coi == CC3_ALL) {
+        *(p + 0) = cc3_g_current_pixel.channel[0];
+        *(p + 1) = cc3_g_current_pixel.channel[1];
+        *(p + 2) = cc3_g_current_pixel.channel[2];
+      }
+      else {
+        *p = cc3_g_current_pixel.channel[cc3_g_current_frame.coi];
+      }
+
+      _cc3_advance_x_loc ();
     }
+  }
   return 1;
 }
 
@@ -364,10 +374,11 @@ int cc3_pixbuf_read_rows (void *mem, uint32_t width, uint32_t rows)
  *
  * This function returns the time since startup in ms as a uint32
  */
-void cc3_wait_ms(uint32_t delay) {
-	uint32_t start;
-	start=cc3_timer();
-	while(cc3_timer()<(start+delay));
+void cc3_wait_ms (uint32_t delay)
+{
+  uint32_t start;
+  start = cc3_timer ();
+  while (cc3_timer () < (start + delay));
 }
 
 
@@ -376,9 +387,11 @@ void cc3_wait_ms(uint32_t delay) {
  *
  * This function returns the time since startup in ms as a uint32
  */
-uint32_t cc3_timer() {
-    return( REG(TIMER0_TC) ); // REG in milliseconds
+uint32_t cc3_timer ()
+{
+  return (REG (TIMER0_TC));     // REG in milliseconds
 }
+
 /**
  * cc3_pixbuf_set_roi():
  * Sets the region of interest in cc3_frame_t for virtual windowing. 
@@ -387,24 +400,24 @@ uint32_t cc3_timer() {
  */
 int cc3_pixbuf_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
 {
-    if (x0 >= 0
-        && x0 <= (cc3_g_current_frame.raw_width / cc3_g_current_frame.x_step)
-        && y0 >= 0
-        && y0 <= (cc3_g_current_frame.raw_height / cc3_g_current_frame.y_step)
-        && x1 >= 0
-        && x1 <= (cc3_g_current_frame.raw_width / cc3_g_current_frame.x_step)
-        && y1 >= 0
-        && y1 <= (cc3_g_current_frame.raw_height / cc3_g_current_frame.y_step)
-        && x0 < x1 && y0 < y1) {
-        cc3_g_current_frame.x0 = x0;
-        cc3_g_current_frame.y0 = y0;
-        cc3_g_current_frame.x1 = x1;
-        cc3_g_current_frame.y1 = y1;
-        cc3_g_current_frame.width = x1 - x0;
-        cc3_g_current_frame.height = y1 - y0;
-        return 1;
-    }
-    return 0;
+  if (x0 >= 0
+      && x0 <= (cc3_g_current_frame.raw_width / cc3_g_current_frame.x_step)
+      && y0 >= 0
+      && y0 <= (cc3_g_current_frame.raw_height / cc3_g_current_frame.y_step)
+      && x1 >= 0
+      && x1 <= (cc3_g_current_frame.raw_width / cc3_g_current_frame.x_step)
+      && y1 >= 0
+      && y1 <= (cc3_g_current_frame.raw_height / cc3_g_current_frame.y_step)
+      && x0 < x1 && y0 < y1) {
+    cc3_g_current_frame.x0 = x0;
+    cc3_g_current_frame.y0 = y0;
+    cc3_g_current_frame.x1 = x1;
+    cc3_g_current_frame.y1 = y1;
+    cc3_g_current_frame.width = x1 - x0;
+    cc3_g_current_frame.height = y1 - y0;
+    return 1;
+  }
+  return 0;
 }
 
 /**
@@ -418,19 +431,19 @@ int cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
 {
   // can't be < 0 if unsigned
   /* 
-    if (x_step < 0 || y_step < 0)
-        return 0;
-  */
-    cc3_g_current_frame.x_step = x_step;
-    cc3_g_current_frame.y_step = y_step;
-    cc3_g_current_frame.width = cc3_g_current_frame.raw_width / x_step;
-    cc3_g_current_frame.height = cc3_g_current_frame.raw_height / y_step;
-    cc3_g_current_frame.x0 = 0;
-    cc3_g_current_frame.y0 = 0;
-    cc3_g_current_frame.x1 = cc3_g_current_frame.width;
-    cc3_g_current_frame.y1 = cc3_g_current_frame.height;
-    cc3_g_current_frame.subsample_mode = mode;
-    return 1;
+     if (x_step < 0 || y_step < 0)
+     return 0;
+   */
+  cc3_g_current_frame.x_step = x_step;
+  cc3_g_current_frame.y_step = y_step;
+  cc3_g_current_frame.width = cc3_g_current_frame.raw_width / x_step;
+  cc3_g_current_frame.height = cc3_g_current_frame.raw_height / y_step;
+  cc3_g_current_frame.x0 = 0;
+  cc3_g_current_frame.y0 = 0;
+  cc3_g_current_frame.x1 = cc3_g_current_frame.width;
+  cc3_g_current_frame.y1 = cc3_g_current_frame.height;
+  cc3_g_current_frame.subsample_mode = mode;
+  return 1;
 }
 
 /**
@@ -441,10 +454,10 @@ int cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
  */
 int cc3_pixbuf_set_coi (cc3_channel_t chan)
 {
-    if (chan > 4)
-        return 0;               // Sanity check on bounds
-    cc3_g_current_frame.coi = chan;
-    return 1;
+  if (chan > 4)
+    return 0;                   // Sanity check on bounds
+  cc3_g_current_frame.coi = chan;
+  return 1;
 }
 
 
@@ -459,43 +472,43 @@ int cc3_pixbuf_set_coi (cc3_channel_t chan)
  */
 int cc3_camera_init ()
 {
-    REG (PCB_PINSEL0) = (REG (PCB_PINSEL0) & 0xFFFF0000) | UART0_PCB_PINSEL_CFG ; //| 0x50;
-    //REG (PCB_PINSEL0) = (REG (PCB_PINSEL0) & 0xFFFF0000) | UART0_PCB_PINSEL_CFG | UART1_PCB_PINSEL_CFG; //| 0x50;
-    REG (GPIO_IODIR) = _CC3_DEFAULT_PORT_DIR;
-    //REG(GPIO_IOSET)=CAM_BUF_ENABLE;
-    //REG (GPIO_IOCLR) = CAM_BUF_ENABLE;  // Change for AL440B
-    REG (GPIO_IOCLR) = _CC3_BUF_RESET;
-    _cc3_camera_reset ();
-    _cc3_fifo_reset ();
+  REG (PCB_PINSEL0) = (REG (PCB_PINSEL0) & 0xFFFF0000) | UART0_PCB_PINSEL_CFG;  //| 0x50;
+  //REG (PCB_PINSEL0) = (REG (PCB_PINSEL0) & 0xFFFF0000) | UART0_PCB_PINSEL_CFG | UART1_PCB_PINSEL_CFG; //| 0x50;
+  REG (GPIO_IODIR) = _CC3_DEFAULT_PORT_DIR;
+  //REG(GPIO_IOSET)=CAM_BUF_ENABLE;
+  //REG (GPIO_IOCLR) = CAM_BUF_ENABLE;  // Change for AL440B
+  REG (GPIO_IOCLR) = _CC3_BUF_RESET;
+  _cc3_camera_reset ();
+  _cc3_fifo_reset ();
 
-    _cc3_g_current_camera_state.camera_type = _CC3_OV6620;      // XXX add autodetect code
-    _cc3_g_current_camera_state.clock_divider = 0;
-    _cc3_g_current_camera_state.brightness = -1;
-    _cc3_g_current_camera_state.contrast = -1;
-    _cc3_g_current_camera_state.auto_exposure = true;
-    _cc3_g_current_camera_state.auto_white_balance = false;
-    _cc3_g_current_camera_state.colorspace = CC3_RGB;
-    _cc3_set_register_state ();
+  _cc3_g_current_camera_state.camera_type = _CC3_OV6620;        // XXX add autodetect code
+  _cc3_g_current_camera_state.clock_divider = 0;
+  _cc3_g_current_camera_state.brightness = -1;
+  _cc3_g_current_camera_state.contrast = -1;
+  _cc3_g_current_camera_state.auto_exposure = true;
+  _cc3_g_current_camera_state.auto_white_balance = false;
+  _cc3_g_current_camera_state.colorspace = CC3_RGB;
+  _cc3_set_register_state ();
 
-    cc3_frame_default ();
+  cc3_frame_default ();
 
-    return 1;
+  return 1;
 }
 
 void cc3_frame_default ()
 {
-    cc3_g_current_frame.coi = CC3_ALL;
-    cc3_g_current_frame.x_step = 1;
-    cc3_g_current_frame.y_step = 1;
-    cc3_g_current_frame.x0 = 0;
-    cc3_g_current_frame.y0 = 0;
-    cc3_g_current_frame.width = cc3_g_current_frame.raw_width;
-    cc3_g_current_frame.height = cc3_g_current_frame.raw_height;
-    cc3_g_current_frame.x1 = cc3_g_current_frame.raw_width;
-    cc3_g_current_frame.y1 = cc3_g_current_frame.raw_height;
-    cc3_g_current_frame.x_loc = 0;
-    cc3_g_current_frame.y_loc = 0;
-    cc3_g_current_frame.subsample_mode = CC3_NEAREST;
+  cc3_g_current_frame.coi = CC3_ALL;
+  cc3_g_current_frame.x_step = 1;
+  cc3_g_current_frame.y_step = 1;
+  cc3_g_current_frame.x0 = 0;
+  cc3_g_current_frame.y0 = 0;
+  cc3_g_current_frame.width = cc3_g_current_frame.raw_width;
+  cc3_g_current_frame.height = cc3_g_current_frame.raw_height;
+  cc3_g_current_frame.x1 = cc3_g_current_frame.raw_width;
+  cc3_g_current_frame.y1 = cc3_g_current_frame.raw_height;
+  cc3_g_current_frame.x_loc = 0;
+  cc3_g_current_frame.y_loc = 0;
+  cc3_g_current_frame.subsample_mode = CC3_NEAREST;
 }
 
 /**
@@ -512,89 +525,89 @@ void cc3_camera_kill ()
 
 static void _cc3_set_cam_ddr_i2c_idle (void)
 {
-    REG (GPIO_IODIR) = _CC3_I2C_PORT_DDR_IDLE;
-    _cc3_delay_i2c ();
+  REG (GPIO_IODIR) = _CC3_I2C_PORT_DDR_IDLE;
+  _cc3_delay_i2c ();
 }
 
 static void _cc3_set_cam_ddr_i2c_write (void)
 {
-    REG (GPIO_IODIR) = _CC3_I2C_PORT_DDR_WRITE;
-    _cc3_delay_i2c ();
+  REG (GPIO_IODIR) = _CC3_I2C_PORT_DDR_WRITE;
+  _cc3_delay_i2c ();
 }
 
 
 static void _cc3_set_cam_ddr (volatile unsigned long val)
 {
-    //DDR(I2C_PORT,val);
-    REG (GPIO_IODIR) = val;
-    _cc3_delay_i2c ();
+  //DDR(I2C_PORT,val);
+  REG (GPIO_IODIR) = val;
+  _cc3_delay_i2c ();
 }
 
 
 
 static unsigned int _cc3_i2c_send (unsigned int num, unsigned int *buffer)
 {
-    unsigned int ack, i, k;
-    unsigned int data;
+  unsigned int ack, i, k;
+  unsigned int data;
 
-    // Send Start Bit
-    //I2C_SDA=0;  // needed because values can be reset by read-modify cycle
-    REG (GPIO_IOCLR) = 0x00800000;
-    _cc3_set_cam_ddr (_CC3_I2C_PORT_DDR_READ_SCL);      // SDA=0 SCL=1
-    //I2C_SCL=0;  // needed because values can be reset by read-modify cycle
-    REG (GPIO_IOCLR) = 0x00400000;
-    _cc3_set_cam_ddr_i2c_write ();      // SDA=0 SCL=0
+  // Send Start Bit
+  //I2C_SDA=0;  // needed because values can be reset by read-modify cycle
+  REG (GPIO_IOCLR) = 0x00800000;
+  _cc3_set_cam_ddr (_CC3_I2C_PORT_DDR_READ_SCL);        // SDA=0 SCL=1
+  //I2C_SCL=0;  // needed because values can be reset by read-modify cycle
+  REG (GPIO_IOCLR) = 0x00400000;
+  _cc3_set_cam_ddr_i2c_write ();        // SDA=0 SCL=0
 
-    // Send the Byte    
-    for (k = 0; k != num; k++) {
-        data = buffer[k];       // To avoid shifting array problems   
-        for (i = 0; !(i & 8); i++)      // Write data    
-        {
-            if (data & 0x80) {
-                _cc3_set_cam_ddr (_CC3_I2C_PORT_DDR_READ_SDA);  // SDA=1 SCL=0
-                _cc3_set_cam_ddr_i2c_idle ();   // SDA=1 SCL=1
-            }
-            else {
-                _cc3_set_cam_ddr_i2c_write ();  // SDA=0 SCL=0
-                _cc3_set_cam_ddr (_CC3_I2C_PORT_DDR_READ_SCL);  // SDA=0 SCL=1
+  // Send the Byte    
+  for (k = 0; k != num; k++) {
+    data = buffer[k];           // To avoid shifting array problems   
+    for (i = 0; !(i & 8); i++)  // Write data    
+    {
+      if (data & 0x80) {
+        _cc3_set_cam_ddr (_CC3_I2C_PORT_DDR_READ_SDA);  // SDA=1 SCL=0
+        _cc3_set_cam_ddr_i2c_idle ();   // SDA=1 SCL=1
+      }
+      else {
+        _cc3_set_cam_ddr_i2c_write ();  // SDA=0 SCL=0
+        _cc3_set_cam_ddr (_CC3_I2C_PORT_DDR_READ_SCL);  // SDA=0 SCL=1
 
-            }
-            while (!(REG (GPIO_IOPIN) & 0x00400000));
-            //while(!I2C_SCL);
+      }
+      while (!(REG (GPIO_IOPIN) & 0x00400000));
+      //while(!I2C_SCL);
 
 
-            if (data & 0x08) {
-                _cc3_set_cam_ddr (_CC3_I2C_PORT_DDR_READ_SDA);  // SDA=1 SCL=0
-
-            }
-            else {
-                _cc3_set_cam_ddr_i2c_write ();  // SDA=0 SCL=0
-            }
-
-            data <<= 1;
-        }                       // END OF 8 BIT FOR LOOP
-
-        // Check ACK  <*************************************
+      if (data & 0x08) {
         _cc3_set_cam_ddr (_CC3_I2C_PORT_DDR_READ_SDA);  // SDA=1 SCL=0
 
-        _cc3_set_cam_ddr_i2c_idle ();   // SDA=1 SCL=1
-        ack = 0;
-
-        //if(I2C_SDA)                     // sample SDA
-        if (REG (GPIO_IOPIN) & 0x00800000) {
-            ack |= 1;
-            break;
-        }
-
+      }
+      else {
         _cc3_set_cam_ddr_i2c_write ();  // SDA=0 SCL=0
+      }
 
+      data <<= 1;
+    }                           // END OF 8 BIT FOR LOOP
+
+    // Check ACK  <*************************************
+    _cc3_set_cam_ddr (_CC3_I2C_PORT_DDR_READ_SDA);      // SDA=1 SCL=0
+
+    _cc3_set_cam_ddr_i2c_idle ();       // SDA=1 SCL=1
+    ack = 0;
+
+    //if(I2C_SDA)                     // sample SDA
+    if (REG (GPIO_IOPIN) & 0x00800000) {
+      ack |= 1;
+      break;
     }
 
-    // Send Stop Bit 
-    _cc3_set_cam_ddr (_CC3_I2C_PORT_DDR_READ_SCL);      // SDA=0 SCL=1
-    _cc3_set_cam_ddr_i2c_idle ();       // SDA=1 SCL=1
+    _cc3_set_cam_ddr_i2c_write ();      // SDA=0 SCL=0
 
-    return ack;
+  }
+
+  // Send Stop Bit 
+  _cc3_set_cam_ddr (_CC3_I2C_PORT_DDR_READ_SCL);        // SDA=0 SCL=1
+  _cc3_set_cam_ddr_i2c_idle (); // SDA=1 SCL=1
+
+  return ack;
 
 }
 
@@ -610,19 +623,19 @@ static unsigned int _cc3_i2c_send (unsigned int num, unsigned int *buffer)
  */
 int cc3_set_raw_register (uint8_t address, uint8_t value)
 {
-    unsigned int data[3];
-    int to;
-    data[0] = _cc3_g_current_camera_state.camera_type;
-    data[1] = address;
-    data[2] = value;
-    to = 0;
-    while (_cc3_i2c_send (3, data)) {
-        to++;
-        if (to > 3)
-            return 0;
-    }
-    _cc3_delay_us_4 (1);
-    return 1;
+  unsigned int data[3];
+  int to;
+  data[0] = _cc3_g_current_camera_state.camera_type;
+  data[1] = address;
+  data[2] = value;
+  to = 0;
+  while (_cc3_i2c_send (3, data)) {
+    to++;
+    if (to > 3)
+      return 0;
+  }
+  _cc3_delay_us_4 (1);
+  return 1;
 }
 
 
@@ -633,11 +646,11 @@ int cc3_set_raw_register (uint8_t address, uint8_t value)
  */
 int cc3_set_resolution (cc3_camera_resolution_t cam_res)
 {
-    _cc3_g_current_camera_state.resolution = cam_res;
-    _cc3_set_register_state (); // XXX Don't reset all of them, this is just quick and dirty...
-    cc3_frame_default ();
+  _cc3_g_current_camera_state.resolution = cam_res;
+  _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
+  cc3_frame_default ();
 
-    return 1;
+  return 1;
 }
 
 /**
@@ -649,45 +662,45 @@ int cc3_set_resolution (cc3_camera_resolution_t cam_res)
  */
 int cc3_set_colorspace (cc3_colorspace_t colorspace)
 {
-    _cc3_g_current_camera_state.colorspace = colorspace;
-    _cc3_set_register_state ();
-    return 1;
+  _cc3_g_current_camera_state.colorspace = colorspace;
+  _cc3_set_register_state ();
+  return 1;
 }
 
 
 int cc3_set_framerate_divider (uint8_t rate_divider)
 {
-    _cc3_g_current_camera_state.clock_divider = rate_divider;
-    _cc3_set_register_state (); // XXX Don't reset all of them, this is just quick and dirty...
-    return 1;
+  _cc3_g_current_camera_state.clock_divider = rate_divider;
+  _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
+  return 1;
 }
 
 int cc3_set_auto_exposure (bool exp)
 {
-    _cc3_g_current_camera_state.auto_exposure = exp;
-    _cc3_set_register_state (); // XXX Don't reset all of them, this is just quick and dirty...
-    return 1;
+  _cc3_g_current_camera_state.auto_exposure = exp;
+  _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
+  return 1;
 }
 
 int cc3_set_auto_white_balance (bool awb)
 {
-    _cc3_g_current_camera_state.auto_white_balance = awb;
-    _cc3_set_register_state (); // XXX Don't reset all of them, this is just quick and dirty...
-    return 1;
+  _cc3_g_current_camera_state.auto_white_balance = awb;
+  _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
+  return 1;
 }
 
 int cc3_set_brightness (uint8_t level)
 {
-    _cc3_g_current_camera_state.brightness = level;
-    _cc3_set_register_state (); // XXX Don't reset all of them, this is just quick and dirty...
-    return 1;
+  _cc3_g_current_camera_state.brightness = level;
+  _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
+  return 1;
 }
 
 int cc3_set_contrast (uint8_t level)
 {
-    _cc3_g_current_camera_state.contrast = level;
-    _cc3_set_register_state (); // XXX Don't reset all of them, this is just quick and dirty...
-    return 1;
+  _cc3_g_current_camera_state.contrast = level;
+  _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
+  return 1;
 }
 
 
