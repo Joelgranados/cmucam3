@@ -1,7 +1,8 @@
-/**************************************************************************************
-*  Initial CMUcam3 (cc3) data types and functions.
-*
-**************************************************************************************/
+/******************************************************************************
+ *
+ *  Initial CMUcam3 (cc3) data types and functions.
+ *
+ *****************************************************************************/
 #include <stdbool.h>
 
 #include "cc3.h"
@@ -22,12 +23,16 @@ static inline void _cc3_seek_right_down (void);
 static inline void _cc3_seek_top (void);
 static inline void _cc3_advance_x_loc (void);
 
-static inline void _cc3_pixbuf_read_from_fifo (void);
+static inline void _cc3_pixbuf_read_from_fifo (cc3_pixel_t *pixel);
 
 static inline void _cc3_pixbuf_skip (uint32_t size);
 
-static inline void _cc3_pixbuf_cond_read_4 (bool b0, bool b1, bool b2,
+static inline void _cc3_pixbuf_cond_read_4 (cc3_pixel_t *pixel,
+					    bool b0, bool b1, bool b2,
                                             bool b3);
+
+static inline int _cc3_pixbuf_read_into (cc3_pixel_t *pixel);
+
 // Move to the next byte in the FIFO 
 static inline void _cc3_fifo_read_inc (void);
 
@@ -71,31 +76,31 @@ void _cc3_fifo_read_inc (void)
 void _cc3_pixbuf_skip (uint32_t size)
 {
   uint32_t i;
-  for (i = 0; i < size; i++) {
-    _cc3_pixbuf_cond_read_4 (false, false, false, false);
+  for (i = 0; i < size / 2; i++) {
+    _cc3_fifo_read_inc();
   }
-
-  _cc3_second_green_valid = false;
 }
 
-void _cc3_pixbuf_read_from_fifo ()
+void _cc3_pixbuf_read_from_fifo (cc3_pixel_t *pixel)
 {
   // read the pixel: GRGB or YCrYCb
   if (cc3_g_current_frame.coi == CC3_ALL) {
-    _cc3_pixbuf_cond_read_4 (true, true, true, true);
+    _cc3_pixbuf_cond_read_4 (pixel, true, true, true, true);
   }
   else {
     switch (_cc3_g_current_camera_state.colorspace) {
     case CC3_YCRCB:
       // YCrYCb
-      _cc3_pixbuf_cond_read_4 (cc3_g_current_frame.coi == CC3_Y,
+      _cc3_pixbuf_cond_read_4 (pixel,
+			       cc3_g_current_frame.coi == CC3_Y,
                                cc3_g_current_frame.coi == CC3_CR,
                                cc3_g_current_frame.coi == CC3_Y,
                                cc3_g_current_frame.coi == CC3_CB);
       break;
     case CC3_RGB:
       // GRGB
-      _cc3_pixbuf_cond_read_4 (cc3_g_current_frame.coi == CC3_GREEN,
+      _cc3_pixbuf_cond_read_4 (pixel,
+			       cc3_g_current_frame.coi == CC3_GREEN,
                                cc3_g_current_frame.coi == CC3_RED,
                                cc3_g_current_frame.coi == CC3_GREEN,
                                cc3_g_current_frame.coi == CC3_BLUE);
@@ -113,6 +118,11 @@ void _cc3_pixbuf_read_from_fifo ()
 
 int cc3_pixbuf_read ()
 {
+  return _cc3_pixbuf_read_into(&cc3_g_current_pixel);
+}
+
+int _cc3_pixbuf_read_into(cc3_pixel_t *pixel)
+{
   _cc3_seek_top ();
   _cc3_seek_right_down ();
   _cc3_seek_left ();
@@ -121,7 +131,7 @@ int cc3_pixbuf_read ()
     return 0;
   }
 
-  _cc3_pixbuf_read_from_fifo ();
+  _cc3_pixbuf_read_from_fifo (pixel);
   _cc3_advance_x_loc ();
   return 1;
 }
@@ -187,7 +197,8 @@ void _cc3_advance_x_loc ()
  * cc3_pixbuf_read():
  * loads cc3_g_current_pixel from fifo
  */
-void _cc3_pixbuf_cond_read_4 (bool b0, bool b1, bool b2, bool b3)
+void _cc3_pixbuf_cond_read_4 (cc3_pixel_t *pixel,
+			      bool b0, bool b1, bool b2, bool b3)
 {
   if (_cc3_second_green_valid) {
     // use the second green
@@ -197,12 +208,12 @@ void _cc3_pixbuf_cond_read_4 (bool b0, bool b1, bool b2, bool b3)
       switch (_cc3_g_current_camera_state.colorspace) {
       case CC3_YCRCB:
         // YCrYCb
-        cc3_g_current_pixel.channel[CC3_Y] = _cc3_second_green;
+        pixel->channel[CC3_Y] = _cc3_second_green;
         break;
 
       case CC3_RGB:
         // GRGB
-        cc3_g_current_pixel.channel[CC3_GREEN] = _cc3_second_green;
+        pixel->channel[CC3_GREEN] = _cc3_second_green;
         break;
       }
     }
@@ -215,12 +226,12 @@ void _cc3_pixbuf_cond_read_4 (bool b0, bool b1, bool b2, bool b3)
   case CC3_YCRCB:
     // YCrYCb
     if (b0) {
-      cc3_g_current_pixel.channel[CC3_Y] = REG (GPIO_IOPIN) >> 24;
+      pixel->channel[CC3_Y] = REG (GPIO_IOPIN) >> 24;
     }
     _cc3_fifo_read_inc ();
 
     if (b1) {
-      cc3_g_current_pixel.channel[CC3_CR] = REG (GPIO_IOPIN) >> 24;
+      pixel->channel[CC3_CR] = REG (GPIO_IOPIN) >> 24;
     }
     _cc3_fifo_read_inc ();
 
@@ -230,7 +241,7 @@ void _cc3_pixbuf_cond_read_4 (bool b0, bool b1, bool b2, bool b3)
     _cc3_fifo_read_inc ();
 
     if (b3) {
-      cc3_g_current_pixel.channel[CC3_CB] = REG (GPIO_IOPIN) >> 24;
+      pixel->channel[CC3_CB] = REG (GPIO_IOPIN) >> 24;
     }
     _cc3_fifo_read_inc ();
 
@@ -238,12 +249,12 @@ void _cc3_pixbuf_cond_read_4 (bool b0, bool b1, bool b2, bool b3)
   case CC3_RGB:
     // GRGB
     if (b0) {
-      cc3_g_current_pixel.channel[CC3_GREEN] = REG (GPIO_IOPIN) >> 24;
+      pixel->channel[CC3_GREEN] = REG (GPIO_IOPIN) >> 24;
     }
     _cc3_fifo_read_inc ();
 
     if (b1) {
-      cc3_g_current_pixel.channel[CC3_RED] = REG (GPIO_IOPIN) >> 24;
+      pixel->channel[CC3_RED] = REG (GPIO_IOPIN) >> 24;
     }
     _cc3_fifo_read_inc ();
 
@@ -253,7 +264,7 @@ void _cc3_pixbuf_cond_read_4 (bool b0, bool b1, bool b2, bool b3)
     _cc3_fifo_read_inc ();
 
     if (b3) {
-      cc3_g_current_pixel.channel[CC3_BLUE] = REG (GPIO_IOPIN) >> 24;
+      pixel->channel[CC3_BLUE] = REG (GPIO_IOPIN) >> 24;
     }
     _cc3_fifo_read_inc ();
 
@@ -350,17 +361,15 @@ int cc3_pixbuf_read_rows (void *mem, uint32_t width, uint32_t rows)
     for (j = 0; j < cc3_g_current_frame.width; j++) {
       uint8_t *p = ((uint8_t *) mem) + (r * width + j * 3);
 
-      // read the pixel
-      _cc3_pixbuf_read_from_fifo ();
-
-      // save into memory
+       // save into memory
       if (cc3_g_current_frame.coi == CC3_ALL) {
-        *(p + 0) = cc3_g_current_pixel.channel[0];
-        *(p + 1) = cc3_g_current_pixel.channel[1];
-        *(p + 2) = cc3_g_current_pixel.channel[2];
+	// read the pixel
+	_cc3_pixbuf_read_from_fifo ((cc3_pixel_t *)p);
       }
       else {
-        *p = cc3_g_current_pixel.channel[cc3_g_current_frame.coi];
+	cc3_pixel_t pixel;
+	_cc3_pixbuf_read_from_fifo (&pixel);
+        *p = pixel.channel[cc3_g_current_frame.coi];
       }
 
       _cc3_advance_x_loc ();
