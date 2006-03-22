@@ -31,7 +31,7 @@ int main (void)
   cc3_set_auto_white_balance(true);
   cc3_set_auto_exposure(true);
   
-  buf = malloc(3 * cc3_g_current_frame.width);
+  buf = cc3_malloc_rows(1);
   if (!buf) {
     printf("ERROR!\n");
     exit(1);
