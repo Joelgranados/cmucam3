@@ -93,8 +93,9 @@ typedef struct {
 
 
 // Globals used by CMUcam functions
-extern cc3_pixel_t cc3_g_current_pixel;   // global that gets updated with pixbuf calls
 extern cc3_frame_t cc3_g_current_frame;   // global that keeps clip, stride
+
+uint8_t *cc3_malloc_row (void);
 
 void cc3_pixbuf_load(void);
 
@@ -102,13 +103,7 @@ void cc3_frame_default(void);
 /**
  * Using the cc3_frame_t reads rows taking into account virtual window and subsampling. 
  */
-int cc3_pixbuf_read_rows(void *mem, uint32_t width, uint32_t rows );
-
-/**
- * loads cc3_g_current_pixel from fifo
- * Must adjust for channel, subframe, position in frame etc
- */
-int cc3_pixbuf_read(void);                              
+int cc3_pixbuf_read_rows(void *mem, uint32_t rows );
 
 /**
  * Rewinds the fifo 
@@ -117,7 +112,7 @@ void cc3_pixbuf_rewind(void);
 /**
  * Sets the region of interest in cc3_frame_t for virtual windowing. 
  */
-int cc3_pixbuf_set_roi( int16_t x0, int16_t y0, int16_t x1, int16_t y1);
+int cc3_pixbuf_set_roi( int16_t x_0, int16_t y_0, int16_t x_1, int16_t y_1);
 /**
  * Sets the subsampling step and mode in cc3_frame_t. 
  */

@@ -4,6 +4,7 @@
  *
  *****************************************************************************/
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include "cc3.h"
 #include "cc3_pin_defines.h"
@@ -23,15 +24,18 @@ static inline void _cc3_seek_right_down (void);
 static inline void _cc3_seek_top (void);
 static inline void _cc3_advance_x_loc (void);
 
-static inline void _cc3_pixbuf_read_from_fifo (cc3_pixel_t *pixel);
+static inline void _cc3_pixbuf_skip_pixels (uint32_t size);
 
-static inline void _cc3_pixbuf_skip (uint32_t size);
+static inline uint8_t _cc3_pixbuf_read_subpixel (void);
 
-static inline void _cc3_pixbuf_cond_read_4 (cc3_pixel_t *pixel,
-					    bool b0, bool b1, bool b2,
-                                            bool b3);
+static inline void _cc3_pixbuf_read_pixel (uint8_t *pixel,
+					   uint8_t *saved,
+					   uint8_t off0,
+					   uint8_t off1,
+					   uint8_t off2);
 
-static inline int _cc3_pixbuf_read_into (cc3_pixel_t *pixel);
+static inline void _cc3_pixbuf_skip_subpixel (void);
+
 
 // Move to the next byte in the FIFO 
 static inline void _cc3_fifo_read_inc (void);
@@ -73,39 +77,11 @@ void _cc3_fifo_read_inc (void)
   REG (GPIO_IOCLR) = _CC3_BUF_RCK;
 }
 
-void _cc3_pixbuf_skip (uint32_t size)
+void _cc3_pixbuf_skip_pixels (uint32_t size)
 {
   uint32_t i;
-  for (i = 0; i < size / 2; i++) {
+  for (i = 0; i < size * 4; i++) {
     _cc3_fifo_read_inc();
-  }
-}
-
-void _cc3_pixbuf_read_from_fifo (cc3_pixel_t *pixel)
-{
-  // read the pixel: GRGB or YCrYCb
-  if (cc3_g_current_frame.coi == CC3_ALL) {
-    _cc3_pixbuf_cond_read_4 (pixel, true, true, true, true);
-  }
-  else {
-    switch (_cc3_g_current_camera_state.colorspace) {
-    case CC3_YCRCB:
-      // YCrYCb
-      _cc3_pixbuf_cond_read_4 (pixel,
-			       cc3_g_current_frame.coi == CC3_Y,
-                               cc3_g_current_frame.coi == CC3_CR,
-                               cc3_g_current_frame.coi == CC3_Y,
-                               cc3_g_current_frame.coi == CC3_CB);
-      break;
-    case CC3_RGB:
-      // GRGB
-      _cc3_pixbuf_cond_read_4 (pixel,
-			       cc3_g_current_frame.coi == CC3_GREEN,
-                               cc3_g_current_frame.coi == CC3_RED,
-                               cc3_g_current_frame.coi == CC3_GREEN,
-                               cc3_g_current_frame.coi == CC3_BLUE);
-      break;
-    }
   }
 }
 
@@ -118,22 +94,7 @@ void _cc3_pixbuf_read_from_fifo (cc3_pixel_t *pixel)
 
 int cc3_pixbuf_read ()
 {
-  return _cc3_pixbuf_read_into(&cc3_g_current_pixel);
-}
-
-int _cc3_pixbuf_read_into(cc3_pixel_t *pixel)
-{
-  _cc3_seek_top ();
-  _cc3_seek_right_down ();
-  _cc3_seek_left ();
-
-  if (cc3_g_current_frame.y_loc > cc3_g_current_frame.y1) {
-    return 0;
-  }
-
-  _cc3_pixbuf_read_from_fifo (pixel);
-  _cc3_advance_x_loc ();
-  return 1;
+  return 0;
 }
 
 void _cc3_seek_top ()
@@ -145,7 +106,7 @@ void _cc3_seek_top ()
        cc3_g_current_frame.y_loc < cc3_g_current_frame.y0;
        cc3_g_current_frame.y_loc++)
     for (i = 0; i < cc3_g_current_frame.y_step; i++)
-      _cc3_pixbuf_skip (cc3_g_current_frame.raw_width);
+      _cc3_pixbuf_skip_pixels (cc3_g_current_frame.raw_width);
   cc3_g_current_frame.x_loc = 0;
 }
 
@@ -154,7 +115,8 @@ void _cc3_seek_left ()
 {
   // Skip left 
   if (cc3_g_current_frame.x_loc < cc3_g_current_frame.x0) {
-    _cc3_pixbuf_skip (cc3_g_current_frame.x0 * cc3_g_current_frame.x_step);
+    _cc3_pixbuf_skip_pixels (cc3_g_current_frame.x0 
+			     * cc3_g_current_frame.x_step);
     cc3_g_current_frame.x_loc = cc3_g_current_frame.x0;
   }
 }
@@ -168,14 +130,14 @@ void _cc3_seek_right_down ()
   }
 
   // Skip right and down 
-  _cc3_pixbuf_skip (cc3_g_current_frame.raw_width -
+  _cc3_pixbuf_skip_pixels (cc3_g_current_frame.raw_width -
                     (cc3_g_current_frame.x_loc * cc3_g_current_frame.x_step));
   cc3_g_current_frame.x_loc = 0;
   cc3_g_current_frame.y_loc++;
   if (cc3_g_current_frame.y_step > 1) {
     // skip horizontally down the image
     for (j = 0; j < cc3_g_current_frame.y_step - 1; j++)
-      _cc3_pixbuf_skip (cc3_g_current_frame.raw_width);
+      _cc3_pixbuf_skip_pixels (cc3_g_current_frame.raw_width);
   }
 }
 
@@ -187,89 +149,45 @@ void _cc3_advance_x_loc ()
     if (cc3_g_current_frame.raw_width >
         (cc3_g_current_frame.x_loc + cc3_g_current_frame.x_step)) {
       // skip pixel
-      _cc3_pixbuf_skip (cc3_g_current_frame.x_step - 1);
+      _cc3_pixbuf_skip_pixels (cc3_g_current_frame.x_step - 1);
     }
   }
 }
 
+uint8_t _cc3_pixbuf_read_subpixel (void)
+{
+  uint8_t result = REG (GPIO_IOPIN) >> 24;
+  _cc3_fifo_read_inc ();
 
-/**
- * cc3_pixbuf_read():
- * loads cc3_g_current_pixel from fifo
- */
-void _cc3_pixbuf_cond_read_4 (cc3_pixel_t *pixel,
-			      bool b0, bool b1, bool b2, bool b3)
+  return result;
+}
+
+void _cc3_pixbuf_skip_subpixel (void)
+{
+  _cc3_fifo_read_inc ();
+}
+
+void _cc3_pixbuf_read_pixel (uint8_t *pixel,
+			     uint8_t *saved,
+			     uint8_t off0,
+			     uint8_t off1,
+			     uint8_t off2)
 {
   if (_cc3_second_green_valid) {
     // use the second green
     _cc3_second_green_valid = false;
-
-    if (b2) {
-      switch (_cc3_g_current_camera_state.colorspace) {
-      case CC3_YCRCB:
-        // YCrYCb
-        pixel->channel[CC3_Y] = _cc3_second_green;
-        break;
-
-      case CC3_RGB:
-        // GRGB
-        pixel->channel[CC3_GREEN] = _cc3_second_green;
-        break;
-      }
-    }
+    *(pixel + off0) = *(saved + off0);
+    *(pixel + off1) = _cc3_second_green;
+    *(pixel + off2) = *(saved + off2);
 
     return;
   }
 
   // otherwise, load a new thing
-  switch (_cc3_g_current_camera_state.colorspace) {
-  case CC3_YCRCB:
-    // YCrYCb
-    if (b0) {
-      pixel->channel[CC3_Y] = REG (GPIO_IOPIN) >> 24;
-    }
-    _cc3_fifo_read_inc ();
-
-    if (b1) {
-      pixel->channel[CC3_CR] = REG (GPIO_IOPIN) >> 24;
-    }
-    _cc3_fifo_read_inc ();
-
-    if (b2) {
-      _cc3_second_green = REG (GPIO_IOPIN) >> 24;
-    }
-    _cc3_fifo_read_inc ();
-
-    if (b3) {
-      pixel->channel[CC3_CB] = REG (GPIO_IOPIN) >> 24;
-    }
-    _cc3_fifo_read_inc ();
-
-    break;
-  case CC3_RGB:
-    // GRGB
-    if (b0) {
-      pixel->channel[CC3_GREEN] = REG (GPIO_IOPIN) >> 24;
-    }
-    _cc3_fifo_read_inc ();
-
-    if (b1) {
-      pixel->channel[CC3_RED] = REG (GPIO_IOPIN) >> 24;
-    }
-    _cc3_fifo_read_inc ();
-
-    if (b2) {
-      _cc3_second_green = REG (GPIO_IOPIN) >> 24;
-    }
-    _cc3_fifo_read_inc ();
-
-    if (b3) {
-      pixel->channel[CC3_BLUE] = REG (GPIO_IOPIN) >> 24;
-    }
-    _cc3_fifo_read_inc ();
-
-    break;
-  }
+  _cc3_second_green = _cc3_pixbuf_read_subpixel();
+  *(pixel + off0) = _cc3_pixbuf_read_subpixel();
+  *(pixel + off1) = _cc3_pixbuf_read_subpixel();
+  *(pixel + off2) = _cc3_pixbuf_read_subpixel();
 
   _cc3_second_green_valid = true;
 }
@@ -326,6 +244,20 @@ void cc3_set_led (uint8_t select)
   }
 }
 
+
+uint8_t *cc3_malloc_row (void)
+{
+  int channels;
+  if (cc3_g_current_frame.coi == CC3_ALL) {
+    channels = 3;
+  } else {
+    channels = 1;
+  }
+
+  return (uint8_t *) malloc (cc3_g_current_frame.width * channels);
+}
+
+
 /**
  * cc3_pixbuf_read_rows():
  * Using the cc3_frame_t reads rows taking into account the virtual window and subsampling. 
@@ -334,19 +266,31 @@ void cc3_set_led (uint8_t select)
  * This should be the lowest level call that the user directly interacts with.
  * Returns 1 upon success
  * Returns -1 if requesting too many rows
- * Returns -2 if provided width does not match actual width of image
  */
-int cc3_pixbuf_read_rows (void *mem, uint32_t width, uint32_t rows)
+int cc3_pixbuf_read_rows (void *mem, uint32_t rows)
 {
 
   int16_t j;
   uint16_t r;
 
+  uint8_t off0, off1, off2;
+
   if ((cc3_g_current_frame.y0 + rows) > cc3_g_current_frame.y1)
     return -1;
 
-  if (cc3_g_current_frame.width != width)
-    return -2;
+  if (_cc3_g_current_camera_state.colorspace == CC3_RGB) {
+    off0 = 0;
+    off1 = 1;
+    off2 = 2;
+  } else if (_cc3_g_current_camera_state.colorspace == CC3_YCRCB) {
+    off0 = 1;
+    off1 = 0;
+    off2 = 2;
+  } else {
+    off0 = 0;
+    off1 = 1;
+    off2 = 2;
+  }
 
   // First read into frame
   _cc3_seek_top ();
@@ -358,21 +302,16 @@ int cc3_pixbuf_read_rows (void *mem, uint32_t width, uint32_t rows)
     // First read into line
     _cc3_seek_left ();
 
-    for (j = 0; j < cc3_g_current_frame.width; j++) {
-      uint8_t *p = ((uint8_t *) mem) + (r * width + j * 3);
-
-       // save into memory
-      if (cc3_g_current_frame.coi == CC3_ALL) {
-	// read the pixel
-	_cc3_pixbuf_read_from_fifo ((cc3_pixel_t *)p);
+    if (cc3_g_current_frame.coi == CC3_ALL) {
+      for (j = 0; j < cc3_g_current_frame.width; j++) {
+	uint8_t *p = ((uint8_t *) mem) +
+	  (r * cc3_g_current_frame.width + j * 3);
+	_cc3_pixbuf_read_pixel (p, p - 3,
+				off0, off1, off2);
+	_cc3_advance_x_loc ();
       }
-      else {
-	cc3_pixel_t pixel;
-	_cc3_pixbuf_read_from_fifo (&pixel);
-        *p = pixel.channel[cc3_g_current_frame.coi];
-      }
-
-      _cc3_advance_x_loc ();
+    } else {
+      // ...
     }
   }
   return 1;

@@ -109,7 +109,7 @@ void capture_current_jpeg(FILE *f) {
   // read and compress
   jpeg_start_compress(&cinfo, TRUE);
   while (cinfo.next_scanline < cinfo.image_height) {
-    cc3_pixbuf_read_rows(row, cinfo.image_width, 1);
+    cc3_pixbuf_read_rows(row, 1);
     jpeg_write_scanlines(&cinfo, row_pointer, 1);
   }
   

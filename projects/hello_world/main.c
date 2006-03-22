@@ -99,7 +99,7 @@ int main (void)
 	{
 		// FIXME: add cc3_pixbug img read rows
 		// read a row into the image picture memory from the camera 
-		cc3_pixbuf_read_rows(img.pix, img.width, 1);	
+		cc3_pixbuf_read_rows(img.pix, 1);	
 		for(uint16_t x=0; x<img.width; x++ )
 		{
 		// get a pixel from the img row memory

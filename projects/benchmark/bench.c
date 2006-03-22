@@ -49,9 +49,7 @@ int main (void)
     cc3_pixbuf_load();
 
     for (y = 0; y < cc3_g_current_frame.height; y++) {
-      cc3_pixbuf_read_rows(buf, 
-			   cc3_g_current_frame.width, 
-			   1);
+      cc3_pixbuf_read_rows(buf, 1);
     }
     
     i++;

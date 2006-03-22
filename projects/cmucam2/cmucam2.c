@@ -182,7 +182,7 @@ uint16_t i;
 		{
 			for(i=0; i<cc3_g_current_frame.height; i++ )
 			{
-			cc3_pixbuf_read_rows(img.pix, img.width, 1);	
+			cc3_pixbuf_read_rows(img.pix, 1);	
 			cc3_color_info_scanline(&img, s_pkt);
 			}
 			cc3_color_info_scanline_finish(s_pkt);
@@ -229,7 +229,7 @@ uint16_t i;
 		}	
 			for(i=0; i<cc3_g_current_frame.height; i++ )
 			{
-			cc3_pixbuf_read_rows(img.pix, img.width, 1);	
+			cc3_pixbuf_read_rows(img.pix, 1);	
 			cc3_track_color_scanline(&img, t_pkt);
 			if(line_mode==1)
 				{
