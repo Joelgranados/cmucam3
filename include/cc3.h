@@ -77,9 +77,8 @@ typedef enum {
 
 typedef struct {
   uint16_t raw_width, raw_height;       // raw image width and height
-  uint16_t width, height;       // subsampled and bound width and height
   uint16_t x0, y0, x1, y1;      // bounding box in frame
-  uint16_t x_loc, y_loc;        // current position in frame
+  uint16_t y_loc;               // current position in frame
   uint8_t x_step, y_step;       // subsampling step
   cc3_channel_t coi;
   cc3_subsample_mode_t subsample_mode;

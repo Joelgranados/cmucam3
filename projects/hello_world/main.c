@@ -68,9 +68,9 @@ int main (void)
 
     // setup an image structure
     img.channels=3;
-    img.width=cc3_g_current_frame.width;
+    img.width=(cc3_g_current_frame.x1 - cc3_g_current_frame.x0) / cc3_g_current_frame.x_step;
     img.height=1;  // image will hold just 1 row for scanline processing
-    img.pix = malloc(3 * img.width);  // malloc!
+    img.pix = cc3_malloc_rows(1);
   
     printf( "Now we will use image data...\n" ); 
     val=0;
@@ -79,6 +79,7 @@ int main (void)
      */ 
     while(1)
     {
+    int y;
     uint16_t my_x, my_y;
     uint8_t max_red;
     cc3_pixel_t my_pix;
@@ -95,11 +96,11 @@ int main (void)
     // This tells the camera to grab a new frame into the fifo and reset
     // any internal location information.
     cc3_pixbuf_load();
-	for(uint16_t y=0; y<cc3_g_current_frame.height; y++ )
-	{
+
+    y = 0;
+    while(cc3_pixbuf_read_rows(img.pix, 1)) {
 		// FIXME: add cc3_pixbug img read rows
 		// read a row into the image picture memory from the camera 
-		cc3_pixbuf_read_rows(img.pix, 1);	
 		for(uint16_t x=0; x<img.width; x++ )
 		{
 		// get a pixel from the img row memory
@@ -112,6 +113,7 @@ int main (void)
 			}
 		}	
 	
+		y++;
 	}
 
     printf( "Found max red value %d at %d, %d\n",max_red,my_x,my_y );

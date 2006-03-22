@@ -44,13 +44,9 @@ int main (void)
   last_time = cc3_timer();
 
   while(true) {
-    int y = 0;
-
     cc3_pixbuf_load();
 
-    for (y = 0; y < cc3_g_current_frame.height; y++) {
-      cc3_pixbuf_read_rows(buf, 1);
-    }
+    while(cc3_pixbuf_read_rows(buf, 1));
     
     i++;
 

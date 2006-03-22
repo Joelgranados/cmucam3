@@ -11,8 +11,10 @@ void cc3_send_image_direct (void)
   uint8_t *row = cc3_malloc_rows(1);
 
   cc3_set_led (1);
-  size_x = cc3_g_current_frame.width;
-  size_y = cc3_g_current_frame.height;
+  size_x = (cc3_g_current_frame.x1 - cc3_g_current_frame.x0) 
+    / cc3_g_current_frame.x_step;
+  size_y = (cc3_g_current_frame.y1 - cc3_g_current_frame.y0)
+    / cc3_g_current_frame.y_step;
 
   putchar (1);
   putchar (size_x);

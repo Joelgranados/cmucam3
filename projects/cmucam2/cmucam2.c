@@ -239,14 +239,14 @@ void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt, uint8_t poll_mode,
   cc3_image_t img;
   uint16_t i;
   img.channels = 3;
-  img.width = cc3_g_current_frame.width;
+  img.width = (cc3_g_current_frame.x1 - cc3_g_current_frame.x0) 
+    / cc3_g_current_frame.x_step;
   img.height = 1;               // image will hold just 1 row for scanline processing
   img.pix = malloc (3 * img.width);
   do {
     cc3_pixbuf_load ();
     if (cc3_color_info_scanline_start (s_pkt) != 0) {
-      for (i = 0; i < cc3_g_current_frame.height; i++) {
-        cc3_pixbuf_read_rows (img.pix, 1);
+      while (cc3_pixbuf_read_rows (img.pix, 1)) {
         cc3_color_info_scanline (&img, s_pkt);
       }
       cc3_color_info_scanline_finish (s_pkt);
@@ -264,10 +264,12 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt, uint8_t poll_mode,
 {
   cc3_image_t img;
   uint16_t i;
+  int height = (cc3_g_current_frame.y1 - cc3_g_current_frame.y0) / cc3_g_current_frame.y_step;
+
   img.channels = 3;
-  img.width = cc3_g_current_frame.width;
+  img.width = (cc3_g_current_frame.x1 - cc3_g_current_frame.x0) / cc3_g_current_frame.x_step;
   img.height = 1;               // image will hold just 1 row for scanline processing
-  img.pix = malloc (3 * img.width);
+  img.pix = cc3_malloc_rows(1);
   do {
     cc3_pixbuf_load ();
     if (cc3_track_color_scanline_start (t_pkt) != 0) {
@@ -277,22 +279,21 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt, uint8_t poll_mode,
       lm_height = 0;
       if (line_mode == 1) {
         lm = &t_pkt->binary_scanline;
-        lm_width = cc3_g_current_frame.width / 8;
-        if (cc3_g_current_frame.width % 8 != 0)
+        lm_width = img.width / 8;
+        if (img.width % 8 != 0)
           lm_width++;
         putchar (0xAA);
-        if (cc3_g_current_frame.height > 255)
+        if (height > 255)
           lm_height = 255;
         else
-          lm_height = cc3_g_current_frame.height;
+          lm_height = height;
 
         //putchar(lm_width);
-        putchar (cc3_g_current_frame.width);
+        putchar (img.width);
         putchar (lm_height);
 
       }
-      for (i = 0; i < cc3_g_current_frame.height; i++) {
-        cc3_pixbuf_read_rows (img.pix, 1);
+      while (cc3_pixbuf_read_rows (img.pix, 1)) {
         cc3_track_color_scanline (&img, t_pkt);
         if (line_mode == 1) {
 

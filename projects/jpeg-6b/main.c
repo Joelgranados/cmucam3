@@ -80,9 +80,9 @@ void init_jpeg(void) {
   jpeg_create_compress(&cinfo);
 
   // parameters for jpeg image
-  cinfo.image_width = cc3_g_current_frame.width;
-  cinfo.image_height = cc3_g_current_frame.height;
-  printf( "image width=%d image height=%d\n",cc3_g_current_frame.width, cc3_g_current_frame.height );
+  cinfo.image_width = (cc3_g_current_frame.x1 - cc3_g_current_frame.x0) / cc3_g_current_frame.x_step;
+  cinfo.image_height = (cc3_g_current_frame.y1 - cc3_g_current_frame.y0) / cc3_g_current_frame.y_step;
+  printf( "image width=%d image height=%d\n", cinfo.image_width, cinfo.image_height );
   cinfo.input_components = 3;
  // cinfo.in_color_space = JCS_YCbCr;
   cinfo.in_color_space = JCS_RGB;
@@ -92,7 +92,7 @@ void init_jpeg(void) {
   jpeg_set_quality(&cinfo, 100, true);
 
   // allocate memory for 1 row
-  row = malloc(3 * cc3_g_current_frame.width);
+  row = cc3_malloc_rows(1);
   if(row==NULL) printf( "FUCK, out of memory!\n" );
 }
 
