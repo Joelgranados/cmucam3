@@ -28,7 +28,7 @@ CMUcam3 Coding Conventions
 	char		// for text characters
 
 9) use the following gnu INDENT options:
-	indent -br -brs -nut -npsl -i4 source_name.c
-10) indent each level 4 more spaces than previous 
+	indent -br -brs -nut -npsl -i2 source_name.c
+10) indent each level 2 more spaces than previous 
 11) Don't put else on the same line of if
 	if (condition) foo (); else bar ();	/* Yuck! */
