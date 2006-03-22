@@ -91,11 +91,6 @@ void _cc3_pixbuf_skip_pixels (uint32_t size)
  * This is slow, but takes care of channel of interest, downsampling, and virtual bounding boxes
  */
 
-int cc3_pixbuf_read ()
-{
-  return 0;
-}
-
 void _cc3_seek_top ()
 {
   int8_t i;

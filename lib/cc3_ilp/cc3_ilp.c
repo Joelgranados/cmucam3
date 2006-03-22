@@ -13,7 +13,7 @@ void cc3_send_image_direct (void)
   cc3_set_led (1);
   size_x = cc3_g_current_frame.width;
   size_y = cc3_g_current_frame.height;
-  cc3_pixbuf_load ();
+
   putchar (1);
   putchar (size_x);
   if (size_y > 255)
