@@ -95,7 +95,7 @@ typedef struct {
 // Globals used by CMUcam functions
 extern cc3_frame_t cc3_g_current_frame; // global that keeps clip, stride
 
-uint8_t *cc3_malloc_row (void);
+uint8_t *cc3_malloc_rows (uint32_t rows);
 
 void cc3_pixbuf_load (void);
 

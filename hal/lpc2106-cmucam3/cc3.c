@@ -243,7 +243,7 @@ void cc3_set_led (uint8_t select)
 }
 
 
-uint8_t *cc3_malloc_row (void)
+uint8_t *cc3_malloc_rows (uint32_t rows)
 {
   int channels;
   if (cc3_g_current_frame.coi == CC3_ALL) {
@@ -253,7 +253,7 @@ uint8_t *cc3_malloc_row (void)
     channels = 1;
   }
 
-  return (uint8_t *) malloc (cc3_g_current_frame.width * channels);
+  return (uint8_t *) malloc (cc3_g_current_frame.width * channels * rows);
 }
 
 
@@ -266,7 +266,7 @@ uint8_t *cc3_malloc_row (void)
  * Returns 1 upon success
  * Returns -1 if requesting too many rows
  */
-int cc3_pixbuf_read_rows (void *mem, uint32_t rows)
+int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
 {
 
   int16_t j;

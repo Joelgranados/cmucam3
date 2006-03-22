@@ -2,11 +2,13 @@
 #include "cc3_ilp.h"
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 void cc3_send_image_direct (void)
 {
   uint32_t x, y;
   uint32_t size_x, size_y;
+  uint8_t *row = cc3_malloc_rows(1);
 
   cc3_set_led (1);
   size_x = cc3_g_current_frame.width;
@@ -19,14 +21,15 @@ void cc3_send_image_direct (void)
   putchar (size_y);
   for (y = 0; y < size_y; y++) {
     putchar (2);
-    for (x = 0; x < size_x; x++) {
-      cc3_pixbuf_read ();
-      putchar (cc3_g_current_pixel.channel[CC3_RED]);
-      putchar (cc3_g_current_pixel.channel[CC3_GREEN]);
-      putchar (cc3_g_current_pixel.channel[CC3_BLUE]);
+    
+    cc3_pixbuf_read_rows(row, 1);
+    for (x = 0; x < size_x * 3; x++) {
+      putchar (row[x]);
     }
   }
   putchar (3);
+  
+  free(row);
 }
 
 uint8_t cc3_load_img_rows (cc3_image_t * img, uint16_t rows)

@@ -3,6 +3,7 @@
 #include "cc3_color_track.h"
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 /**
  * cc3_track_color()
@@ -20,6 +21,8 @@ uint8_t cc3_track_color (cc3_track_pkt_t * pkt)
 {
   uint16_t y, x;
 
+  uint8_t *row, *pixel;
+
   x = pkt->scratch_x;
   y = pkt->scratch_y;
 
@@ -27,6 +30,7 @@ uint8_t cc3_track_color (cc3_track_pkt_t * pkt)
       (pkt->lower_bound.channel[1] > pkt->upper_bound.channel[1]) ||
       (pkt->lower_bound.channel[2] > pkt->upper_bound.channel[2]))
     return 0;
+
   pkt->num_pixels = 0;
   pkt->x0 = UINT16_MAX;
   pkt->y0 = UINT16_MAX;
@@ -35,26 +39,33 @@ uint8_t cc3_track_color (cc3_track_pkt_t * pkt)
   pkt->centroid_x = 0;
   pkt->centroid_y = 0;
 
+  pixel = row = cc3_malloc_rows(1);
+  
+  for (y = 0; y < cc3_g_current_frame.height; y++) {
+    cc3_pixbuf_read_rows(row, 1);
 
-  for (y = 0; y < cc3_g_current_frame.height; y++)
     for (x = 0; x < cc3_g_current_frame.width; x++) {
       bool pixel_good = 0;
-      cc3_pixbuf_read ();
+
       if (cc3_g_current_frame.coi == CC3_ALL) {
-        if (cc3_g_current_pixel.channel[0] >= pkt->lower_bound.channel[0]
-            && cc3_g_current_pixel.channel[0] <= pkt->upper_bound.channel[0]
-            && cc3_g_current_pixel.channel[1] >= pkt->lower_bound.channel[1]
-            && cc3_g_current_pixel.channel[1] <= pkt->upper_bound.channel[1]
-            && cc3_g_current_pixel.channel[2] >= pkt->lower_bound.channel[2]
-            && cc3_g_current_pixel.channel[2] <= pkt->upper_bound.channel[2])
+        if (pixel[0] >= pkt->lower_bound.channel[0]
+            && pixel[0] <= pkt->upper_bound.channel[0]
+            && pixel[1] >= pkt->lower_bound.channel[1]
+            && pixel[1] <= pkt->upper_bound.channel[1]
+            && pixel[2] >= pkt->lower_bound.channel[2]
+            && pixel[2] <= pkt->upper_bound.channel[2])
           pixel_good = 1;
+          
+          pixel += 3;
       }
       else {
-        if (cc3_g_current_pixel.channel[cc3_g_current_frame.coi] >=
+        if (*pixel >=
             pkt->lower_bound.channel[cc3_g_current_frame.coi]
-            && cc3_g_current_pixel.channel[cc3_g_current_frame.coi] <=
+            && pixel [cc3_g_current_frame.coi] <=
             pkt->upper_bound.channel[cc3_g_current_frame.coi])
           pixel_good = 1;
+          
+          pixel++;
       }
 
       if (pixel_good) {
@@ -71,7 +82,7 @@ uint8_t cc3_track_color (cc3_track_pkt_t * pkt)
         pkt->centroid_y += y;
       }
     }
-
+  }
 
   if (pkt->num_pixels > 0) {
     // FIXME:  Density hack to keep it an integer
@@ -91,6 +102,9 @@ uint8_t cc3_track_color (cc3_track_pkt_t * pkt)
     pkt->centroid_y = 0;
 
   }
+
+  free(row);
+
   return 1;
 }
 
