@@ -97,6 +97,8 @@ extern cc3_frame_t cc3_g_current_frame; // global that keeps clip, stride
 
 uint8_t *cc3_malloc_rows (uint32_t rows);
 
+void cc3_pixbuf_load (void);
+
 void cc3_frame_default (void);
 /**
  * Using the cc3_frame_t reads rows taking into account virtual window and subsampling. 
