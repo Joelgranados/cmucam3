@@ -80,8 +80,8 @@ void init_jpeg(void) {
   jpeg_create_compress(&cinfo);
 
   // parameters for jpeg image
-  cinfo.image_width = (cc3_g_current_frame.x1 - cc3_g_current_frame.x0) / cc3_g_current_frame.x_step;
-  cinfo.image_height = (cc3_g_current_frame.y1 - cc3_g_current_frame.y0) / cc3_g_current_frame.y_step;
+  cinfo.image_width = cc3_g_current_frame.width;
+  cinfo.image_height = cc3_g_current_frame.height;
   printf( "image width=%d image height=%d\n", cinfo.image_width, cinfo.image_height );
   cinfo.input_components = 3;
  // cinfo.in_color_space = JCS_YCbCr;

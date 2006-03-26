@@ -68,7 +68,7 @@ int main (void)
 
     // setup an image structure
     img.channels=3;
-    img.width=(cc3_g_current_frame.x1 - cc3_g_current_frame.x0) / cc3_g_current_frame.x_step;
+    img.width=cc3_g_current_frame.width;
     img.height=1;  // image will hold just 1 row for scanline processing
     img.pix = cc3_malloc_rows(1);
   

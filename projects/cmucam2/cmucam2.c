@@ -237,10 +237,8 @@ void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt, uint8_t poll_mode,
                        uint8_t line_mode)
 {
   cc3_image_t img;
-  uint16_t i;
   img.channels = 3;
-  img.width = (cc3_g_current_frame.x1 - cc3_g_current_frame.x0) 
-    / cc3_g_current_frame.x_step;
+  img.width = cc3_g_current_frame.width;
   img.height = 1;               // image will hold just 1 row for scanline processing
   img.pix = malloc (3 * img.width);
   do {
@@ -264,10 +262,9 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt, uint8_t poll_mode,
 {
   cc3_image_t img;
   uint16_t i;
-  int height = (cc3_g_current_frame.y1 - cc3_g_current_frame.y0) / cc3_g_current_frame.y_step;
 
   img.channels = 3;
-  img.width = (cc3_g_current_frame.x1 - cc3_g_current_frame.x0) / cc3_g_current_frame.x_step;
+  img.width = cc3_g_current_frame.width;
   img.height = 1;               // image will hold just 1 row for scanline processing
   img.pix = cc3_malloc_rows(1);
   do {
@@ -283,10 +280,10 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt, uint8_t poll_mode,
         if (img.width % 8 != 0)
           lm_width++;
         putchar (0xAA);
-        if (height > 255)
+        if (cc3_g_current_frame.height > 255)
           lm_height = 255;
         else
-          lm_height = height;
+          lm_height = cc3_g_current_frame.height;
 
         //putchar(lm_width);
         putchar (img.width);

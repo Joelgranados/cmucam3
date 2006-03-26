@@ -20,7 +20,6 @@
 uint8_t cc3_track_color (cc3_track_pkt_t * pkt)
 {
   uint16_t y, x;
-  int height, width;
 
   uint8_t *row, *pixel;
 
@@ -42,15 +41,10 @@ uint8_t cc3_track_color (cc3_track_pkt_t * pkt)
 
   pixel = row = cc3_malloc_rows(1);
   
-  height = (cc3_g_current_frame.y1 - cc3_g_current_frame.y0)
-    / cc3_g_current_frame.y_step;
-  width = (cc3_g_current_frame.x1 - cc3_g_current_frame.x0)
-    / cc3_g_current_frame.x_step;
-
-  for (y = 0; y < height; y++) {
+  for (y = 0; y < cc3_g_current_frame.height; y++) {
     cc3_pixbuf_read_rows(row, 1);
 
-    for (x = 0; x < width; x++) {
+    for (x = 0; x < cc3_g_current_frame.width; x++) {
       bool pixel_good = 0;
 
       if (cc3_g_current_frame.coi == CC3_ALL) {

@@ -82,6 +82,7 @@ typedef struct {
   uint8_t x_step, y_step;       // subsampling step
   cc3_channel_t coi;
   cc3_subsample_mode_t subsample_mode;
+  uint16_t width, height;
 } cc3_frame_t;
 
 

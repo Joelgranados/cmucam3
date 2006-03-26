@@ -40,6 +40,8 @@ static inline void _cc3_fifo_read_inc (void);
 static uint8_t _cc3_second_green;
 static bool _cc3_second_green_valid;
 
+static void _cc3_update_frame_bounds ();
+
 void cc3_pixbuf_load ()
 {
   //  uint32_t start_time;
@@ -211,8 +213,7 @@ void cc3_set_led (uint8_t select)
 uint8_t *cc3_malloc_rows (uint32_t rows)
 {
   int channels;
-  int width = (cc3_g_current_frame.x1 - cc3_g_current_frame.x0)
-    / cc3_g_current_frame.x_step;
+  int width = cc3_g_current_frame.width;
 
   if (cc3_g_current_frame.coi == CC3_ALL) {
     channels = 3;
@@ -241,8 +242,7 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
 
   uint8_t off0, off1, off2;
 
-  int width = (cc3_g_current_frame.x1 - cc3_g_current_frame.x0)
-    / cc3_g_current_frame.x_step;
+  int width = cc3_g_current_frame.width;
 
   int row_limit = (cc3_g_current_frame.y1 - cc3_g_current_frame.y_loc)
     / cc3_g_current_frame.y_step;
@@ -348,6 +348,9 @@ int cc3_pixbuf_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
     cc3_g_current_frame.y0 = y0;
     cc3_g_current_frame.x1 = x1;
     cc3_g_current_frame.y1 = y1;
+
+    _cc3_update_frame_bounds (&cc3_g_current_frame);
+
     return 1;
   }
   return 0;
@@ -374,6 +377,8 @@ int cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
   cc3_g_current_frame.x1 = cc3_g_current_frame.raw_width;
   cc3_g_current_frame.y1 = cc3_g_current_frame.raw_height;
   cc3_g_current_frame.subsample_mode = mode;
+
+  _cc3_update_frame_bounds (&cc3_g_current_frame);
   return 1;
 }
 
@@ -437,6 +442,8 @@ void cc3_frame_default ()
   cc3_g_current_frame.y1 = cc3_g_current_frame.raw_height;
   cc3_g_current_frame.y_loc = 0;
   cc3_g_current_frame.subsample_mode = CC3_NEAREST;
+
+  _cc3_update_frame_bounds (&cc3_g_current_frame);
 }
 
 /**
@@ -579,6 +586,12 @@ int cc3_set_resolution (cc3_camera_resolution_t cam_res)
   cc3_frame_default ();
 
   return 1;
+}
+
+void _cc3_update_frame_bounds (cc3_frame_t *f)
+{
+  f->width = (f->x1 - f->x0) / f->x_step;
+  f->height = (f->y1 - f->y0) / f->y_step;
 }
 
 /**

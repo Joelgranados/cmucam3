@@ -7,25 +7,20 @@
 void cc3_send_image_direct (void)
 {
   uint32_t x, y;
-  uint32_t size_x, size_y;
   uint8_t *row = cc3_malloc_rows(1);
 
   cc3_set_led (1);
-  size_x = (cc3_g_current_frame.x1 - cc3_g_current_frame.x0) 
-    / cc3_g_current_frame.x_step;
-  size_y = (cc3_g_current_frame.y1 - cc3_g_current_frame.y0)
-    / cc3_g_current_frame.y_step;
 
   putchar (1);
-  putchar (size_x);
-  if (size_y > 255)
-    size_y = 255;
-  putchar (size_y);
-  for (y = 0; y < size_y; y++) {
+  putchar (cc3_g_current_frame.width);
+  if (cc3_g_current_frame.height > 255)
+    cc3_g_current_frame.height = 255;
+  putchar (cc3_g_current_frame.height);
+  for (y = 0; y < cc3_g_current_frame.height; y++) {
     putchar (2);
     
     cc3_pixbuf_read_rows(row, 1);
-    for (x = 0; x < size_x * 3; x++) {
+    for (x = 0; x < cc3_g_current_frame.width * 3U; x++) {
       putchar (row[x]);
     }
   }
