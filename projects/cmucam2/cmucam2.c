@@ -66,6 +66,7 @@ cmucam2_start:
   val = setvbuf (stdout, NULL, _IONBF, 0);
 
   cc3_camera_init ();
+  cc3_set_resolution(CC3_LOW_RES);
 
   printf ("%s\r", VERSION_BANNER);
   //cc3_set_led (true);

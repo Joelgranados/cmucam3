@@ -296,7 +296,8 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
       }
     }
     else {
-      // ...
+      // we are just reading 1 channel
+      // FIXME
     }
 
     cc3_g_current_frame.y_loc++;
