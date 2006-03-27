@@ -27,7 +27,11 @@ void cc3_send_image_direct (void)
     
     cc3_pixbuf_read_rows(row, 1);
     for (x = 0; x < size_x * 3U; x++) {
-      putchar (row[x]);
+      uint8_t p = row[x];
+      if (p < 14) {
+	p = 14;
+      }
+      putchar (p);
     }
   }
   putchar (3);

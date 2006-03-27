@@ -40,7 +40,7 @@ static inline void _cc3_fifo_read_inc (void);
 static uint8_t _cc3_second_green;
 static bool _cc3_second_green_valid;
 
-static void _cc3_update_frame_bounds ();
+static void _cc3_update_frame_bounds (cc3_frame_t *);
 
 void cc3_pixbuf_load ()
 {
@@ -244,7 +244,7 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
 
   int width = cc3_g_current_frame.width;
 
-  int row_limit = (cc3_g_current_frame.y1 - cc3_g_current_frame.y_loc)
+  unsigned int row_limit = (cc3_g_current_frame.y1 - cc3_g_current_frame.y_loc)
     / cc3_g_current_frame.y_step;
 
   if (row_limit < rows) {
@@ -287,10 +287,12 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
 	  x++;
 	} else if (cc3_g_current_frame.x_step + x 
 		   >= cc3_g_current_frame.raw_width) {
-	  _cc3_pixbuf_skip_pixels ((cc3_g_current_frame.raw_width - x) / 2);
+	  //printf("outside the window\n");
+	  _cc3_pixbuf_skip_pixels ((cc3_g_current_frame.raw_width - x - 1) / 2);
 	  // and we're done with this row
 	} else {
-	  _cc3_pixbuf_skip_pixels (cc3_g_current_frame.x_step / 2);
+	  //printf("inside the window\n");
+	  _cc3_pixbuf_skip_pixels ((cc3_g_current_frame.x_step - 1) / 2);
 	  x += cc3_g_current_frame.x_step;
 	}
       }
@@ -308,7 +310,6 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
 /**
  * cc3_wait_ms():
  *
- * This function returns the time since startup in ms as a uint32
  */
 void cc3_wait_ms (uint32_t delay)
 {
@@ -366,11 +367,28 @@ int cc3_pixbuf_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
 int cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
                               uint8_t y_step)
 {
-  // can't be < 0 if unsigned
-  /* 
-     if (x_step < 0 || y_step < 0)
-     return 0;
-   */
+  int result = 1;
+
+  if (x_step == 0) {
+    x_step = 1;
+    result = 0;
+  }
+  if (y_step == 0) {
+    y_step = 1;
+    result = 0;
+  }
+
+  // only allow even subsampling (or 1)
+  if (x_step != 1 && x_step % 2 != 0) {
+    x_step++;
+    result = 0;
+  }
+  if (y_step != 1 && y_step % 2 != 0) {
+    y_step++;
+    result = 0;
+  }
+
+
   cc3_g_current_frame.x_step = x_step;
   cc3_g_current_frame.y_step = y_step;
   cc3_g_current_frame.x0 = 0;
@@ -380,7 +398,8 @@ int cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
   cc3_g_current_frame.subsample_mode = mode;
 
   _cc3_update_frame_bounds (&cc3_g_current_frame);
-  return 1;
+
+  return result;
 }
 
 /**
