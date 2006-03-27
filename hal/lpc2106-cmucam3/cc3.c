@@ -349,32 +349,56 @@ uint32_t cc3_timer ()
  */
 int cc3_pixbuf_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
 {
-  if (x0 >= 0
-      && x0 <= (cc3_g_current_frame.raw_width / cc3_g_current_frame.x_step)
-      && y0 >= 0
-      && y0 <= (cc3_g_current_frame.raw_height / cc3_g_current_frame.y_step)
-      && x1 >= 0
-      && x1 <= (cc3_g_current_frame.raw_width / cc3_g_current_frame.x_step)
-      && y1 >= 0
-      && y1 <= (cc3_g_current_frame.raw_height / cc3_g_current_frame.y_step)
-      && x0 < x1 && y0 < y1) {
-    cc3_g_current_frame.x0 = x0;
-    cc3_g_current_frame.y0 = y0;
-    cc3_g_current_frame.x1 = x1;
-    cc3_g_current_frame.y1 = y1;
+  int w = cc3_g_current_frame.raw_width;
+  int h = cc3_g_current_frame.raw_height;
 
-    _cc3_update_frame_bounds (&cc3_g_current_frame);
-
-    return 1;
+  // constrain
+  if (x0 < 0) {
+    x0 = 0;
   }
-  return 0;
+  if (y0 < 0) {
+    y0 = 0;
+  }
+  if (x0 > w) {
+    x0 = w;
+  }
+  if (y0 > h) {
+    y0 = h;
+  }
+
+  if (x1 < 0) {
+    x1 = 0;
+  }
+  if (y1 < 0) {
+    y1 = 0;
+  }
+  if (x1 > w) {
+    x1 = w;
+  }
+  if (y1 > h) {
+    y1 = h;
+  }
+
+  // check bounds
+  if (x0 >= x1 || y0 >= y1) {
+    return 0;
+  }
+  
+  // set if ok
+  cc3_g_current_frame.x0 = x0;
+  cc3_g_current_frame.y0 = y0;
+  cc3_g_current_frame.x1 = x1;
+  cc3_g_current_frame.y1 = y1;
+  
+  _cc3_update_frame_bounds (&cc3_g_current_frame);
+
+  return 1;
 }
 
 /**
  * cc3_pixbuf_set_subsample():
  * Sets the subsampling step and mode in cc3_frame_t. 
  * This function changes the way data is read from the FIFO.
- * Warning:  This function resets the ROI to the size of the new image.
  */
 int cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
                               uint8_t y_step)
@@ -403,10 +427,10 @@ int cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
 
   cc3_g_current_frame.x_step = x_step;
   cc3_g_current_frame.y_step = y_step;
-  cc3_g_current_frame.x0 = 0;
-  cc3_g_current_frame.y0 = 0;
-  cc3_g_current_frame.x1 = cc3_g_current_frame.raw_width;
-  cc3_g_current_frame.y1 = cc3_g_current_frame.raw_height;
+  //cc3_g_current_frame.x0 = 0;
+  //cc3_g_current_frame.y0 = 0;
+  //cc3_g_current_frame.x1 = cc3_g_current_frame.raw_width;
+  //cc3_g_current_frame.y1 = cc3_g_current_frame.raw_height;
   cc3_g_current_frame.subsample_mode = mode;
 
   _cc3_update_frame_bounds (&cc3_g_current_frame);
