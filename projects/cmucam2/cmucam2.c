@@ -168,7 +168,9 @@ cmucam2_start:
         }
         else
           print_ACK ();
-        cc3_pixbuf_set_roi (arg_list[0], arg_list[1], arg_list[2],
+        cc3_pixbuf_set_roi (arg_list[0] * 2, 
+			    arg_list[1], 
+			    arg_list[2] * 2,
                             arg_list[3]);
         break;
       case DOWN_SAMPLE:
@@ -178,7 +180,7 @@ cmucam2_start:
         }
         else
           print_ACK ();
-        cc3_pixbuf_set_subsample (CC3_NEAREST, arg_list[0] + 1, arg_list[1]);
+        cc3_pixbuf_set_subsample (CC3_NEAREST, arg_list[0] * 2, arg_list[1]);
         break;
       case TRACK_COLOR:
         if (n != 0 && n != 6) {

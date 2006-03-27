@@ -286,7 +286,7 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
 	if (cc3_g_current_frame.x_step == 1) {
 	  x++;
 	} else if (cc3_g_current_frame.x_step + x 
-		   >= cc3_g_current_frame.raw_width) {
+		   >= cc3_g_current_frame.x1) {
 	  //printf("outside the window\n");
 	  _cc3_pixbuf_skip_pixels ((cc3_g_current_frame.raw_width - x - 1) / 2);
 	  // and we're done with this row
@@ -302,7 +302,19 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
       // FIXME
     }
 
-    cc3_g_current_frame.y_loc++;
+
+    // advance by y_step, but don't go over the edge
+    if (cc3_g_current_frame.y_step == 1) {
+      cc3_g_current_frame.y_loc++;
+    } else if (cc3_g_current_frame.y_step + cc3_g_current_frame.y_loc
+	       >= cc3_g_current_frame.y1) {
+      // we're done
+      cc3_g_current_frame.y_loc += cc3_g_current_frame.y_step;
+    } else {
+      _cc3_pixbuf_skip_pixels ((cc3_g_current_frame.y_step - 1) 
+			       * cc3_g_current_frame.raw_width / 2);
+      cc3_g_current_frame.y_loc += cc3_g_current_frame.y_step;
+    }
   }
   return rows;
 }
