@@ -1,0 +1,103 @@
+% matlab script for testing the C code
+
+im = double(imread('G:/TEST.PGM'));
+ii = cumsum(cumsum(im,1),2);
+ii2 = cumsum(cumsum(im.^2,1),2);
+
+% compute the row for which the features are to be calculated for features
+% same as get_rows_to_eval
+CC3_IMAGE_HEIGHT = 144;
+top_offset = 12;
+bottom_offset = 12;
+full_img_height = CC3_IMAGE_HEIGHT - top_offset - bottom_offset;
+full_img_width = 176;
+
+scales = [24 30 38 48 60];
+scales = scales + 1;
+steps = [2 2 4 6 8];
+num_scales = length(scales);
+
+rows_to_eval_feat = zeros(full_img_height, num_scales);
+
+for j = 1:full_img_height
+    for i = 1:num_scales
+        rows_to_eval_feat(j,i) = (mod((j-1),steps(i)) == 0) & (j-1+scales(i) <= full_img_height);
+    end
+end
+
+if 0
+%% 1 
+% compute the std from ii only for a particular window
+x1 = 1; y1 = 1; curr_scale_idx = 1;
+x2 = x1 + scales(curr_scale_idx)-1;
+y2 = y1 + scales(curr_scale_idx)-1;
+
+% store the sum of squares of pixels in the sub-window except "window's"
+% first row and column
+sum_sq_pix = 0;
+sum_pix = 0;
+for i = (y1+1):y2
+    for j = (x1+1):x2
+        pix_val = ii(i,j) - ii(i-1,j) - ii(i,j-1) + ii(i-1,j-1);
+        sum_pix = sum_pix + pix_val;
+        sum_sq_pix = sum_sq_pix + pix_val*pix_val;
+    end
+end
+sum_pix
+sum_sq_pix
+% actual sum_sq_pix from the image itself 
+from_img_sum_sq_pix = sum(sum(im((y1+1):y2,(x1+1):x2).^2))
+return;
+
+end
+
+
+ %% 2
+% stdev = zeros(full_img_height, full_img_width, num_scales); % std
+% mv = zeros(full_img_height, full_img_width, num_scales);  % mean
+% sum_sq_pix = zeros(full_img_height, full_img_width, num_scales);  % mean
+% sum_pix = zeros(full_img_height, full_img_width, num_scales);  % mean
+all_data = zeros(4, full_img_height, full_img_width, num_scales);
+
+sum_pix = [];
+sum_sq_pix = [];
+npixels = [];
+
+% compute the mean and std of the windows
+for i = 1:full_img_height
+    for curr_scale_idx = 1:num_scales
+        if (rows_to_eval_feat(i,curr_scale_idx) == 1)
+           for j = 1:steps(curr_scale_idx):(full_img_width - scales(curr_scale_idx))
+              x1 = j+1;  y1 = i+1;  % skip first row and col
+              x2 = j + scales(curr_scale_idx)-1;
+              y2 = i + scales(curr_scale_idx)-1;
+                
+              npixels = [npixels (x2-x1+1)*(y2-y1+1)];  
+                            
+              sub_window = im(y1:y2, x1:x2);
+              m = mean(sub_window(:));
+              st_dev = std(sub_window(:));
+            
+            %  sum_pix = [sum_pix sum(sub_window(:))];
+            %  sum_sq_pix = [sum_sq_pix sum(sub_window(:).^2)];
+              %mv(i,j,curr_scale_idx) = m;
+              %stdev(i,j, curr_scale_idx) = st_dev;
+              %sum_sq_pix(i,j,curr_scale_idx) = sum(sub_window(:).^2);
+              %sum_pix(i,j, curr_scale_idx) = sum(sub_window(:));
+             
+              
+              all_data(1,i,j,curr_scale_idx) = sum(sub_window(:));
+              all_data(2,i,j,curr_scale_idx) = sum(sub_window(:).^2);
+              all_data(3,i,j,curr_scale_idx) = m;
+              all_data(4,i,j,curr_scale_idx) = st_dev;
+              
+         %     keyboard;
+              %num_pixels = scales(curr_scale_idx)*scales(curr_scale_idx);
+              %mean_val = (ii(y1,x1) - ii(y1,x2) - ii(y2,x1) + ii(y2,x2))/num_pixels;  
+             
+           end
+        end
+    end
+end
+
+%keyboard;
