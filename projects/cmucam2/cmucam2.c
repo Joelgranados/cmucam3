@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+
 #define MAX_ARGS     10
 #define MAX_LINE     128
 #define VERSION_BANNER "CMUcam2 v1.00 c6"
