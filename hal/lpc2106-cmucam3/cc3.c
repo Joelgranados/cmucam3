@@ -276,45 +276,84 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
     // First read into line
     _cc3_seek_left ();
 
-    if (cc3_g_current_frame.coi == CC3_ALL) {
+    switch (cc3_g_current_frame.coi) {
+    case CC3_ALL:
+      _cc3_second_green_valid = false;
       for (j = 0; j < width; j++) {
         uint8_t *p = ((uint8_t *) mem) +
           (r * width + j * 3);
         _cc3_pixbuf_read_pixel (p, p - 3, off0, off1, off2);
 
-	// advance by x_step, but don't go over the edge
-	if (cc3_g_current_frame.x_step == 1) {
-	  x++;
-	} else if (cc3_g_current_frame.x_step + x 
-		   >= cc3_g_current_frame.x1) {
-	  //printf("outside the window\n");
-	  _cc3_pixbuf_skip_pixels ((cc3_g_current_frame.raw_width - x - 1) / 2);
-	  // and we're done with this row
-	} else {
-	  //printf("inside the window\n");
-	  _cc3_pixbuf_skip_pixels ((cc3_g_current_frame.x_step - 1) / 2);
-	  x += cc3_g_current_frame.x_step;
-	}
+	// advance by x_step
+	x += cc3_g_current_frame.x_step;
+	_cc3_pixbuf_skip_pixels ((cc3_g_current_frame.x_step - 1) / 2);
       }
+
+      break;
+
+    case CC3_RED:
+      for (j = 0; j < width; j++) {
+	uint8_t *p = ((uint8_t *) mem) + (r * width + j);
+
+	if ((j & 0x1) == 0 || cc3_g_current_frame.x_step > 1) {
+	  // read
+	  _cc3_pixbuf_skip_subpixel ();
+	  *p = _cc3_pixbuf_read_subpixel ();
+	  _cc3_pixbuf_skip_subpixel ();
+	  _cc3_pixbuf_skip_subpixel ();
+	} else {
+	  *p = *(p - 1);
+	}
+
+	x += cc3_g_current_frame.x_step;
+	_cc3_pixbuf_skip_pixels ((cc3_g_current_frame.x_step - 1) / 2);
+      }
+      break;
+
+    case CC3_GREEN:
+      for (j = 0; j < width; j++) {
+	uint8_t *p = ((uint8_t *) mem) + (r * width + j);
+
+	if ((j & 0x1) == 0 || cc3_g_current_frame.x_step > 1) {
+	  // read
+	  *p = _cc3_pixbuf_read_subpixel ();
+	  _cc3_pixbuf_skip_subpixel ();
+	  _cc3_second_green = _cc3_pixbuf_read_subpixel ();
+	  _cc3_pixbuf_skip_subpixel ();
+	} else {
+	  *p = _cc3_second_green;
+	}
+
+	x += cc3_g_current_frame.x_step;
+	_cc3_pixbuf_skip_pixels ((cc3_g_current_frame.x_step - 1) / 2);
+      }
+      break;
+
+    case CC3_BLUE:
+      for (j = 0; j < width; j++) {
+	uint8_t *p = ((uint8_t *) mem) + (r * width + j);
+
+	if ((j & 0x1) == 0 || cc3_g_current_frame.x_step > 1) {
+	  // read
+	  _cc3_pixbuf_skip_subpixel ();
+	  _cc3_pixbuf_skip_subpixel ();
+	  _cc3_pixbuf_skip_subpixel ();
+	  *p = _cc3_pixbuf_read_subpixel ();
+	} else {
+	  *p = *(p - 1);
+	}
+
+	x += cc3_g_current_frame.x_step;
+	_cc3_pixbuf_skip_pixels ((cc3_g_current_frame.x_step - 1) / 2);
+      }
+      break;
     }
-    else {
-      // we are just reading 1 channel
-      // FIXME
-    }
+    _cc3_pixbuf_skip_pixels ((cc3_g_current_frame.raw_width - x) / 2);
 
 
-    // advance by y_step, but don't go over the edge
-    if (cc3_g_current_frame.y_step == 1) {
-      cc3_g_current_frame.y_loc++;
-    } else if (cc3_g_current_frame.y_step + cc3_g_current_frame.y_loc
-	       >= cc3_g_current_frame.y1) {
-      // we're done
-      cc3_g_current_frame.y_loc += cc3_g_current_frame.y_step;
-    } else {
-      _cc3_pixbuf_skip_pixels ((cc3_g_current_frame.y_step - 1) 
-			       * cc3_g_current_frame.raw_width / 2);
-      cc3_g_current_frame.y_loc += cc3_g_current_frame.y_step;
-    }
+    // advance by y_step
+    _cc3_pixbuf_skip_pixels ((cc3_g_current_frame.y_step - 1) * cc3_g_current_frame.raw_width / 2);
+    cc3_g_current_frame.y_loc += cc3_g_current_frame.y_step;
   }
   return rows;
 }
@@ -355,6 +394,9 @@ int cc3_pixbuf_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
   // constrain
   if (x0 < 0) {
     x0 = 0;
+  }
+  if ((x0 & 0x1) == 1) {
+    x0++;          // x0 must be even!
   }
   if (y0 < 0) {
     y0 = 0;
@@ -414,16 +456,11 @@ int cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
     result = 0;
   }
 
-  // only allow even subsampling (or 1)
+  // only allow even subsampling (or 1) for x
   if (x_step != 1 && x_step % 2 != 0) {
     x_step++;
     result = 0;
   }
-  if (y_step != 1 && y_step % 2 != 0) {
-    y_step++;
-    result = 0;
-  }
-
 
   cc3_g_current_frame.x_step = x_step;
   cc3_g_current_frame.y_step = y_step;
