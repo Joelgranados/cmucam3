@@ -71,7 +71,7 @@ void cc3_get_curr_segment()
 	  //	  cc3_integral_image[i][0] = (3*pix_temp.channel[0]+6*pix_temp.channel[1]+pix_temp.channel[2])/10; // rgb->gray 
 
 	  //	  printf("writing to file %u \n\r", i);
-	  fprintf(fp, "%d ", cc3_integral_image[i][0]);
+	  //fprintf(fp, "%d ", cc3_integral_image[i][0]);
 	  //      printf("wrot to file %u \n\r", i);
 	  
 	  // start copying from the next pixel and calculate cumulative sum at the same time
@@ -80,12 +80,12 @@ void cc3_get_curr_segment()
 	      cc3_get_pixel(&cc3_img_tmp, j, 0, &pix_temp);
 	      cc3_integral_image[i][j] = pix_temp.channel[1]; // only green channel
 	      //  cc3_integral_image[i][j] = (3*pix_temp.channel[0]+6*pix_temp.channel[1]+pix_temp.channel[2])/10; // rgb->gray 
-	      fprintf( fp,"%d ",cc3_integral_image[i][j] );
+	      //fprintf( fp,"%d ",cc3_integral_image[i][j] );
 	      
 	      // compute cumulative sum across the row
 	      cc3_integral_image[i][j] += cc3_integral_image[i][j-1];
 	    }
-	  fprintf( fp, "\n" );
+	  //fprintf( fp, "\n" );
 	}
       
       // find cumulative sum along columns to complete the integral image computation
@@ -122,7 +122,7 @@ void cc3_get_curr_segment()
       cc3_get_pixel(&cc3_img_tmp, 0, 0, &pix_temp);
       cc3_integral_image[newly_added_row][0] = pix_temp.channel[1];
       //      cc3_integral_image[newly_added_row][0] = (3*pix_temp.channel[0]+6*pix_temp.channel[1]+pix_temp.channel[2])/10; // rgb->gray 
-      fprintf( fp,"%d ",cc3_integral_image[newly_added_row][0] );
+      //fprintf( fp,"%d ",cc3_integral_image[newly_added_row][0] );
       
       // read the row, from next pixel onward and compute cum sum across the row
       for (uint16_t j = 1; j < cc3_img_tmp.width; j++)
@@ -130,12 +130,12 @@ void cc3_get_curr_segment()
 	  cc3_get_pixel(&cc3_img_tmp, j, 0, &pix_temp);
 	  cc3_integral_image[newly_added_row][j] = pix_temp.channel[1];
 	  //	  cc3_integral_image[newly_added_row][j] = (3*pix_temp.channel[0] + 6*pix_temp.channel[1] + pix_temp.channel[2])/10;
-	  fprintf( fp,"%d ",cc3_integral_image[newly_added_row][j] );
+	  //fprintf( fp,"%d ",cc3_integral_image[newly_added_row][j] );
 
 	  // compute cumulative sum across the row
 	  cc3_integral_image[newly_added_row][j] += cc3_integral_image[newly_added_row][j-1];
 	}
-       fprintf( fp, "\n" );
+       //fprintf( fp, "\n" );
 
        //     printf("%s %d \n\r", "New Row...", cc3_row_counter_calc_ii);
        // find cumulative sum along columns to complete the integral image computation
@@ -293,6 +293,8 @@ int main (void)
 {
 
   int16_t val; 
+  uint8_t blink;
+  blink=0;
   // don't know why its here...just dont feel like removing it...has been the sole variable that has stood the test of time...:-)
   // i feel bonded ....
   
@@ -351,17 +353,17 @@ int main (void)
 	 }
        
        
-       printf(" New Frame...\n\r");
-       
+      // printf(" New Frame...\n\r");
+       printf( "START\r" ); 
        // new image
-       sprintf(img_name, "%s%04d%s","c:/img",num_frames, ".pgm");
-       fp=fopen(img_name,"w" );
-       printf("%s %s\n\r", "Opened: ",img_name);
+       //sprintf(img_name, "%s%04d%s","c:/img",num_frames, ".pgm");
+       //fp=fopen(img_name,"w" );
+       //printf("%s %s\n\r", "Opened: ",img_name);
        
-       fprintf( fp, "P2\n%d %d\n255\n", cc3_g_current_frame.width, cc3_g_current_frame.height-top_offset-bottom_offset );
-       sprintf(img_name, "%s%04d%s","c:/img",num_frames,".txt");
-       fout = fopen(img_name, "w");
-       printf("%s %s\n\r", "Opened: ",img_name);
+       //fprintf( fp, "P2\n%d %d\n255\n", cc3_g_current_frame.width, cc3_g_current_frame.height-top_offset-bottom_offset );
+       //sprintf(img_name, "%s%04d%s","c:/img",num_frames,".txt");
+       //fout = fopen(img_name, "w");
+       //printf("%s %s\n\r", "Opened: ",img_name);
 
        // This tells the camera to grab a new frame into the fifo and reset
        // any internal location information.
@@ -409,7 +411,7 @@ int main (void)
 			y2 = (cc3_row_counter_ii + CC3_SCALES[curr_scale_idx]-1) % CC3_INTEGRAL_IMG_HEIGHT;
 			if (x2 >= CC3_INTEGRAL_IMG_WIDTH ) 
 			  {
-			    printf("Error....width outside limits!! \n\r");
+			    printf("*Error....width outside limits!! \n\r");
 			  }
 			
 			//printf("%s %s %s %d %d %d \n\r", "Row: ", "Col: ", "scale: ",cc3_curr_row_counter_actual_img, curr_pos_x, CC3_SCALES[curr_scale_idx]);
@@ -695,7 +697,8 @@ int main (void)
 				    
 				    if (face)
 				      {
-					fprintf(fout, "%d %d %d \n",curr_pos_x+1, cc3_row_counter_cropped_img+1, CC3_SCALES[curr_scale_idx]-1);
+					printf( "F %d %d %d\r",curr_pos_x+1, cc3_row_counter_cropped_img+1, CC3_SCALES[curr_scale_idx]-1);
+				//	fprintf(fout, "%d %d %d \n",curr_pos_x+1, cc3_row_counter_cropped_img+1, CC3_SCALES[curr_scale_idx]-1);
 					//		cc3_faces[cc3_num_detected_faces][0] = curr_pos_x;
 					//cc3_faces[cc3_num_detected_faces][1] = cc3_row_counter_cropped_img; // + top_offset;
 					//cc3_faces[cc3_num_detected_faces][2] = CC3_SCALES[curr_scale_idx];
@@ -726,23 +729,30 @@ int main (void)
 	    
 	  } // end of iterating over all the rows in the actual image (upto bottom_offset)
 	
-	printf("No. of faces : %d \n\r", cc3_num_detected_faces);     
-	
+//	printf("No. of faces : %d \n\r", cc3_num_detected_faces); 
+        if(cc3_num_detected_faces>0 ) cc3_set_led(2);
+        else cc3_clr_led(2);	
+        printf( "END %d\r",cc3_num_detected_faces );
+
 	//	for (uint8_t i = 0; i < cc3_num_detected_faces; i++)
 	//  printf ( " Face at x=%d, y=%d scale=%d \n\r",cc3_faces[i][0], cc3_faces[i][1], cc3_faces[i][2]);
 
-	fprintf( fout, "%d %d %d \n",0,0,0);
-	fclose(fout);
-	fclose(fp);
+//	fprintf( fout, "%d %d %d \n",0,0,0);
+//	fclose(fout);
+//	fclose(fp);
 
 	num_frames++;
 	//	break;
-	
+
+        if(blink)
+	{	
 	cc3_clr_led (0);
-	cc3_set_led (2);
-	 while(!cc3_read_button());
+	}
+	else
+	{
 	 cc3_set_led (0);
-	 cc3_clr_led (2);
+	}
+	blink=!blink;
 	  // wait for the button to be pressed for the next frame
 
 	// sample non-blocking serial routine
@@ -752,14 +762,6 @@ int main (void)
     
     
     free(cc3_img_tmp.pix);  // don't forget to free!
-    printf( "You pressed %c to escape \n\r",fgetc(stdin) );
-    
-    // stdio actually works... 
-    printf( "Type in a number followed by return to test scanf: " );
-    scanf( "%d", &val );
-    printf( "You typed %d\n",val );
-    
-    printf( "Good work, now try something on your own...\n" );
     while(1);
     
     return 0;

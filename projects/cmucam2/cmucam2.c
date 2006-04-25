@@ -76,6 +76,8 @@ cmucam2_start:
   cc3_pixbuf_set_subsample (CC3_NEAREST, 2, 1);
 
   while (1) {
+    cc3_channel_t old_coi;
+    
     printf (":");
     error = 0;
     n = cmucam2_get_command (&command, arg_list);
@@ -140,10 +142,14 @@ cmucam2_start:
 
         break;
       case SEND_FRAME:
-        if (n == 1 && arg_list[0] > 4) {
-          error = 1;
-          break;
-        }
+	old_coi = cc3_g_current_frame.coi;
+        if (n == 1) {
+	  if (arg_list[0] > 4) {
+            error = 1;
+            break;
+          }
+	  cc3_pixbuf_set_coi(arg_list[0]);
+	}
         else if (n > 1) {
           error = 1;
           break;
@@ -151,6 +157,7 @@ cmucam2_start:
         else
           print_ACK ();
         cc3_send_image_direct ();
+	cc3_pixbuf_set_coi(old_coi);
         break;
       case CAMERA_REG:
         if (n % 2 != 0 || n < 2) {

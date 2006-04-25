@@ -9,6 +9,7 @@ void cc3_send_image_direct (void)
   uint32_t x, y;
   uint32_t size_x, size_y;
   uint8_t *row = cc3_malloc_rows(1);
+  uint8_t num_channels = cc3_g_current_frame.coi == CC3_ALL ? 3 : 1;
 
   cc3_set_led (1);
 
@@ -26,11 +27,8 @@ void cc3_send_image_direct (void)
     putchar (2);
     
     cc3_pixbuf_read_rows(row, 1);
-    for (x = 0; x < size_x * 3U; x++) {
+    for (x = 0; x < size_x * num_channels; x++) {
       uint8_t p = row[x];
-      if (p < 14) {
-	p = 14;
-      }
       putchar (p);
     }
   }
