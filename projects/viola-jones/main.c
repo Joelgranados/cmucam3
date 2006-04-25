@@ -30,17 +30,26 @@ uint16_t cc3_row_counter_actual_img;
 // integral image counter (for many rows, integral image has been calculated)
 uint16_t cc3_row_counter_calc_ii;
 
+// keep track of the current cascade stage for the current sub-window
+int8_t curr_cascade;
+
+// keep track of no. of frames (or rather no. of images taken)
+int16_t num_frames;
+
 uint32_t mean_val;       // mean for a subwinow
-uint64_t sum_pix;        // sum of pixels in a sub-window
-uint64_t sum_pix_sq; // sum of squares of pixels in a subwindow
+uint32_t sum_pix;        // sum of pixels in a sub-window
+uint32_t sum_pix_sq; // sum of squares of pixels in a subwindow
 uint32_t std;        // standard deviation
-uint64_t var;        // variance
+uint32_t var;        // variance 
+uint32_t vert_past_sum_sq_pix[4]; // should be equal to CC3_NUM_SCALES
+uint32_t horz_past_sum_sq_pix[4];
 
 // array to store rows while transfering b/w fifo and ii
 static uint8_t image_row[176*3];
 
 
 FILE* fp;
+FILE* fout;
 
 // function to get the current segment from the actual image
 void cc3_get_curr_segment()
@@ -54,16 +63,16 @@ void cc3_get_curr_segment()
       for (uint8_t i = 0; i < CC3_INTEGRAL_IMG_HEIGHT; i++)
 	{
 	  // get a row..
-	  cc3_pixbuf_read_rows(cc3_img_tmp.pix, cc3_img_tmp.width, cc3_img_tmp.height);
+	  cc3_pixbuf_read_rows(cc3_img_tmp.pix, cc3_img_tmp.height);
 	  
 	  // copy the first pixel
 	  cc3_get_pixel(&cc3_img_tmp, 0, 0, &pix_temp);
 	  cc3_integral_image[i][0] = pix_temp.channel[1]; // only green channel
 	  //	  cc3_integral_image[i][0] = (3*pix_temp.channel[0]+6*pix_temp.channel[1]+pix_temp.channel[2])/10; // rgb->gray 
 
-	  printf("writing to file %u \n\r", i);
+	  //	  printf("writing to file %u \n\r", i);
 	  fprintf(fp, "%d ", cc3_integral_image[i][0]);
-	  printf("wrot to file %u \n\r", i);
+	  //      printf("wrot to file %u \n\r", i);
 	  
 	  // start copying from the next pixel and calculate cumulative sum at the same time
 	  for (uint16_t j = 1; j < cc3_img_tmp.width; j++)
@@ -104,7 +113,7 @@ void cc3_get_curr_segment()
   else 
     { 
       // get a new row
-      cc3_pixbuf_read_rows(cc3_img_tmp.pix, cc3_img_tmp.width, cc3_img_tmp.height);
+      cc3_pixbuf_read_rows(cc3_img_tmp.pix, cc3_img_tmp.height);
 	  
       uint8_t newly_added_row = cc3_row_counter_calc_ii % CC3_INTEGRAL_IMG_HEIGHT;
       uint8_t prev_row = (cc3_row_counter_calc_ii - 1 + CC3_INTEGRAL_IMG_HEIGHT) % CC3_INTEGRAL_IMG_HEIGHT; 
@@ -128,7 +137,7 @@ void cc3_get_curr_segment()
 	}
        fprintf( fp, "\n" );
 
-       printf("%s %d \n\r", "New Row...", cc3_row_counter_calc_ii);
+       //     printf("%s %d \n\r", "New Row...", cc3_row_counter_calc_ii);
        // find cumulative sum along columns to complete the integral image computation
        for (uint16_t j = 0; j < CC3_INTEGRAL_IMG_WIDTH; j++)
 	 {
@@ -151,24 +160,131 @@ int16_t cc3_get_feat_val(uint8_t feat_num, uint8_t curr_scale, uint16_t x, uint1
   int32_t fval = 0;
   uint16_t x_in_ii, y_in_ii;
 
-  // evaluate the subwindow for this feature
-  for (uint8_t pt=0; pt < 9 ; pt++)
+  // for stage1 cascade
+  if (curr_cascade == 0)
     {
-      x_in_ii = x + CC3_FACE_FEATURES[feat_num][curr_scale].x[pt];
-      y_in_ii = (y + CC3_FACE_FEATURES[feat_num][curr_scale].y[pt]) % CC3_INTEGRAL_IMG_HEIGHT; // circular warping
-      fval+=cc3_integral_image[y_in_ii][x_in_ii]*CC3_FACE_FEATURES[feat_num][curr_scale].val_at_corners[pt];
+      // evaluate the subwindow for this feature
+      for (uint8_t pt=0; pt < 9 ; pt++)
+	{
+	  x_in_ii = x + CC3_FACE_FEATURES0[feat_num][curr_scale].x[pt];
+	  y_in_ii = (y + CC3_FACE_FEATURES0[feat_num][curr_scale].y[pt]) % CC3_INTEGRAL_IMG_HEIGHT; // circular warping
+	  fval+=cc3_integral_image[y_in_ii][x_in_ii]*CC3_FACE_FEATURES0[feat_num][curr_scale].val_at_corners[pt];
+	}
+
+      // mult by scaling factor
+      fval = fval * CC3_SCALING_FACTOR;
+      
+      // taking into account the effect of normalization
+      fval = fval/((int32_t)std);
+      
+      // check if fval < threshold
+      if (fval*CC3_FACE_FEATURES0[feat_num][curr_scale].parity < CC3_FACE_FEATURES0[feat_num][curr_scale].thresh*CC3_FACE_FEATURES0[feat_num][curr_scale].parity)
+	return CC3_FACE_FEATURES0[feat_num][curr_scale].alpha;
+      else 
+	return 0;
     }
 
-  // taking into account the effect of normalization
-  //  printf("%s %d", "fval before std", fval);
-  fval = fval/((int32_t)std);
-  //  printf("%s %d", "fval after std", fval);
+  // for stage 2
+  else if (curr_cascade == 1)
+    {
+       // evaluate the subwindow for this feature
+      for (uint8_t pt=0; pt < 9 ; pt++)
+	{
+	  x_in_ii = x + CC3_FACE_FEATURES1[feat_num][curr_scale].x[pt];
+	  y_in_ii = (y + CC3_FACE_FEATURES1[feat_num][curr_scale].y[pt]) % CC3_INTEGRAL_IMG_HEIGHT; // circular warping
+	  fval+=cc3_integral_image[y_in_ii][x_in_ii]*CC3_FACE_FEATURES1[feat_num][curr_scale].val_at_corners[pt];
+	}
+      
+      // mult by scaling factor
+      fval = fval * CC3_SCALING_FACTOR;
 
-  // check if fval < threshold
-  if (fval*CC3_FACE_FEATURES[feat_num][curr_scale].parity < CC3_FACE_FEATURES[feat_num][curr_scale].thresh*CC3_FACE_FEATURES[feat_num][curr_scale].parity)
-    return CC3_FACE_FEATURES[feat_num][curr_scale].alpha;
+      // taking into account the effect of normalization
+      fval = fval/((int32_t)std);
+      
+      // check if fval < threshold
+      if (fval*CC3_FACE_FEATURES1[feat_num][curr_scale].parity < CC3_FACE_FEATURES1[feat_num][curr_scale].thresh*CC3_FACE_FEATURES1[feat_num][curr_scale].parity)
+	return CC3_FACE_FEATURES1[feat_num][curr_scale].alpha;
+      else 
+	return 0;
+    }
+
+  // for stage 3
+  else if (curr_cascade == 2)
+    {
+       // evaluate the subwindow for this feature
+      for (uint8_t pt=0; pt < 9 ; pt++)
+	{
+	  x_in_ii = x + CC3_FACE_FEATURES2[feat_num][curr_scale].x[pt];
+	  y_in_ii = (y + CC3_FACE_FEATURES2[feat_num][curr_scale].y[pt]) % CC3_INTEGRAL_IMG_HEIGHT; // circular warping
+	  fval+=cc3_integral_image[y_in_ii][x_in_ii]*CC3_FACE_FEATURES2[feat_num][curr_scale].val_at_corners[pt];
+	}
+      
+      // mult by scaling factor
+      fval = fval * CC3_SCALING_FACTOR;
+
+      // taking into account the effect of normalization
+      fval = fval/((int32_t)std);
+      
+      // check if fval < threshold
+      if (fval*CC3_FACE_FEATURES2[feat_num][curr_scale].parity < CC3_FACE_FEATURES2[feat_num][curr_scale].thresh*CC3_FACE_FEATURES2[feat_num][curr_scale].parity)
+	return CC3_FACE_FEATURES2[feat_num][curr_scale].alpha;
+      else 
+	return 0;
+     
+    }
+
+  // for stage 4
+  else if (curr_cascade == 3)
+    {
+       // evaluate the subwindow for this feature
+      for (uint8_t pt=0; pt < 9 ; pt++)
+	{
+	  x_in_ii = x + CC3_FACE_FEATURES3[feat_num][curr_scale].x[pt];
+	  y_in_ii = (y + CC3_FACE_FEATURES3[feat_num][curr_scale].y[pt]) % CC3_INTEGRAL_IMG_HEIGHT; // circular warping
+	  fval+=cc3_integral_image[y_in_ii][x_in_ii]*CC3_FACE_FEATURES3[feat_num][curr_scale].val_at_corners[pt];
+	}
+      
+      // mult by scaling factor
+      fval = fval * CC3_SCALING_FACTOR;
+
+      // taking into account the effect of normalization
+      fval = fval/((int32_t)std);
+      
+      // check if fval < threshold
+      if (fval*CC3_FACE_FEATURES3[feat_num][curr_scale].parity < CC3_FACE_FEATURES3[feat_num][curr_scale].thresh*CC3_FACE_FEATURES3[feat_num][curr_scale].parity)
+	return CC3_FACE_FEATURES3[feat_num][curr_scale].alpha;
+      else 
+	return 0;
+    }
+
+ // for stage 5
+  else if (curr_cascade == 4)
+    {
+       // evaluate the subwindow for this feature
+      for (uint8_t pt=0; pt < 9 ; pt++)
+	{
+	  x_in_ii = x + CC3_FACE_FEATURES4[feat_num][curr_scale].x[pt];
+	  y_in_ii = (y + CC3_FACE_FEATURES4[feat_num][curr_scale].y[pt]) % CC3_INTEGRAL_IMG_HEIGHT; // circular warping
+	  fval+=cc3_integral_image[y_in_ii][x_in_ii]*CC3_FACE_FEATURES4[feat_num][curr_scale].val_at_corners[pt];
+	}
+      
+      // mult by scaling factor
+      fval = fval * CC3_SCALING_FACTOR;
+
+      // taking into account the effect of normalization
+      fval = fval/((int32_t)std);
+      
+      // check if fval < threshold
+      if (fval*CC3_FACE_FEATURES4[feat_num][curr_scale].parity < CC3_FACE_FEATURES4[feat_num][curr_scale].thresh*CC3_FACE_FEATURES4[feat_num][curr_scale].parity)
+	return CC3_FACE_FEATURES4[feat_num][curr_scale].alpha;
+      else 
+	return 0;
+    }
+
+
   else 
     return 0;
+  
 }
 
 
@@ -177,73 +293,87 @@ int main (void)
 {
 
   int16_t val; 
-// don't know why its here...just dont feel like removing it...has been the sole variable that has stood the test of time...:-)
-// i feel bonded ....
-
-  // feature value for a particular sudwindow
-  // int16_t feat_val;
-
-   uint8_t x2, y2; // lowe right sub-window coordinates
-   uint64_t num_pixels; // no. of pixels in a subwindow
-
-   int32_t temp1, temp2; // temp variables used for computations
+  // don't know why its here...just dont feel like removing it...has been the sole variable that has stood the test of time...:-)
+  // i feel bonded ....
   
-    // setup system    
-    cc3_system_setup ();
-
-    // configure uarts
-    cc3_uart_init (0, CC3_UART_RATE_115200,CC3_UART_MODE_8N1,CC3_UART_BINMODE_BINARY);
+  // name of the curr image
+  char img_name[50];
+  
+   uint8_t x2, y2; // lower right sub-window coordinates
+   uint16_t num_pixels; // no. of pixels in a subwindow
    
-    cc3_camera_init ();
- 
-    cc3_set_colorspace(CC3_RGB);
-    cc3_set_resolution(CC3_LOW_RES);
-    cc3_set_auto_white_balance(true);
-    cc3_set_auto_exposure(true);
-     
-    printf("Face Detector...\n\r");
-    
-    cc3_clr_led (0);
-    cc3_clr_led (1);
-    cc3_clr_led (2);
+   int32_t temp1, temp2; // temp variables used for computations
    
-    // sample wait command in ms 
-    cc3_wait_ms(1000);
-    cc3_set_led (0);
+   // setup system    
+   cc3_system_setup ();
+   
+   // configure uarts
+   cc3_uart_init (0, CC3_UART_RATE_115200,CC3_UART_MODE_8N1,CC3_UART_BINMODE_BINARY);
+   
+   cc3_camera_init ();
+   
+   cc3_set_colorspace(CC3_RGB);
+   cc3_set_resolution(CC3_LOW_RES);
+   cc3_set_auto_white_balance(true);
+   cc3_set_auto_exposure(true);
+   
+   printf("Face Detector...\n\r");
+   
+   cc3_clr_led (0);
+   cc3_clr_led (1);
+   cc3_clr_led (2);
+   
+   // sample wait command in ms 
+   cc3_wait_ms(1000);
+   cc3_set_led (0);
+   
+   // setup integral image structure
+   cc3_img_tmp.channels=3; // RGB color 
+   cc3_img_tmp.width=cc3_g_current_frame.width;  // equal to Int_Img_Width
+   cc3_img_tmp.height = 1;  // image will hold just 1 row for scanline processing
+   // if ((cc3_img_tmp.pix = malloc(cc3_img_tmp.width*cc3_img_tmp.channels)) == NULL)
+   //      printf("Cannot allocate memory \n\r");  // malloc! (to hold one row RGB)
+   cc3_img_tmp.pix = &image_row;
+   
+   if (cc3_img_tmp.width != CC3_INTEGRAL_IMG_WIDTH)
+     printf("Error...image width and integral image width different \n\r");
+   
+   num_frames = 0;
+   
+   while(1) 
+     {
+       cc3_num_detected_faces = 0;
+       // initliaze the past records of sum_sq_pix to zero
+       for (uint8_t i = 0; i < CC3_NUM_SCALES; i++)
+	 {
+	   vert_past_sum_sq_pix[i] = (uint32_t) 0;
+	   horz_past_sum_sq_pix[i] = (uint32_t) 0;
+	 }
+       
+       
+       printf(" New Frame...\n\r");
+       
+       // new image
+       sprintf(img_name, "%s%04d%s","c:/img",num_frames, ".pgm");
+       fp=fopen(img_name,"w" );
+       printf("%s %s\n\r", "Opened: ",img_name);
+       
+       fprintf( fp, "P2\n%d %d\n255\n", cc3_g_current_frame.width, cc3_g_current_frame.height-top_offset-bottom_offset );
+       sprintf(img_name, "%s%04d%s","c:/img",num_frames,".txt");
+       fout = fopen(img_name, "w");
+       printf("%s %s\n\r", "Opened: ",img_name);
 
-    // setup integral image structure
-    cc3_img_tmp.channels=3; // RGB color 
-    cc3_img_tmp.width=cc3_g_current_frame.width;  // equal to Int_Img_Width
-    cc3_img_tmp.height = 1;  // image will hold just 1 row for scanline processing
-    // if ((cc3_img_tmp.pix = malloc(cc3_img_tmp.width*cc3_img_tmp.channels)) == NULL)
-    //      printf("Cannot allocate memory \n\r");  // malloc! (to hold one row RGB)
-     cc3_img_tmp.pix = &image_row;
-
-    if (cc3_img_tmp.width != CC3_INTEGRAL_IMG_WIDTH)
-      printf("Error...image width and integral image width different \n\r");
-
-    
-    fp=fopen("c:/test.pgm","w" );
-    fprintf( fp, "P2\n%d %d\n255\n", cc3_g_current_frame.width, cc3_g_current_frame.height-top_offset-bottom_offset );
-
-    while(1) 
-      {
-	cc3_num_detected_faces = 0;
-
-	printf(" New Frame...\n\r");
-	// This tells the camera to grab a new frame into the fifo and reset
-	// any internal location information.
-	cc3_pixbuf_load();
-	
-	printf(" captured the image \n\r");
-	// discard some top rows, given by top_offset
-	for (uint8_t i = 0; i < top_offset ; i++)
-	  {
-	    cc3_pixbuf_read_rows(cc3_img_tmp.pix, cc3_img_tmp.width, cc3_img_tmp.height);
-	  }
-	
-	
-	printf(" read top offset \n\r");
+       // This tells the camera to grab a new frame into the fifo and reset
+       // any internal location information.
+       cc3_pixbuf_load();
+       
+       // discard some top rows, given by top_offset
+       for (uint8_t i = 0; i < top_offset ; i++)
+	 {
+	   cc3_pixbuf_read_rows(cc3_img_tmp.pix, cc3_img_tmp.height);
+	 }
+       
+       
 	// indicating how many rows have we read in the actual full image
 	// top_offset rows are discarded and next "CC3_INTEGRAL_IMG_HEIGHT" rows are read in the first 
 	// instance of the following for loop
@@ -252,29 +382,28 @@ int main (void)
 	cc3_row_counter_cropped_img = 0;
 	cc3_row_counter_calc_ii = (CC3_INTEGRAL_IMG_HEIGHT - 1); 
 	
-	printf(" reached the main while loop \n\r");
+	//printf(" reached the main while loop \n\r");
 	// iterating over the rows of the actual image until the bottom offset
 	while (cc3_row_counter_actual_img < (CC3_IMAGE_HEIGHT - bottom_offset))
 	  { 
-	    //  printf("%s %d \n\r", "CURRENT ROW ",cc3_row_counter_cropped_img);
+	    // printf("%s %d \n\r", "CURRENT ROW ",cc3_row_counter_cropped_img);
 	    if (cc3_row_counter_calc_ii < CC3_IMAGE_HEIGHT - top_offset - bottom_offset) // check if we need to load any more rows?
 	      {
 		// get the current segment and its integral image
 		cc3_get_curr_segment();
 	      }
 	    
-	    //   printf("got the curr seg \n\r");
+	    // printf("got the curr seg \n\r");
 	    for (uint8_t curr_scale_idx = 0; curr_scale_idx < CC3_NUM_SCALES; curr_scale_idx++)
 	      {
 		
-		//	printf (" Current scale %d \n\r", CC3_SCALES[curr_scale_idx]);
+		// printf (" Current scale %d \n\r", CC3_SCALES[curr_scale_idx]);
 		// check if we need to evaluate subwindows at this scale for this sub-window
 		if (cc3_rows_to_eval_feat[cc3_row_counter_cropped_img][curr_scale_idx] == 1)
 		  { 
 		    // iterate over all horizontal shifted sub-window
 		    for (uint8_t curr_pos_x =0; curr_pos_x < CC3_INTEGRAL_IMG_WIDTH - CC3_SCALES[curr_scale_idx]; curr_pos_x+=CC3_WIN_STEPS[curr_scale_idx])
 		      { 
-			//	printf ("current pos_x %d \n\r",curr_pos_x);
 			// compute the standard deviation for this window
 			x2 = curr_pos_x + CC3_SCALES[curr_scale_idx]-1 ;
 			y2 = (cc3_row_counter_ii + CC3_SCALES[curr_scale_idx]-1) % CC3_INTEGRAL_IMG_HEIGHT;
@@ -283,7 +412,8 @@ int main (void)
 			    printf("Error....width outside limits!! \n\r");
 			  }
 			
-
+			//printf("%s %s %s %d %d %d \n\r", "Row: ", "Col: ", "scale: ",cc3_curr_row_counter_actual_img, curr_pos_x, CC3_SCALES[curr_scale_idx]);
+			
 			// Don't consider the first row and first column in the sub-window for calculating 
 			// std
 			num_pixels = (CC3_SCALES[curr_scale_idx]-1)*(CC3_SCALES[curr_scale_idx]-1);
@@ -292,123 +422,300 @@ int main (void)
 			temp2 = cc3_integral_image[y2][x2] - cc3_integral_image[y2][curr_pos_x];
 			sum_pix = (uint32_t) (temp1 + temp2); 
 			mean_val = sum_pix/num_pixels;
-			
-			//	printf("%s %u %u %u %u \n\r"," II ",  cc3_integral_image[cc3_row_counter_ii+1][curr_pos_x+1], cc3_integral_image[cc3_row_counter_ii+1][x2], cc3_integral_image[y2][curr_pos_x+1], cc3_integral_image[y2][x2]);
-
-			//		printf("%s %d \n\r", "Mean: ", mean_val);
-			//			printf("%s %d \n\r", "Num Pixels: ", num_pixels);
-			sum_pix_sq = 0;
-			for (uint8_t i = (cc3_row_counter_ii+1) % CC3_INTEGRAL_IMG_HEIGHT; i != (y2+1)% CC3_INTEGRAL_IMG_HEIGHT; )
-			  {
-			    for (uint8_t j = curr_pos_x+1; j <= x2; j++)
-			      {
-				temp2 = (i-1+CC3_INTEGRAL_IMG_HEIGHT) % CC3_INTEGRAL_IMG_HEIGHT;
-				temp1 = cc3_integral_image[i][j] - cc3_integral_image[i][j-1];
-				temp2 = -cc3_integral_image[temp2][j] + cc3_integral_image[temp2][j-1];
-				temp1 = temp1+temp2;
-				
-				//	if (cc3_row_counter_ii == 0)
-				//	 printf("%s %u \n\r", "  ",temp1);
-
-				sum_pix_sq+=temp1*temp1;
-			      }
-			    //	    printf("\n");
-			    i = (i+1) % CC3_INTEGRAL_IMG_HEIGHT; 
-			  }
-			
-			uint64_t numer, denom;
-			//		printf("%s %d %d %d \n\r","current wind ",cc3_row_counter_cropped_img, curr_pos_x, CC3_SCALES[curr_scale_idx]);
-			//			printf("%s %u \n\r", "Sum_pix ",sum_pix);
-			//			printf("%s %u \n\r", "Square Sum Pix: ",sum_pix_sq); 
-			
-			numer = (num_pixels*sum_pix_sq);
-			numer =  (numer - sum_pix*sum_pix);
-			//	printf("%s %u \n\r", "var: numerator", numer);
-			
-			denom = (num_pixels*num_pixels);
-			//	printf("%s %u \n\r", "var: denom", denom);
-			
-			var = numer/denom;            //variance
-			//	var = (sum_pix_sq/num_pixels) - mean_val*mean_val;
-			//	mean_val = sum_pix/num_pixels;
-			
-			//			printf("%s %u \n\r", "Var ",var);
-			//printf("%s %u \n\r", "Mean: ", mean_val);
-			
-			if (var < 25)
-			  {
-			    std = 1;  // basically reject the windows with this variance
-			  }
-			
-			else
-			  {
-			    // find the standard deviation
-			    for (uint64_t i = 4; i < var/2 ; i++)
-			      {
-				if ((i*i <= var) & ((i+1)*(i+1) > var))
-				  {
-				    if ((var - i*i) < ((i+1)*(i+1) - var))
-				      std = i;
-				    else 
-				      std = i+1;
-				    
-				    break;
-				  }
-			      }
-			  }
-			
-			//			printf("%s %u \n\r\n", "STD ",std);
-			
-			//	std = 5;
-			
-			if ( (std > 4) & (mean_val > 20) & (mean_val < 200)) // check for face only if std > 3, otherwise its too uniform 
-			  {
-			    //	    printf("%s \n\r\n", "Checking for face ");
-			    
-			    int16_t feat_sum = 0;
-			    //	    int16_t curr_sum;
-			    // compute the val of this sub-window for all the features
-			    for (uint8_t curr_feat_idx = 0; curr_feat_idx < CC3_NUM_FEATURES; curr_feat_idx++)
-			      {
-				feat_sum+=cc3_get_feat_val(curr_feat_idx, curr_scale_idx, curr_pos_x, cc3_row_counter_ii);
-				//		printf("%s %d \n\r", "feat alpha ", curr_sum);
-				//				feat_sum+=curr_sum;
-			      }
-			    
-			    //	    printf("After finding feat val \n\r");
-			    
-			    // check if its a face
-			    if (feat_sum > CC3_GLOBAL_THRESHOLD)
-			      {
-				//	printf("Found a face \n\r");
-				//				printf(" global thersh %d \n\r",CC3_GLOBAL_THRESHOLD);
-				// found a face....or the code says so..(and hope so!!!)
-				if (cc3_num_detected_faces < CC3_MAX_FACES )
-				  {
-				    //				    printf(" Face found... %d \n\r", cc3_num_detected_faces);
-				    
-				    cc3_faces[cc3_num_detected_faces][0] = curr_pos_x;
-				    cc3_faces[cc3_num_detected_faces][1] = cc3_row_counter_cropped_img; // + top_offset;
-				    cc3_faces[cc3_num_detected_faces][2] = CC3_SCALES[curr_scale_idx];
-				    cc3_num_detected_faces++;
-				  }
-				
-				// as of now, if MAX_FACES already reached, do nothing...(for a change, Relax!!)
-				
-			      }
-			    
-			    //	    printf("end of detecing face \n\r");
-			  } // end of if (std > 5)
-			
-			//	printf(" end of iterating over horizintally shisted win \n\r");
-		      } // end of iterating over horizontally shifted sub-windows
-		  }
 		
-		//	printf(" End of iterating over all scales \n\r");
-		//		printf(" Printing the val of cc3_row_counter_cropped_img %d \n\r",cc3_row_counter_cropped_img);
+			//	printf ("%s %u \n\r", "sum_pix: ", sum_pix );
+			//	printf ("%s %u \n\r", "Mean: ", mean_val);
+
+			// reject the window if it is too dark or too white
+			
+			if ( mean_val > 0) //(mean_val > 30) & (mean_val < 200) )
+			  {
+			    /* if first column --> use the past vertical sum_sq_pix*/
+				/* first time, calculate sum_sq_pix for every scale */
+				if ( (curr_pos_x == 0) && (cc3_row_counter_cropped_img == 0) )
+				  {
+				    vert_past_sum_sq_pix[curr_scale_idx] = (uint32_t) 0;
+				    horz_past_sum_sq_pix[curr_scale_idx] = (uint32_t) 0;
+				    
+				    sum_pix_sq = 0;
+				    for (uint8_t i = (cc3_row_counter_ii+1) % CC3_INTEGRAL_IMG_HEIGHT; i != (y2+1)% CC3_INTEGRAL_IMG_HEIGHT; )
+				      {
+					for (uint8_t j = curr_pos_x+1; j <= x2; j++)
+					  {
+					    temp2 = (i-1+CC3_INTEGRAL_IMG_HEIGHT) % CC3_INTEGRAL_IMG_HEIGHT;
+					    temp1 = cc3_integral_image[i][j] - cc3_integral_image[i][j-1];
+					    temp2 = -cc3_integral_image[temp2][j] + cc3_integral_image[temp2][j-1];
+					    temp1 = temp1+temp2;
+					    temp1 = temp1*temp1;  /* square of pixel intensity  */
+					    
+					    /* update horizontal past sum_sq_pix */	    
+					    if ( j > (uint8_t) (curr_pos_x + CC3_WIN_STEPS[curr_scale_idx]) )
+					      {
+						horz_past_sum_sq_pix[curr_scale_idx]+= temp1;
+					      }
+					    
+					    /* update vertical past sum_sq_pix */
+					    if ( i > (uint8_t) (cc3_row_counter_ii + CC3_WIN_STEPS[curr_scale_idx]) )
+					      {
+						vert_past_sum_sq_pix[curr_scale_idx]+= temp1;
+					      }
+					    
+					    /* update the sum_sq_pix for this window */
+					    sum_pix_sq+= (uint32_t) temp1;
+					    
+					  }
+					
+					i = (i+1) % CC3_INTEGRAL_IMG_HEIGHT; 
+				      }
+				    
+				    //    printf ("%s \n\r", "into x=0, y=0");
+				    // printf ("%s %u \n\r", "horz sq pix: ", horz_past_sum_sq_pix[curr_scale_idx]);
+				    //printf ("%s %u \n\r", "vert sq pix: ", vert_past_sum_sq_pix[curr_scale_idx]);
+				    //printf ("%s %u \n\r", "sum_sq_pix: ", sum_pix_sq);
+
+				  }	
+				
+				/* if the first col but not the first crow --> use vertical past sum_sq_pix 
+				 - need to update both vert past & horiz past sum_sq_pix */
+				
+				else if (curr_pos_x == 0)
+				  {
+				    uint8_t y11 = (cc3_row_counter_ii+1) % CC3_INTEGRAL_IMG_HEIGHT;
+				    // uint32_t tops_horz = 0;
+				      
+				      /* use the past vert sum_sq_pix */
+				      sum_pix_sq = vert_past_sum_sq_pix[curr_scale_idx];
+					
+					/* calcuate sum_sq_pix for top horizontal block */
+				      	uint32_t top_horz = (uint32_t) 0;
+					uint8_t i = y11;
+
+					//					printf ("%s \n\r", "before top horz.. ");
+					for (uint8_t k = 0; k < CC3_WIN_STEPS[curr_scale_idx]; k++)
+					  {
+					    for (uint8_t j = curr_pos_x+1; j <= x2; j++)
+					      {
+						temp2 = (i-1+CC3_INTEGRAL_IMG_HEIGHT) % CC3_INTEGRAL_IMG_HEIGHT;
+						temp1 = cc3_integral_image[i][j] - cc3_integral_image[i][j-1];
+						temp2 = -cc3_integral_image[temp2][j] + cc3_integral_image[temp2][j-1];
+						temp1 = temp1+temp2;
+						temp1 = temp1*temp1;  /* square of pixel intensity  */
+						
+						top_horz+=temp1;
+						
+					      }
+					    
+					    i = (i+1) % CC3_INTEGRAL_IMG_HEIGHT; 
+					  }
+					
+					/* calculate left vertical block */
+					uint32_t left_vert = (uint32_t) 0;
+					
+					//printf ("%s \n\r", "before left vertical ..");
+					for (i = y11; i != (y2+1)% CC3_INTEGRAL_IMG_HEIGHT; )
+					  {
+					    for (uint8_t j = curr_pos_x+1; j <= curr_pos_x + CC3_WIN_STEPS[curr_scale_idx]; j++)
+					      {
+						temp2 = (i-1+CC3_INTEGRAL_IMG_HEIGHT) % CC3_INTEGRAL_IMG_HEIGHT;
+						temp1 = cc3_integral_image[i][j] - cc3_integral_image[i][j-1];
+						temp2 = -cc3_integral_image[temp2][j] + cc3_integral_image[temp2][j-1];
+						temp1 = temp1+temp2;
+						temp1 = temp1*temp1;  /* square of pixel intensity  */
+						
+						left_vert+= temp1;
+						
+					      }
+					    
+					    i = (i+1) % CC3_INTEGRAL_IMG_HEIGHT; 
+					    
+					  }
+					
+					/* calculate sum_sq_pix for new pixels */
+
+					//printf ("%s \n\r", "before calc new pix ");
+					i = (y2 - CC3_WIN_STEPS[curr_scale_idx] + 1 + CC3_INTEGRAL_IMG_HEIGHT) % CC3_INTEGRAL_IMG_HEIGHT;
+					for ( ; i != (y2 +1 ) % CC3_INTEGRAL_IMG_HEIGHT; )
+					  {
+					    for (uint8_t j = curr_pos_x+1; j <= x2; j++)
+					      {
+						temp2 = (i-1+CC3_INTEGRAL_IMG_HEIGHT) % CC3_INTEGRAL_IMG_HEIGHT;
+						temp1 = cc3_integral_image[i][j] - cc3_integral_image[i][j-1];
+						temp2 = -cc3_integral_image[temp2][j] + cc3_integral_image[temp2][j-1];
+						temp1 = temp1+temp2;
+						temp1 = temp1*temp1;  /* square of pixel intensity  */
+						
+						sum_pix_sq+= temp1;
+						
+					      }
+					    i = (i+1) % CC3_INTEGRAL_IMG_HEIGHT; 
+					    
+					  }
+					
+					/* update vert past sum_sq_pix */
+					vert_past_sum_sq_pix[curr_scale_idx] = (sum_pix_sq - top_horz);
+					
+					/* update horz past sum_sq_pix */
+					horz_past_sum_sq_pix[curr_scale_idx] = (sum_pix_sq - left_vert);
+					
+					//	printf ("%s \n\r", "into x=0, y !=0");
+					//printf ("%s %u \n\r", "horz sq pix: ", horz_past_sum_sq_pix[curr_scale_idx]);
+					//printf ("%s %u \n\r", "vert sq pix: ", vert_past_sum_sq_pix[curr_scale_idx]);
+					//printf ("%s %u \n\r", "sum_sq_pix: ", sum_pix_sq);
+					
+				  }
+				
+				
+				/* else use horizontal past sum_sq_pix, no need to update vert past sum_sq_pix */
+				else 
+				  {
+				    /* use the past horz sum_sq_pix */
+				    sum_pix_sq = horz_past_sum_sq_pix[curr_scale_idx];
+				    
+				    uint8_t y11 = (cc3_row_counter_ii+1) % CC3_INTEGRAL_IMG_HEIGHT;
+				    
+				    /* claculate left vertical block */
+				    uint32_t left_vert = (uint32_t) 0;
+				    
+				    // i = x1;
+				    for (uint8_t i = y11; i != (y2+1)% CC3_INTEGRAL_IMG_HEIGHT; )
+				      {
+					for (uint8_t j = curr_pos_x+1; j <= curr_pos_x + CC3_WIN_STEPS[curr_scale_idx]; j++)
+					  {
+					    temp2 = (i-1+CC3_INTEGRAL_IMG_HEIGHT) % CC3_INTEGRAL_IMG_HEIGHT;
+					    temp1 = cc3_integral_image[i][j] - cc3_integral_image[i][j-1];
+					    temp2 = -cc3_integral_image[temp2][j] + cc3_integral_image[temp2][j-1];
+					    temp1 = temp1+temp2;
+					    temp1 = temp1*temp1;  /* square of pixel intensity  */
+					    left_vert+= (uint32_t) temp1;
+					    
+					  }
+					
+					i = (i+1) % CC3_INTEGRAL_IMG_HEIGHT; 
+				      }
+				    
+				    
+				    /* calculate right vertical block and add to sum_sq_pix */
+				    for (uint8_t i = y11; i != (y2+1)% CC3_INTEGRAL_IMG_HEIGHT; )
+				      {
+					for (uint8_t j = x2; j >= x2 - CC3_WIN_STEPS[curr_scale_idx] + 1; j--)
+					  {
+					    temp2 = (i-1+CC3_INTEGRAL_IMG_HEIGHT) % CC3_INTEGRAL_IMG_HEIGHT;
+					    temp1 = cc3_integral_image[i][j] - cc3_integral_image[i][j-1];
+					    temp2 = -cc3_integral_image[temp2][j] + cc3_integral_image[temp2][j-1];
+					    temp1 = temp1+temp2;
+					    temp1 = temp1*temp1;  /* square of pixel intensity  */
+					    
+					    sum_pix_sq+= (uint32_t)temp1;
+					  }
+					
+					i = (i+1) % CC3_INTEGRAL_IMG_HEIGHT; 
+					
+				      }
+				    
+				    /* update horz past sum_sq_pix */
+				    horz_past_sum_sq_pix[curr_scale_idx] = (sum_pix_sq - left_vert);
+
+				    //				    printf ("%s \n\r", "into x != 0, y != 0");
+				    //printf ("%s %u \n\r", "horz sq pix: ", horz_past_sum_sq_pix[curr_scale_idx]);
+				    // printf ("%s %u \n\r", "vert sq pix: ", vert_past_sum_sq_pix[curr_scale_idx]);
+				    //printf ("%s %u \n\r", "sum_sq_pix: ", sum_pix_sq);
+				    
+				  }
+				
+				
+				/* after sum_sq_pixels has been calculated */
+				uint64_t numer, denom;
+				//printf("%s %d %d %d \n\r","current wind ",cc3_row_counter_cropped_img, curr_pos_x, CC3_SCALES[curr_scale_idx]);
+				
+				numer = ((uint64_t)num_pixels*(uint64_t)sum_pix_sq);
+				numer =  (numer - (uint64_t)sum_pix*(uint64_t)sum_pix);
+				//	printf("%s %u \n\r", "var: sum_pix_sq", sum_pix_sq);
+				
+				denom = ((uint64_t)num_pixels*(uint64_t)num_pixels);
+				//printf("%s %u \n\r", "var: denom", denom);
+				
+				var = (uint32_t)(numer/denom);            //variance
+				//	var = (sum_pix_sq/num_pixels) - mean_val*mean_val;
+				//	mean_val = sum_pix/num_pixels;
+				
+				//printf("%s %u \n\r", "Var ",var);
+				//	printf("%s %u \n\r", "Mean: ", mean_val);
+				
+				if (var < 200)
+				  {
+				    std = 1;  // basically reject the windows with this variance
+				  }
+				
+				else
+				  {
+				    // find the standard deviation
+				    for (uint32_t i = 14; i < var/2 ; i++)
+				      {
+					if ((i*i <= var) & ((i+1)*(i+1) > var))
+					  {
+					    if ((var - i*i) < ((i+1)*(i+1) - var))
+					      std = i;
+					    else 
+					      std = i+1;
+					    
+					    break;
+					  }
+				      }
+				  }
+				
+				//printf("%s %u \n\r\n", "STD ",std);
+				// check for face only if std > 4, otherwise its too uniform 
+				if ( (std > 13) & ( (mean_val > 30) | (mean_val < 200)) )  
+				  {
+				    int16_t feat_sum = 0;
+				    int8_t face = 1;
+				    // compute the val of this sub-window for all the features
+				    
+				    curr_cascade = 0; 
+				    face = 1;
+				    while ( (curr_cascade < CC3_NUM_CASCADES) & (face))
+				      {
+					feat_sum = 0;
+					for (uint8_t curr_feat_idx = 0; curr_feat_idx < CC3_NUM_FEATURES[curr_cascade]; curr_feat_idx++)
+					  {
+					    feat_sum+=cc3_get_feat_val(curr_feat_idx, curr_scale_idx, curr_pos_x, cc3_row_counter_ii);
+					  }
+					
+					// if its a face, go to next cascade otherwise quit
+					if (feat_sum > CC3_GLOBAL_THRESHOLD[curr_cascade])
+					  {
+					    face = 1; 
+					    curr_cascade++;
+					  }
+					else 
+					  {
+					    face = 0;
+					  }
+				      }
+				    
+				    if (face)
+				      {
+					fprintf(fout, "%d %d %d \n",curr_pos_x+1, cc3_row_counter_cropped_img+1, CC3_SCALES[curr_scale_idx]-1);
+					//		cc3_faces[cc3_num_detected_faces][0] = curr_pos_x;
+					//cc3_faces[cc3_num_detected_faces][1] = cc3_row_counter_cropped_img; // + top_offset;
+					//cc3_faces[cc3_num_detected_faces][2] = CC3_SCALES[curr_scale_idx];
+					cc3_num_detected_faces++;
+					
+				      }
+				    
+				    
+				  } // end of if (std > 5)
+				
+			  } // end of checking for mean (30,200)
+			
+			
+		      } // end of iterating over horizontally shifted sub-windows
+		    
+		  } // end of if loop for this particular scale at this row
+		
+		
 	      } // end of iterating over all scales
 	    
-	    //	       printf("End for curr cropped row %d \n\r", cc3_row_counter_cropped_img);
 	    
 	    // increment the row counters
 	    cc3_row_counter_actual_img++;
@@ -421,16 +728,25 @@ int main (void)
 	
 	printf("No. of faces : %d \n\r", cc3_num_detected_faces);     
 	
-	for (uint8_t i = 0; i < cc3_num_detected_faces; i++)
-	  printf ( " Face at x=%d, y=%d scale=%d \n\r",cc3_faces[i][0], cc3_faces[i][1], cc3_faces[i][2]);
-	
+	//	for (uint8_t i = 0; i < cc3_num_detected_faces; i++)
+	//  printf ( " Face at x=%d, y=%d scale=%d \n\r",cc3_faces[i][0], cc3_faces[i][1], cc3_faces[i][2]);
+
+	fprintf( fout, "%d %d %d \n",0,0,0);
+	fclose(fout);
 	fclose(fp);
-	//	printf(" file closed...");
+
+	num_frames++;
+	//	break;
 	
-	break;
-	
+	cc3_clr_led (0);
+	cc3_set_led (2);
+	 while(!cc3_read_button());
+	 cc3_set_led (0);
+	 cc3_clr_led (2);
+	  // wait for the button to be pressed for the next frame
+
 	// sample non-blocking serial routine
-		if(!cc3_uart_has_data(0) ) break; 
+	if(!cc3_uart_has_data(0) ) break; 
       } // end of while 
     
     
