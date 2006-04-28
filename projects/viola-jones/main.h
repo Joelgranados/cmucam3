@@ -1,5 +1,5 @@
-// header file containing declaration of parameters and
-// functions to be used in face detection
+/* header file containing declaration of parameters and
+   functions to be used in face detection */
 
 
 #ifndef MAIN_H
@@ -32,9 +32,8 @@ const uint16_t CC3_INTEGRAL_IMG_WIDTH = 176; // width of integral image
 
 // the actual image size is 176x144 (low res)
 // but for this the integral image doesn't fit into the memory, so 
-// dropping off the 
+// dropping off the some rows from top and bottom
 const uint8_t CC3_IMAGE_HEIGHT = 144;        // height of the actual image
-
 
 const uint8_t top_offset = 12; // discard some top rows from the actual image so that integral image can fit into memory
 const uint8_t bottom_offset = 12; // similarly, discard some bottom rows in the actual image
@@ -42,12 +41,7 @@ const uint8_t bottom_offset = 12; // similarly, discard some bottom rows in the 
 
 //int32_t cc3_integral_image[CC3_INTEGRAL_IMG_HEIGHT][CC3_INTEGRAL_IMG_WIDTH];
 uint32_t cc3_integral_image[61][176];
-
-//const uint8_t CC3_MAX_FACES = 10;            // max no. of deteced faces allowed
     
-// store the location of detected faces, cc3_faces[CC3_MAX_FACES][3]
-//uint8_t cc3_faces[10][3];  // 2nd dimension-->[x][y][scale]
-
 const uint8_t CC3_NUM_SCALES = 4;            // no. of scales of sub-windows allowed
 const uint8_t CC3_SCALES[] = {31, 39, 49, 61}; // array containing different scales  (assuming no. of scales = 4)
 const uint8_t CC3_WIN_STEPS[]={2, 2, 4, 4}; // array containing "window step" for each scale
