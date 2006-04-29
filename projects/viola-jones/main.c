@@ -88,7 +88,7 @@ void cc3_get_curr_segment()
 	      cc3_integral_image[i][j] = pix_temp.channel[1]; // only green channel
 
 	      #ifdef SAVE_IMAGES
-	      //fprintf( fp,"%d ",cc3_integral_image[i][j] );
+	      fprintf( fp,"%d ",cc3_integral_image[i][j] );
 	      #endif 
 	      
 	      // compute cumulative sum across the row
@@ -97,7 +97,6 @@ void cc3_get_curr_segment()
 
           #ifdef SAVE_IMAGES
 	  fprintf( fp, "\n" );
-
 	  #endif
 	}
       
@@ -124,7 +123,7 @@ void cc3_get_curr_segment()
       cc3_integral_image[newly_added_row][0] = pix_temp.channel[1];
 
       #ifdef SAVE_IMAGES
-      //fprintf( fp,"%d ",cc3_integral_image[newly_added_row][0] );
+      fprintf( fp,"%d ",cc3_integral_image[newly_added_row][0] );
       #endif
       
       // read the row, from next pixel onward and compute cum sum across the row
@@ -134,7 +133,7 @@ void cc3_get_curr_segment()
 	  cc3_integral_image[newly_added_row][j] = pix_temp.channel[1];
 
 	  #ifdef SAVE_IMAGES
-	  //fprintf( fp,"%d ",cc3_integral_image[newly_added_row][j] );
+	  fprintf( fp,"%d ",cc3_integral_image[newly_added_row][j] );
           #endif
 
 	  // compute cumulative sum across the row
@@ -143,7 +142,6 @@ void cc3_get_curr_segment()
      
        #ifdef SAVE_IMAGES
        fprintf( fp, "\n" );
-
        #endif 
 
        // find cumulative sum along columns to complete the integral image computation
@@ -700,7 +698,7 @@ int main (void)
        fprintf( fout, "%d %d %d \n",0,0,0);
        fclose(fout);
        fclose(fp);
-	#endif
+       #endif
 	
 	num_frames++;
 
