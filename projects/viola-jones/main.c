@@ -6,7 +6,7 @@
 #include <ctype.h>
 #include <cc3.h>
 #include <cc3_ilp.h>
-#include "main.h"
+#include "vj.h"
 
 /* define for saving the images to mmc */
 #define SAVE_IMAGES
