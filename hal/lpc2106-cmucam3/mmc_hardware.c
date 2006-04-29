@@ -154,12 +154,20 @@ static void SPI_Read (uint8_t * buf, long Length)
 ******************************************************/
 static bool mmcStatus (uint8_t response)
 {
+  int i;
   int count = 4000;
+
   uint8_t resultStatus;
-  resultStatus = ~response;
-  while (resultStatus != response && --count)
+
+  for (i = 0; i < count; i++) {
     resultStatus = spiGetByte ();
-  return (count != 0);          // loop was exited before timeout
+    if (resultStatus == response) {
+      return true;                    // happy end
+    }
+  }
+
+  DriveDesc.IsValid = false;          // reset MMC subsystem
+  return false;                       // sad end
 }
 
 /******************************************************

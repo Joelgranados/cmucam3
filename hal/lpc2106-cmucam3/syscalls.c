@@ -20,15 +20,8 @@ extern int errno;
 
 
 extern DEVICE_TABLE_ENTRY mmc_driver;
-static bool mmc_initialized = false;
 
 static void init_mmc(void) {
-  if (mmc_initialized) {
-    return;
-  }
-
-  mmc_initialized = true;
-
   mmc_driver.init();
 }
 
