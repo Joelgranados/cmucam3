@@ -9,7 +9,7 @@
 #include "main.h"
 
 /* define for saving the images to mmc */
-//#define SAVE_IMAGES
+#define SAVE_IMAGES
 
 /* ---global variables----*/
 
@@ -662,7 +662,7 @@ int main (void)
 			   
 			    if (face)
 			      {
-                                #ifdef SAVE_IAMGES
+                                #ifdef SAVE_IMAGES
 				fprintf(fout, "%d %d %d \n",curr_pos_x+1, cc3_row_counter_cropped_img+1, CC3_SCALES[curr_scale_idx]-1);
 				#endif
 		
