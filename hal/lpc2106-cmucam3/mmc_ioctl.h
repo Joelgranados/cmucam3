@@ -11,15 +11,14 @@
 int fflushdir (FILE * file);
 
 struct ioctl_seek {
-  _off_t * pos;
-  int    * whence;
+  _off_t *pos;
+  int *whence;
 };
 
 struct ioctl_rename {
-  const char * oldname;
-  const char * newname;
+  const char *oldname;
+  const char *newname;
 };
-    
+
 
 #endif
-
