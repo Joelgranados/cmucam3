@@ -83,6 +83,7 @@ typedef struct {
   cc3_channel_t coi;
   cc3_subsample_mode_t subsample_mode;
   uint16_t width, height;
+  uint8_t channels;
 } cc3_frame_t;
 
 

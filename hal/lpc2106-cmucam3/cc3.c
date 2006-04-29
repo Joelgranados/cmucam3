@@ -212,15 +212,8 @@ void cc3_set_led (uint8_t select)
 
 uint8_t *cc3_malloc_rows (uint32_t rows)
 {
-  int channels;
+  int channels = cc3_g_current_frame.channels;
   int width = cc3_g_current_frame.width;
-
-  if (cc3_g_current_frame.coi == CC3_ALL) {
-    channels = 3;
-  }
-  else {
-    channels = 1;
-  }
 
   return (uint8_t *) malloc (width * channels * rows);
 }
@@ -486,6 +479,9 @@ int cc3_pixbuf_set_coi (cc3_channel_t chan)
   if (chan > 4)
     return 0;                   // Sanity check on bounds
   cc3_g_current_frame.coi = chan;
+
+  cc3_g_current_frame.channels = (chan == CC3_ALL ? 3 : 1);
+
   return 1;
 }
 
@@ -526,7 +522,6 @@ int cc3_camera_init ()
 
 void cc3_frame_default ()
 {
-  cc3_g_current_frame.coi = CC3_ALL;
   cc3_g_current_frame.x_step = 1;
   cc3_g_current_frame.y_step = 1;
   cc3_g_current_frame.x0 = 0;
@@ -535,6 +530,8 @@ void cc3_frame_default ()
   cc3_g_current_frame.y1 = cc3_g_current_frame.raw_height;
   cc3_g_current_frame.y_loc = 0;
   cc3_g_current_frame.subsample_mode = CC3_NEAREST;
+
+  cc3_pixbuf_set_coi(CC3_ALL);
 
   _cc3_update_frame_bounds (&cc3_g_current_frame);
 }
