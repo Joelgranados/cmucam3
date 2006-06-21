@@ -1,0 +1,10 @@
+obj\Debug\CMUcam3 Frame Grabber.exe
+obj\Debug\CMUcam3 Frame Grabber.xml
+obj\Debug\CMUcam3 Frame Grabber.pdb
+bin\Debug\CMUcam3 Frame Grabber.exe
+bin\Debug\CMUcam3 Frame Grabber.pdb
+bin\Debug\CMUcam3 Frame Grabber.xml
+obj\Debug\ResolveAssemblyReference.cache
+obj\Debug\CC3_GRAB.Form1.resources
+obj\Debug\CC3_GRAB.Resources.resources
+obj\Debug\cc3_img_viewer.vbproj.GenerateResource.Cache

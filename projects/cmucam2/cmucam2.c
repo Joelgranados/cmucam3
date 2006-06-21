@@ -8,6 +8,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include "cc3_jpg.h"
 
 
 #define MAX_ARGS     10
@@ -19,6 +20,7 @@ typedef enum {
   RESET,
   TRACK_COLOR,
   SEND_FRAME,
+  HI_RES,
   FRAME_DIFF,
   GET_VERSION,
   GET_MEAN,
@@ -94,6 +96,8 @@ cmucam2_start:
         printf ("\r");
         goto cmucam2_start;
         break;
+
+
       case GET_VERSION:
         if (n != 0) {
           error = 1;
@@ -103,6 +107,9 @@ cmucam2_start:
           print_ACK ();
         printf ("%s\r", VERSION_BANNER);
         break;
+      
+      
+      
       case POLL_MODE:
         if (n != 1) {
           error = 1;
@@ -115,6 +122,22 @@ cmucam2_start:
         else
           poll_mode = 0;
         break;
+
+
+	case HI_RES:
+        if (n != 1) {
+          error = 1;
+          break;
+        }
+        else
+          print_ACK ();
+        if (arg_list[0] == 1)
+  	 cc3_set_resolution(CC3_HIGH_RES);
+        else
+  	 cc3_set_resolution(CC3_LOW_RES);
+        break;
+
+
       case LINE_MODE:
         if (n != 2) {
           error = 1;
@@ -138,8 +161,14 @@ cmucam2_start:
         else
           print_ACK ();
         //init_jpeg(); 
-
-
+  	// cc3_set_resolution(CC3_HIGH_RES);
+  	//cc3_pixbuf_set_subsample (CC3_NEAREST, 1, 1);
+	
+	
+	init_jpeg();
+  	capture_current_jpeg(stdout);
+  	destroy_jpeg();
+	printf( "JPG_END\r" );
         break;
       case SEND_FRAME:
 	old_coi = cc3_g_current_frame.coi;
@@ -383,6 +412,7 @@ void set_cmucam2_commands (void)
   cmucam2_cmds[RESET] = "RS";
   cmucam2_cmds[TRACK_COLOR] = "TC";
   cmucam2_cmds[SEND_FRAME] = "SF";
+  cmucam2_cmds[HI_RES] = "HR";
   cmucam2_cmds[FRAME_DIFF] = "FD";
   cmucam2_cmds[GET_VERSION] = "GV";
   cmucam2_cmds[CAMERA_REG] = "CR";
