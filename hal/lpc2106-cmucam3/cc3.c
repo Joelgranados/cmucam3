@@ -34,7 +34,7 @@ static inline void _cc3_pixbuf_read_pixel (uint8_t * pixel,
 static inline void _cc3_pixbuf_skip_subpixel (void);
 
 
-// Move to the next byte in the FIFO 
+// Move to the next byte in the FIFO
 static inline void _cc3_fifo_read_inc (void);
 
 static uint8_t _cc3_second_green;
@@ -47,7 +47,7 @@ void cc3_pixbuf_load ()
   //  uint32_t start_time;
 
   unsigned int i;
-  //REG(GPIO_IOCLR)=CAM_IE;  
+  //REG(GPIO_IOCLR)=CAM_IE;
   //while(frame_done!=1);
   cc3_pixbuf_rewind ();
   _cc3_pixbuf_write_rewind ();
@@ -102,7 +102,7 @@ void _cc3_seek_top ()
   if (cc3_g_current_frame.y_loc < cc3_g_current_frame.y0) {
     _cc3_pixbuf_skip_pixels (cc3_g_current_frame.raw_width / 2
 			     * cc3_g_current_frame.y0);
-    
+
     cc3_g_current_frame.y_loc = cc3_g_current_frame.y0;
   }
 }
@@ -146,7 +146,7 @@ void _cc3_pixbuf_read_pixel (uint8_t * pixel,
     *(pixel + off0) = _cc3_pixbuf_read_subpixel ();   // R
     _cc3_second_green = _cc3_pixbuf_read_subpixel (); // G
     *(pixel + off2) = _cc3_pixbuf_read_subpixel ();   // B
-    
+
     _cc3_second_green_valid = true;
   } else {
     _cc3_pixbuf_skip_subpixel ();
@@ -159,7 +159,7 @@ void _cc3_pixbuf_read_pixel (uint8_t * pixel,
 /**
  * cc3_pixbuf_rewind():
  * Rewinds the fifo.
- * Calling this and then changing parameters such as the 
+ * Calling this and then changing parameters such as the
  * region of interest, channel of interest, virtual frame, and
  * subsampling will allow rapid reprocessing of a new frame.
  */
@@ -221,7 +221,7 @@ uint8_t *cc3_malloc_rows (uint32_t rows)
 
 /**
  * cc3_pixbuf_read_rows():
- * Using the cc3_frame_t reads rows taking into account the virtual window and subsampling. 
+ * Using the cc3_frame_t reads rows taking into account the virtual window and subsampling.
  * This function copies a specified number of rows from the camera FIFO into a block
  * of cc3_pixel_t memory.
  * This should be the lowest level call that the user directly interacts with.
@@ -375,7 +375,7 @@ uint32_t cc3_timer ()
 
 /**
  * cc3_pixbuf_set_roi():
- * Sets the region of interest in cc3_frame_t for virtual windowing. 
+ * Sets the region of interest in cc3_frame_t for virtual windowing.
  * This function changes the way data is read from the FIFO.
  * Returns 1 upon success and 0 on an out of bounds failure.
  */
@@ -418,13 +418,13 @@ int cc3_pixbuf_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
   if (x0 >= x1 || y0 >= y1) {
     return 0;
   }
-  
+
   // set if ok
   cc3_g_current_frame.x0 = x0;
   cc3_g_current_frame.y0 = y0;
   cc3_g_current_frame.x1 = x1;
   cc3_g_current_frame.y1 = y1;
-  
+
   _cc3_update_frame_bounds (&cc3_g_current_frame);
 
   return 1;
@@ -432,7 +432,7 @@ int cc3_pixbuf_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
 
 /**
  * cc3_pixbuf_set_subsample():
- * Sets the subsampling step and mode in cc3_frame_t. 
+ * Sets the subsampling step and mode in cc3_frame_t.
  * This function changes the way data is read from the FIFO.
  */
 int cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
@@ -489,7 +489,7 @@ int cc3_pixbuf_set_coi (cc3_channel_t chan)
 
 /**
  * cc3_camera_init():
- * First Enable Camera & FIFO Power, next Reset Camera, then call cc3_set functions for default state 
+ * First Enable Camera & FIFO Power, next Reset Camera, then call cc3_set functions for default state
  *
  * Return:
  * 	1 successfully got acks back
@@ -538,13 +538,59 @@ void cc3_frame_default ()
 
 /**
  * cc3_camera_kill():
- * Turn camera power off 
+ * Turn camera power off
  * Turn fifo power off (may "cause picture to evaporate")
  */
 void cc3_camera_kill ()
 {
 // XXX I need to be implemented
 
+}
+
+
+void
+cc3_system_setup (void)
+{
+
+  // --- enable and connect the PLL (Phase Locked Loop) ---
+  // a. set multiplier and divider
+  REG(SYSCON_PLLCFG) = MSEL | (1<<PSEL1) | (0<<PSEL0);
+  // b. enable PLL
+  REG(SYSCON_PLLCON) = (1<<PLLE);
+  // c. feed sequence
+  REG(SYSCON_PLLFEED) = PLL_FEED1;
+  REG(SYSCON_PLLFEED) = PLL_FEED2;
+  // d. wait for PLL lock (PLOCK bit is set if locked)
+  while (!(REG(SYSCON_PLLSTAT) & (1<<PLOCK)));
+  // e. connect (and enable) PLL
+  REG(SYSCON_PLLCON) = (1<<PLLE) | (1<<PLLC);
+  // f. feed sequence
+  REG(SYSCON_PLLFEED) = PLL_FEED1;
+  REG(SYSCON_PLLFEED) = PLL_FEED2;
+
+  // --- setup and enable the MAM (Memory Accelerator Module) ---
+  // a. start change by turning of the MAM (redundant)
+  REG(MAMCR) = 0;
+  // b. set MAM-Fetch cycle to 3 cclk as recommended for >40MHz
+  REG(MAMTIM) = MAM_FETCH;
+  // c. enable MAM
+  REG(MAMCR) = MAM_MODE;
+
+  // --- set VPB speed ---
+  REG(SYSCON_VPBDIV) = VPBDIV_VAL;
+
+  // --- map INT-vector ---
+  REG(SYSCON_MEMMAP) = MEMMAP_USER_FLASH_MODE;
+
+  //REG(PCB_PINSEL1) = 0x1;  // External interrupt 0
+
+  // Setup timer0 to count by milliseconds starting from 0
+  REG(TIMER0_TCR)=0;   // turn off timer
+  REG(TIMER0_MCR)=0;    // disable interrupt
+  REG(TIMER0_TC)=0;    // clear counter
+  REG(TIMER0_PC)=0;    // clear prescale count
+  REG(TIMER0_PR) = (int)((FOSC*PLL_M)/1000);  // every 1 ms
+  REG(TIMER0_TCR)=1;   // start the timer
 }
 
 
@@ -583,10 +629,10 @@ static unsigned int _cc3_i2c_send (unsigned int num, unsigned int *buffer)
   REG (GPIO_IOCLR) = 0x00400000;
   _cc3_set_cam_ddr_i2c_write ();        // SDA=0 SCL=0
 
-  // Send the Byte    
+  // Send the Byte
   for (k = 0; k != num; k++) {
-    data = buffer[k];           // To avoid shifting array problems   
-    for (i = 0; !(i & 8); i++)  // Write data    
+    data = buffer[k];           // To avoid shifting array problems
+    for (i = 0; !(i & 8); i++)  // Write data
     {
       if (data & 0x80) {
         _cc3_set_cam_ddr (_CC3_I2C_PORT_DDR_READ_SDA);  // SDA=1 SCL=0
@@ -628,7 +674,7 @@ static unsigned int _cc3_i2c_send (unsigned int num, unsigned int *buffer)
 
   }
 
-  // Send Stop Bit 
+  // Send Stop Bit
   _cc3_set_cam_ddr (_CC3_I2C_PORT_DDR_READ_SCL);        // SDA=0 SCL=1
   _cc3_set_cam_ddr_i2c_idle (); // SDA=1 SCL=1
 
@@ -640,7 +686,7 @@ static unsigned int _cc3_i2c_send (unsigned int num, unsigned int *buffer)
  * cc3_set_raw_register():
  * This will take an address and a value from the OmniVision manual
  * and set it on the camera.  This should be used for advanced low level
- * manipulation of the camera modes.  Currently, this will not set the 
+ * manipulation of the camera modes.  Currently, this will not set the
  * corresponding cc3 internal data structure that keeps record of the camera
  * mode.  Use with CAUTION.
  *

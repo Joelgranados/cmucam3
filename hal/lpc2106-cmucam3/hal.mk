@@ -1,6 +1,6 @@
 include defs.mk
 
-CSOURCES=interrupt.c cc3.c cc3_hal.c LPC2100.c syscalls.c serial.c \
+CSOURCES=interrupt.c cc3.c cc3_hal.c syscalls.c serial.c \
 	servo.c rdcf2.c mmc_init.c mmc_hardware.c mmc_module.c
 INCLUDES=cc3_hal.h devices.h ioctl.h lpc_config.h rdcf2.h servo.h \
 	cc3_pin_defines.h interrupt.h LPC2100.h mmc_hardware.h serial.h spi.h \

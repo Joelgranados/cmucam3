@@ -132,24 +132,6 @@ _mainCRTStartup:
         strlo r0,[r2],#4
         blo   1b                        @ loop until done
 	
-/*
-   Call C++ constructors (for objects in "global scope")
-   ctor loop added by Martin Thomas 4/2005 
-   based on a Anglia Design example-application for ST ARM
-*/
-
-		LDR 	r0, =__ctors_start__
-		LDR 	r1, =__ctors_end__
-ctor_loop:
-		CMP 	r0, r1
-		BEQ 	ctor_end
-		LDR 	r2, [r0], #4
-		STMFD 	sp!, {r0-r1}
-		MOV 	lr, pc
-		MOV 	pc, r2
-		LDMFD 	sp!, {r0-r1}
-		B 		ctor_loop
-ctor_end:
 
 @ Call main program: main(0)
 @ --------------------------
