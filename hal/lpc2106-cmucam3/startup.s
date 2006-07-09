@@ -1,4 +1,8 @@
-/* 
+/*
+ * Copyright 2006  Anthony Rowe and Adam Goode
+ */
+
+/*
  crt0.S for LPC2xxx
  - based on examples from R O Software
  - based on examples from newlib-lpc
@@ -6,6 +10,25 @@
 
  collected and modified by Martin Thomas
 */
+
+/*
+ * This file is part of cc3.
+ *
+ * cc3 is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * cc3 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with cc3; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 
         .global _etext                  @ -> .data initial values in ROM
         .global _data                   @ -> .data area in RAM
@@ -76,7 +99,7 @@ __irq:  stmfd   sp!, { lr }               /* save return address on stack */
 	ldmfd   sp!, { r0-r3, r12, lr }   /* restore regs from stack */
 	msr     spsr_cxsf, lr             /* put back spsr_irq */
 	ldmfd   sp!, { lr }               /* put back lr_irq */
-	subs    pc, lr, #0x4              /* return, restoring CPSR from SPSR */    
+	subs    pc, lr, #0x4              /* return, restoring CPSR from SPSR */
         .size _boot, . - _boot
         .endfunc
 
@@ -131,7 +154,7 @@ _mainCRTStartup:
         ldrlo r0,[r1],#4                @ copy it
         strlo r0,[r2],#4
         blo   1b                        @ loop until done
-	
+
 
 @ Call main program: main(0)
 @ --------------------------
@@ -149,27 +172,6 @@ _mainCRTStartup:
         msr   CPSR_c,#MODE_SYS|F_BIT @ System Mode
         bx    r10                       @ enter main()
 
-/* "global object"-dtors are never called and it should not be 
-   needed since there is no OS to exit to. */
-/* Call destructors */
-#		LDR		r0, =__dtors_start__
-#		LDR		r1, =__dtors_end__
-dtor_loop:
-#		CMP		r0, r1
-#		BEQ		dtor_end
-#		LDR		r2, [r0], #4
-#		STMFD	sp!, {r0-r1}
-#		MOV		lr, pc
-#		MOV		pc, r2
-#		LDMFD	sp!, {r0-r1}
-#		B		dtor_loop
-dtor_end:
-   
-        .size   _start, . - _start
-        .endfunc
-
-        .global _reset, reset, exit, abort
-        .func   _reset
 _reset:
 reset:
 exit:

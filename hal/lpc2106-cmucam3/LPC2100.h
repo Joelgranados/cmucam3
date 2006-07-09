@@ -1,3 +1,5 @@
+/* XXX license */
+
 #ifndef LPC2100_H
 #define LPC2100_H
 
