@@ -1,5 +1,5 @@
 /*
-** $Id$
+** $Id: loslib.c 268 2006-07-09 21:05:12Z goodea $
 ** Standard Operating System library
 ** See Copyright Notice in lua.h
 */

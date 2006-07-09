@@ -1,5 +1,5 @@
 /*
-** $Id$
+** $Id: lua.h 266 2006-07-09 20:58:32Z goodea $
 ** Lua - An Extensible Extension Language
 ** Lua.org, PUC-Rio, Brazil (http://www.lua.org)
 ** See Copyright Notice at the end of this file

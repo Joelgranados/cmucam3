@@ -1,5 +1,5 @@
 /*
-** $Id$
+** $Id: lparser.c 266 2006-07-09 20:58:32Z goodea $
 ** Lua Parser
 ** See Copyright Notice in lua.h
 */
