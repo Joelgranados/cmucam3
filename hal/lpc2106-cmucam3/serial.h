@@ -116,12 +116,13 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Definitions for typical UART 'baud' settings
-#define B1200         UART_BAUD(1200)
-#define B9600         UART_BAUD(9600)
-#define B19200        UART_BAUD(19200)
-#define B38400        UART_BAUD(38400)
-#define B57600        UART_BAUD(57600)
-#define B115200       UART_BAUD(115200)
+//#define B1200         UART_BAUD(1200)
+//#define B9600         UART_BAUD(9600)
+//#define B19200        UART_BAUD(19200)
+//#define B38400        UART_BAUD(38400)
+//#define B57600        UART_BAUD(57600)
+//#define B115200       UART_BAUD(115200)
+//#define B230400	      UART_BAUD(230400)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Definitions for typical UART 'mode' settings
@@ -162,9 +163,10 @@ void _cc3_uart1_setup(uint16_t baud, uint8_t mode, uint8_t fmode);
 #define LCR_ENABLE_PARITY        (uint32_t)0x00000008
 #define LCR_1_STOP_BIT           (uint32_t)0x00000000
 #define LCR_CHAR_LENGTH_8        (uint32_t)0x00000003
-#define BAUD_9600	    	         144
-#define BAUD_19200	    	         72
-#define BAUD_115200	    	         12	// 8 for 10MHz, 12 for 14.745MHz
+//#define BAUD_9600	    	         144
+//#define BAUD_19200	    	         72
+//#define BAUD_115200	    	         12	// 8 for 10MHz, 12 for 14.745MHz
+//#define BAUD_230400	    	         6	// 8 for 10MHz, 12 for 14.745MHz
 #define LSR_THR_EMPTY           (uint32_t)0x00000020
 #define LSR_RBR_EMPTY           (uint32_t)0x00000001
 

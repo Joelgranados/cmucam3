@@ -10,6 +10,17 @@
 #include <stdlib.h>
 #include "cc3_jpg.h"
 
+//#define SERIAL_BAUD_RATE  CC3_UART_RATE_230400
+#define SERIAL_BAUD_RATE  CC3_UART_RATE_115200 
+//#define SERIAL_BAUD_RATE  CC3_UART_RATE_57600 
+//#define SERIAL_BAUD_RATE  CC3_UART_RATE_38400 
+//#define SERIAL_BAUD_RATE  CC3_UART_RATE_19200 
+//#define SERIAL_BAUD_RATE  CC3_UART_RATE_9600 
+//#define SERIAL_BAUD_RATE  CC3_UART_RATE_4800 
+//#define SERIAL_BAUD_RATE  CC3_UART_RATE_2400 
+//#define SERIAL_BAUD_RATE  CC3_UART_RATE_1200 
+//#define SERIAL_BAUD_RATE  CC3_UART_RATE_300 
+
 
 #define MAX_ARGS     10
 #define MAX_LINE     128
@@ -64,7 +75,7 @@ cmucam2_start:
   cc3_system_setup ();
 
   cc3_uart_init (0,
-                 CC3_UART_RATE_115200,
+                 SERIAL_BAUD_RATE,
                  CC3_UART_MODE_8N1, CC3_UART_BINMODE_BINARY);
   val = setvbuf (stdout, NULL, _IONBF, 0);
 
