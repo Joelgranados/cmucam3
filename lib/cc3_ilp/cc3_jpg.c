@@ -1,3 +1,24 @@
+/*
+ * Copyright 2006  Anthony Rowe and Adam Goode
+ *
+ * This file is part of cc3.
+ *
+ * cc3 is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * cc3 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with cc3; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -13,7 +34,6 @@ void cc3_jpeg_send_simple(void) {
   init_jpeg();
 
   capture_current_jpeg(stdout);
-  
 
   destroy_jpeg();
 }
@@ -21,10 +41,11 @@ void cc3_jpeg_send_simple(void) {
 
 static struct jpeg_compress_struct cinfo;
 static struct jpeg_error_mgr jerr;
+
 //static cc3_pixel_t *row;
 uint8_t *row;
 
-void init_jpeg(void) {
+static void init_jpeg(void) {
   cinfo.err = jpeg_std_error(&jerr);
   jpeg_create_compress(&cinfo);
 
@@ -45,7 +66,7 @@ void init_jpeg(void) {
   if(row==NULL) printf( "FUCK, out of memory!\n" );
 }
 
-void capture_current_jpeg(FILE *f) {
+static void capture_current_jpeg(FILE *f) {
   JSAMPROW row_pointer[1];
   row_pointer[0] = row;
 
@@ -61,14 +82,14 @@ void capture_current_jpeg(FILE *f) {
     cc3_pixbuf_read_rows(row, 1);
     jpeg_write_scanlines(&cinfo, row_pointer, 1);
   }
-  
+
   // finish
   jpeg_finish_compress(&cinfo);
 }
 
 
 
-void destroy_jpeg(void) {
+static void destroy_jpeg(void) {
   jpeg_destroy_compress(&cinfo);
   free(row);
 }
