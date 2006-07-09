@@ -164,10 +164,7 @@ cmucam2_start:
   	// cc3_set_resolution(CC3_HIGH_RES);
   	//cc3_pixbuf_set_subsample (CC3_NEAREST, 1, 1);
 	
-	
-	init_jpeg();
-  	capture_current_jpeg(stdout);
-  	destroy_jpeg();
+        cc3_jpeg_send_simple();	
 	printf( "JPG_END\r" );
         break;
       case SEND_FRAME:
