@@ -60,6 +60,18 @@
 
 
 /*
+@@ LUA_PATH and LUA_CPATH are the names of the environment variables that
+@* Lua check to set its paths.
+@@ LUA_INIT is the name of the environment variable that Lua
+@* checks for initialization code.
+** CHANGE them if you want different names.
+*/
+#define LUA_PATH        "LUA_PATH"
+#define LUA_CPATH       "LUA_CPATH"
+#define LUA_INIT	"LUA_INIT"
+
+
+/*
 @@ LUA_PATH_DEFAULT is the default path that Lua uses to look for
 @* Lua libraries.
 @@ LUA_CPATH_DEFAULT is the default path that Lua uses to look for
@@ -230,8 +242,8 @@
 ** CHANGE them if you want different prompts. (You can also change the
 ** prompts dynamically, assigning to globals _PROMPT/_PROMPT2.)
 */
-#define LUA_PROMPT		">: "
-#define LUA_PROMPT2		">>: "
+#define LUA_PROMPT		"> "
+#define LUA_PROMPT2		">> "
 
 
 /*
@@ -321,14 +333,14 @@
 ** CHANGE it to undefined as soon as your programs use only '...' to
 ** access vararg parameters (instead of the old 'arg' table).
 */
-#undef LUA_COMPAT_VARARG
+#define LUA_COMPAT_VARARG
 
 /*
 @@ LUA_COMPAT_MOD controls compatibility with old math.mod function.
 ** CHANGE it to undefined as soon as your programs use 'math.fmod' or
 ** the new '%' operator instead of 'math.mod'.
 */
-#undef LUA_COMPAT_MOD
+#define LUA_COMPAT_MOD
 
 /*
 @@ LUA_COMPAT_LSTR controls compatibility with old long string nesting
@@ -336,14 +348,14 @@
 ** CHANGE it to 2 if you want the old behaviour, or undefine it to turn
 ** off the advisory error when nesting [[...]].
 */
-#undef LUA_COMPAT_LSTR
+#define LUA_COMPAT_LSTR		1
 
 /*
 @@ LUA_COMPAT_GFIND controls compatibility with old 'string.gfind' name.
 ** CHANGE it to undefined as soon as you rename 'string.gfind' to
 ** 'string.gmatch'.
 */
-#undef LUA_COMPAT_GFIND
+#define LUA_COMPAT_GFIND
 
 /*
 @@ LUA_COMPAT_OPENLIB controls compatibility with old 'luaL_openlib'
@@ -351,7 +363,7 @@
 ** CHANGE it to undefined as soon as you replace to 'luaL_registry'
 ** your uses of 'luaL_openlib'
 */
-#undef LUA_COMPAT_OPENLIB
+#define LUA_COMPAT_OPENLIB
 
 
 
@@ -488,14 +500,14 @@
 ** ===================================================================
 */
 
-/*#define LUA_NUMBER_DOUBLE */
-#define LUA_NUMBER	long
+#define LUA_NUMBER_DOUBLE
+#define LUA_NUMBER	double
 
 /*
 @@ LUAI_UACNUMBER is the result of an 'usual argument conversion'
 @* over a number.
 */
-#define LUAI_UACNUMBER	long
+#define LUAI_UACNUMBER	double
 
 
 /*
@@ -505,11 +517,11 @@
 @@ LUAI_MAXNUMBER2STR is maximum size of previous conversion.
 @@ lua_str2number converts a string to a number.
 */
-#define LUA_NUMBER_SCAN		"%ld"
-#define LUA_NUMBER_FMT		"%ld"
+#define LUA_NUMBER_SCAN		"%lf"
+#define LUA_NUMBER_FMT		"%.14g"
 #define lua_number2str(s,n)	sprintf((s), LUA_NUMBER_FMT, (n))
 #define LUAI_MAXNUMBER2STR	32 /* 16 digits, sign, point, and \0 */
-#define lua_str2number(s,p)	strtol((s), (p), 10)
+#define lua_str2number(s,p)	strtod((s), (p))
 
 
 /*
@@ -517,18 +529,17 @@
 */
 #if defined(LUA_CORE)
 #include <math.h>
-#include "lpow.h"
 #define luai_numadd(a,b)	((a)+(b))
 #define luai_numsub(a,b)	((a)-(b))
 #define luai_nummul(a,b)	((a)*(b))
 #define luai_numdiv(a,b)	((a)/(b))
-#define luai_nummod(a,b)	((a)%(b))
-#define luai_numpow(a,b)	(lpow(a,b))
+#define luai_nummod(a,b)	((a) - floor((a)/(b))*(b))
+#define luai_numpow(a,b)	(pow(a,b))
 #define luai_numunm(a)		(-(a))
 #define luai_numeq(a,b)		((a)==(b))
 #define luai_numlt(a,b)		((a)<(b))
 #define luai_numle(a,b)		((a)<=(b))
-#define luai_numisnan(a)	(0)
+#define luai_numisnan(a)	(!luai_numeq((a), (a)))
 #endif
 
 
@@ -544,10 +555,24 @@
 /* On a Pentium, resort to a trick */
 #if defined(LUA_NUMBER_DOUBLE) && !defined(LUA_ANSI) && !defined(__SSE2__) && \
     (defined(__i386) || defined (_M_IX86) || defined(__i386__))
+
+/* On a Microsoft compiler, use assembler */
+#if defined(_MSC_VER)
+
+#define lua_number2int(i,d)   __asm fld d   __asm fistp i
+#define lua_number2integer(i,n)		lua_number2int(i, n)
+
+/* the next trick should work on any Pentium, but sometimes clashes
+   with a DirectX idiosyncrasy */
+#else
+
 union luai_Cast { double l_d; long l_l; };
 #define lua_number2int(i,d) \
   { volatile union luai_Cast u; u.l_d = (d) + 6755399441055744.0; (i) = u.l_l; }
 #define lua_number2integer(i,n)		lua_number2int(i, n)
+
+#endif
+
 
 /* this option always works, but may be slow */
 #else
