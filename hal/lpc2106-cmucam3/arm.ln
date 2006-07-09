@@ -1,13 +1,8 @@
-/***********************************************************************/
-/*                                                                     */
-/*  ROM.ld:  Linker Script File                                        */
-/*                                                                     */
-/***********************************************************************/
+/*  Linker Script File    */
+
 ENTRY(_boot)
 STACK_SIZE = 0x2400;
 
-/* Memory Definitions */
-/* lpc2129 mt */
 MEMORY
 {
   ROM (rx) : ORIGIN = 0x00000000, LENGTH = 120K
@@ -18,54 +13,21 @@ MEMORY
 SECTIONS
 {
   /* first section is .text which is used for code */
-   .text :
-  {
-	KEEP(*(.init))             /* Startup code from .init-section */
-	*(.text .text.*)           /* remaining code */
-	*(.gnu.linkonce.t.*)
-	*(.glue_7)
-	*(.glue_7t)
-	*(.gcc_except_table)
-	*(.gnu.linkonce.r.*)
-	*(.rodata)                 /* read-only data (constants) */
-	*(.rodata*)
-  } > ROM
-  
-  /***** old: 
   .text :
   {
-    *crt0.o (.text)            
-    *(.text)                   
-    *(.rodata)                 
-    *(.rodata*)
+    KEEP(*(.init))             /* Startup code from .init-section */
+    *(.text .text.*)           /* remaining code */
+    *(.gnu.linkonce.t.*)
     *(.glue_7)
     *(.glue_7t)
-  } > ROM 
-  *****/
+    *(.gcc_except_table)
+    *(.gnu.linkonce.r.*)
+    *(.rodata)                 /* read-only data (constants) */
+    *(.rodata*)
+  } > ROM
 
   . = ALIGN(4);
-  
-	/* .ctors .dtors are used for c++ constructors/destructors */
-	/* added by Martin Thomas 4/2005 based on Anglia Design example */
-	.ctors :
-	{
-		PROVIDE(__ctors_start__ = .);
-		KEEP(*(SORT(.ctors.*)))
-		KEEP(*(.ctors))
-		PROVIDE(__ctors_end__ = .);
-	} >ROM
-	
-	.dtors :
-	{
-		PROVIDE(__dtors_start__ = .); 
-		KEEP(*(SORT(.dtors.*)))
-		KEEP(*(.dtors))
-		PROVIDE(__dtors_end__ = .);
-	} >ROM
-  
-    . = ALIGN(4);
-	/* mthomas - end */
-   
+
   _etext = . ;
   PROVIDE (etext = .);
 
@@ -74,13 +36,12 @@ SECTIONS
   {
     _data = .;
     *(.data)
-	*(.data.*)
-	*(.gnu.linkonce.d*)
-	SORT(CONSTRUCTORS) /* mt 4/2005 */
-	. = ALIGN(4);
-	*(.fastrun)
+    *(.data.*)
+    *(.gnu.linkonce.d*)
+    . = ALIGN(4);
+    *(.fastrun)
   } > RAM  AT > ROM
- 
+
   . = ALIGN(4);
   _edata = . ;
   PROVIDE (edata = .);
@@ -91,7 +52,7 @@ SECTIONS
     __bss_start = . ;
     __bss_start__ = . ;
     *(.bss)
-	*(.gnu.linkonce.b*)
+    *(.gnu.linkonce.b*)
     *(COMMON)
     . = ALIGN(4);
   } > RAM
@@ -120,6 +81,8 @@ SECTIONS
   .stab.index    0 : { *(.stab.index) }
   .stab.indexstr 0 : { *(.stab.indexstr) }
   .comment       0 : { *(.comment) }
+
+
   /* DWARF debug sections.
      Symbols in the DWARF debugging sections are relative to the beginning
      of the section so we begin them at 0.  */
