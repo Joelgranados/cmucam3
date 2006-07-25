@@ -27,6 +27,10 @@
 #include <jpeglib.h>
 
 
+static void destroy_jpeg(void);
+static void init_jpeg(void); 
+static void capture_current_jpeg(FILE *f); 
+
 void cc3_jpeg_send_simple(void) {
 
 

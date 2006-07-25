@@ -203,6 +203,11 @@ uint8_t cc3_servo_set (uint8_t servo, uint32_t pos);
 // User function to disable servos to conserve power
 void cc3_servo_disable (void);
 
+void cc3_gpio_set_to_servo(uint8_t mask);
+void cc3_gpio_set_to_input(uint8_t mask);
+void cc3_gpio_set_to_output(uint8_t mask);
+uint8_t cc3_gpio_set_pin(uint8_t pin);
+uint8_t cc3_gpio_get_pin(uint8_t pin);
 
 
 

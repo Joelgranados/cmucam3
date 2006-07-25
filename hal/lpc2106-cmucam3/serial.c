@@ -58,7 +58,6 @@ cc3_uart_binmode_t _cc3_uart1_binmode;
 /*    baudrate divisor - use UART_BAUD macro
  *    mode - see typical modes (uart.h)
  *    fmode - see typical fmodes (uart.h)
- *    NOTE: uart0Init(UART_BAUD(9600), UART_8N1, UART_FIFO_8); 
  */
 void _cc3_uart0_setup(uint16_t baud, uint8_t mode, uint8_t fmode)
 {
