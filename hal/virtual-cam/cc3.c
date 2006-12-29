@@ -78,9 +78,9 @@ void cc3_pixbuf_load ()
 	exit(0);
 	}
   if(_cc3_g_current_camera_state.resolution ==CC3_LOW_RES  )
-  	sprintf(filename, "../virtual_cam/low_res/IMG%.5d.PPM", img_cnt);
+  	sprintf(filename, "../virtual_cam_imgs/low_res/IMG%.5d.PPM", img_cnt);
   else
-  	sprintf(filename, "../virtual_cam/high_res/IMG%.5d.PPM", img_cnt);
+  	sprintf(filename, "../virtual_cam_imgs/high_res/IMG%.5d.PPM", img_cnt);
   img_cnt++;
   fp=fopen(filename,"r" );
   if(fp==NULL )
