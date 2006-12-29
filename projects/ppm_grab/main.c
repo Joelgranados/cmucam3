@@ -35,7 +35,8 @@ int main(void) {
   
    // Check if files exist, if they do then skip over them 
     do { 
-    	snprintf(filename, 16, "c:/img%.5d.ppm", i);
+    //	snprintf(filename, 16, "c:/img%.5d.ppm", i);
+    	snprintf(filename, 16, "img%.5d.ppm", i);
     	f = fopen(filename, "r");
     	if(f!=NULL ) { 
 		printf( "%s already exists...\n",filename ); 

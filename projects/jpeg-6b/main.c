@@ -22,7 +22,7 @@ int main(void) {
 
   cc3_camera_init ();
    
- // cc3_set_colorspace(CC3_YCRCB);
+  //cc3_set_colorspace(CC3_YCRCB);
   cc3_set_resolution(CC3_HIGH_RES);
   // cc3_pixbuf_set_subsample (CC3_NEAREST, 2, 2);
   cc3_wait_ms(1000);
@@ -41,7 +41,9 @@ int main(void) {
    // Check if files exist, if they do then skip over them 
     do { 
     	snprintf(filename, 16, "c:/img%.5d.jpg", i);
-    	f = fopen(filename, "r");
+    	// For virtual camera use this path...
+        // snprintf(filename, 16, "img%.5d.jpg", i);
+        f = fopen(filename, "r");
     	if(f!=NULL ) { 
 		printf( "%s already exists...\n",filename ); 
 		i++; 
@@ -55,6 +57,7 @@ int main(void) {
     if(f==NULL || i>200 )
     {
 	cc3_set_led(3);
+	printf( "Error: Can't open file\r\n" );
 	while(1);
     }
     capture_current_jpeg(f);

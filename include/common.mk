@@ -18,9 +18,11 @@
 
 
 # set hal if not given by "hal=____"
+#hal=virtual-cam
 
 ifeq ($(strip $(hal)),)
   hal=lpc2106-cmucam3
+  #hal=virtual-cam
 endif
 
 INCLUDES += ../../include/cc3.h

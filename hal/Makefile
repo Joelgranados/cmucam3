@@ -1,4 +1,5 @@
-SUBDIRS=lpc2106-cmucam3 virtual-cam
+#SUBDIRS=lpc2106-cmucam3 virtual-cam
+SUBDIRS=virtual-cam
 
 # Build rules
 all:

@@ -16,7 +16,7 @@ Compiler
 The compiler choice is left up to the hal. This allows different hardware
 platforms to use different compilers.
 
-Currently, the only supported hal is "lpc2106-cmucam3", which uses a
+The normal CMUcam3 hal is "lpc2106-cmucam3", which uses a
 version of GCC optimized for the ARM processor. To build using this
 hal, you'll need the arm-none-eabi-* style GCC tools from
 CodeSourcery.  These can be acquired here:
@@ -30,6 +30,9 @@ If you feel like using a different compiler, simply change the
 variables in hal/lpc2106-cmucam3/defs.mk to something else. A popular
 thing to change is COMPILER_PREFIX, in case you have a custom compiler
 built under a different name.
+
+If you would like to try to use the "virtual-cam" hal, which allows for
+prototyping on your PC either add "hal=virtual-cam" at the top of /include/common.mk or type "make hal=virtual-cam" whenever you build (including in the project directories).
 
 
 Building

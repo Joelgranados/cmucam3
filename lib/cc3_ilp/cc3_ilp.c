@@ -19,7 +19,7 @@
  */
 
 
-#include "cc3.h"
+#include <cc3.h>
 #include "cc3_ilp.h"
 #include <stdbool.h>
 #include <stdio.h>
