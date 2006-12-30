@@ -67,7 +67,7 @@ void cc3_pixbuf_load ()
   //  uint32_t start_time;
   FILE *fp;
   char filename[40];
-  int x,i,val,tmp,r,g,b,r2,b2,g2,t;
+  int i,val,r,g,b,r2,b2,g2,t,depth,x,y,col_cnt,k;
   char c;
   static int img_cnt=0;
   
@@ -77,10 +77,8 @@ void cc3_pixbuf_load ()
 	printf( "Virtual Cam Achtung! Das YCrCb Colorspace ist Verboten...\n" );
 	exit(0);
 	}
-  if(_cc3_g_current_camera_state.resolution ==CC3_LOW_RES  )
-  	sprintf(filename, "../virtual_cam_imgs/low_res/IMG%.5d.PPM", img_cnt);
-  else
-  	sprintf(filename, "../virtual_cam_imgs/high_res/IMG%.5d.PPM", img_cnt);
+  
+  sprintf(filename, "../virtual_cam_imgs/IMG%.5d.PPM", img_cnt);
   img_cnt++;
   fp=fopen(filename,"r" );
   if(fp==NULL )
@@ -91,21 +89,27 @@ void cc3_pixbuf_load ()
 	}
 
   // skip first 3 rows of ppm
-  for(i=0; i<3; i++ )
-	{
-	do {
-	c=fgetc(fp);
-	}while(c!='\n' );
-	}
+  // read first row
+  do { c=fgetc(fp); }while(c!='\n' );
+  val=fscanf( fp, "%d %d\n%d\n",&x, &y, &depth  ); 
+  if(val==EOF) { printf( "Virtual Cam malformed file\n");   exit(0); } 
 
+   col_cnt=0;
    i=0;
    do{
-   val=fscanf( fp, "%d", &r ); if(val==EOF) break;
-   val=fscanf( fp, "%d", &g ); if(val==EOF) break;
-   val=fscanf( fp, "%d", &b ); if(val==EOF) break;
-   val=fscanf( fp, "%d", &r2 ); if(val==EOF) break;
-   val=fscanf( fp, "%d", &g2 ); if(val==EOF) break;
-   val=fscanf( fp, "%d", &b2 ); if(val==EOF) break;
+  if(_cc3_g_current_camera_state.resolution==CC3_LOW_RES  && col_cnt>=176 )
+	{
+	for(k=0; k<352; k++ )
+		{
+		val=fscanf( fp, "%d %d %d %d %d %d ",&r,&g,&b,&r2,&g2,&b2);
+		if(val==EOF) break;
+		}
+	col_cnt=0;
+	}
+  val=fscanf( fp, "%d %d %d %d %d %d ",&r,&g,&b,&r2,&g2,&b2);
+  if(_cc3_g_current_camera_state.resolution ==CC3_LOW_RES  )
+	val=fscanf( fp, "%d %d %d %d %d %d ",&r,&g,&b,&r2,&g2,&b2);
+   col_cnt++;
    //printf( "%d %d %d %d %d %d ",r,g,b,r2,g2,b2 );
    // Load up the FIFO in the most natural way...
    virtual_fifo[i++]=g;
@@ -114,7 +118,7 @@ void cc3_pixbuf_load ()
    virtual_fifo[i++]=b;
    } while(val!=EOF);
    
-   printf( "FIFO Loaded %d bytes\n", i);
+   printf( "FIFO Loaded %d bytes.  img x=%d, img y=%d\n", i,x,y);
    virtual_fifo_index=0;
    cc3_g_current_frame.y_loc = 0;
 
