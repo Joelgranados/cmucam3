@@ -22,7 +22,6 @@
 
 ifeq ($(strip $(hal)),)
   hal=lpc2106-cmucam3
-  #hal=virtual-cam
 endif
 
 INCLUDES += ../../include/cc3.h

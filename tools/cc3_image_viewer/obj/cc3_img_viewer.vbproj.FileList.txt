@@ -8,3 +8,13 @@ obj\Debug\ResolveAssemblyReference.cache
 obj\Debug\CC3_GRAB.Form1.resources
 obj\Debug\CC3_GRAB.Resources.resources
 obj\Debug\cc3_img_viewer.vbproj.GenerateResource.Cache
+bin\Release\CMUcam3 Frame Grabber.exe
+bin\Release\CMUcam3 Frame Grabber.pdb
+bin\Release\CMUcam3 Frame Grabber.xml
+obj\Release\ResolveAssemblyReference.cache
+obj\Release\CC3_GRAB.Form1.resources
+obj\Release\CC3_GRAB.Resources.resources
+obj\Release\cc3_img_viewer.vbproj.GenerateResource.Cache
+obj\Release\CMUcam3 Frame Grabber.exe
+obj\Release\CMUcam3 Frame Grabber.xml
+obj\Release\CMUcam3 Frame Grabber.pdb

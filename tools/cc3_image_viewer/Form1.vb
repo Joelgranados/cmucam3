@@ -2,7 +2,8 @@ Public Class Form1
     Dim WithEvents serialPort As New IO.Ports.SerialPort
     Public jpeg_grab As Byte
     Public myStr As String
-    
+
+
 
 
 
@@ -11,6 +12,7 @@ Public Class Form1
        ByVal sender As System.Object, _
        ByVal e As System.EventArgs) _
        Handles MyBase.Load
+
 
         For i As Integer = 0 To _
            My.Computer.Ports.SerialPortNames.Count - 1
@@ -75,6 +77,7 @@ Public Class Form1
         Try
             Dim i As Integer
             Dim buf() As Byte
+
 
             jpeg_grab = 1
             serialPort.DiscardInBuffer()
