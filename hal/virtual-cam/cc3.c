@@ -83,7 +83,7 @@ void cc3_pixbuf_load ()
   fp=fopen(filename,"r" );
   if(fp==NULL )
 	{
-	printf( "Virtual Camera Error: No more test images...\n" );
+	printf( "Virtual Cam Error: No more test images...\n" );
 	printf( "Last tried img: %s\n",filename );
 	exit(0);
 	}
@@ -92,12 +92,23 @@ void cc3_pixbuf_load ()
   // read first row
   do { c=fgetc(fp); }while(c!='\n' );
   val=fscanf( fp, "%d %d\n%d\n",&x, &y, &depth  ); 
-  if(val==EOF) { printf( "Virtual Cam malformed file\n");   exit(0); } 
+  if(val==EOF) 
+	{ 
+	printf( "Virtual Cam Error: Malformed img file\n");   
+	exit(0); 
+	} 
+
+   if(x!=352 && y!=288)
+	{
+	printf( "Virtual Cam Error: Bad Image Resolution\n" );
+	exit(0);
+	}
 
    col_cnt=0;
    i=0;
    do{
-  if(_cc3_g_current_camera_state.resolution==CC3_LOW_RES  && col_cnt>=176 )
+   // skip every other row in low-res mode
+   if(_cc3_g_current_camera_state.resolution==CC3_LOW_RES  && col_cnt>=176 )
 	{
 	for(k=0; k<352; k++ )
 		{
@@ -107,18 +118,18 @@ void cc3_pixbuf_load ()
 	col_cnt=0;
 	}
   val=fscanf( fp, "%d %d %d %d %d %d ",&r,&g,&b,&r2,&g2,&b2);
+  // skip every other pixel in low-res mode
   if(_cc3_g_current_camera_state.resolution ==CC3_LOW_RES  )
 	val=fscanf( fp, "%d %d %d %d %d %d ",&r,&g,&b,&r2,&g2,&b2);
+
    col_cnt++;
-   //printf( "%d %d %d %d %d %d ",r,g,b,r2,g2,b2 );
-   // Load up the FIFO in the most natural way...
    virtual_fifo[i++]=g;
    virtual_fifo[i++]=r;
    virtual_fifo[i++]=g2;
    virtual_fifo[i++]=b;
    } while(val!=EOF);
    
-   printf( "FIFO Loaded %d bytes.  img x=%d, img y=%d\n", i,x,y);
+   printf( "Virtual FIFO Loaded %d bytes.\n", i);
    virtual_fifo_index=0;
    cc3_g_current_frame.y_loc = 0;
 
