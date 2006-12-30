@@ -127,6 +127,11 @@ void cc3_pixbuf_load ()
    virtual_fifo[i++]=r;
    virtual_fifo[i++]=g2;
    virtual_fifo[i++]=b;
+   if(i>=VIRTUAL_FIFO_SIZE)
+	{
+	  printf( "Virtual Cam Error: FIFO ran out during frame load.\n" );
+	  exit(0);
+	}
    } while(val!=EOF);
    
    printf( "Virtual FIFO Loaded %d bytes.\n", i);
@@ -138,7 +143,12 @@ void cc3_pixbuf_load ()
 void _cc3_fifo_read_inc (void)
 {
   //printf( "cc3_fifo_read_inc\n" );
-  virtual_fifo_index++;
+  if(virtual_fifo_index<VIRTUAL_FIFO_SIZE)
+  	virtual_fifo_index++;
+  else {
+	  printf( "Virtual Cam Error: FIFO ran out during read.\n" );
+	  exit(0);
+	}
 }
 
 void _cc3_pixbuf_skip_pixels (uint32_t size)
