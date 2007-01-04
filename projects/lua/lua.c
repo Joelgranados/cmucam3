@@ -18,7 +18,7 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
-
+#include "lua_cc3lib.h"
 
 static lua_State *globalL = NULL;
 
@@ -238,6 +238,7 @@ static const luaL_Reg my_lualibs[] = {
   //  {LUA_LOADLIBNAME, luaopen_package},
   {LUA_TABLIBNAME, luaopen_table},
   {LUA_IOLIBNAME, luaopen_io},
+  {"cc3", open_cc3lib},
   //  {LUA_OSLIBNAME, luaopen_os},
   //  {LUA_STRLIBNAME, luaopen_string},
   //  {LUA_MATHLIBNAME, luaopen_math},
