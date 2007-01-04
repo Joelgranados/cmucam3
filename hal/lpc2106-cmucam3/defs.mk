@@ -17,7 +17,8 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
-HALNAME=lpc2106-cmucam3$(THUMB_SUFFIX)
+export hal=lpc2106-cmucam3
+HALNAME=$(hal)$(THUMB_SUFFIX)
 #HALNAME=virtual_cam
 
 COMPILER_PREFIX=arm-none-eabi

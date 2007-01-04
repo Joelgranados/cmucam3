@@ -18,7 +18,8 @@
 
 
 #HALNAME=lpc2106-cmucam3$(THUMB_SUFFIX)
-HALNAME=virtual-cam
+export hal=virtual-cam
+HALNAME=$(hal)
 
 #COMPILER_PREFIX=arm-none-eabi
 COMPILER_PREFIX=
