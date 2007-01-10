@@ -7,6 +7,7 @@
 #include <cc3.h>
 #include <cc3_ilp.h>
 
+//#define VIRTUAL_CAM
 
 #define COLOR_THRESH   25
 #define MIN_BLOB_SIZE  15
@@ -24,10 +25,11 @@
 
 void connected_component_reduce (cc3_image_t * img, int min_blob_size);
 void generate_histogram (cc3_image_t * img, uint8_t * hist);
-void matrix_to_ppm (cc3_image_t * img);
+void matrix_to_pgm (cc3_image_t * img);
 void convert_histogram_to_ppm (cc3_image_t * img, uint8_t * hist);
 int count (cc3_image_t * img, int x, int y, int steps);
 int reduce (cc3_image_t * img, int x, int y, int steps, int remove);
+void write_raw_fifo_ppm();
 
 
 
@@ -71,7 +73,6 @@ int main (void)
 
   // sample wait command in ms 
   cc3_wait_ms (1000);
-  cc3_set_led (0);
 
   // setup an image structure 
   //img.channels=CC3_GREEN;
@@ -98,6 +99,12 @@ int main (void)
     cc3_pixel_t right_pix;
     cc3_pixel_t down_pix;
 
+	cc3_set_led(2);
+	 while(!cc3_read_button());
+	cc3_clr_led(2);
+	  
+
+    // clear polly working image
     p.channel[0] = 0;
     for (int y = 0; y < HEIGHT; y++)
       for (int x = 0; x < WIDTH; x++)
@@ -105,6 +112,11 @@ int main (void)
 
 
     cc3_pixbuf_load ();
+    cc3_pixbuf_set_coi (CC3_ALL);
+    write_raw_fifo_ppm();
+    cc3_pixbuf_set_coi (CC3_GREEN);
+    cc3_pixbuf_rewind();
+
     cc3_pixbuf_read_rows (img.pix, cc3_g_current_frame.height);
 
     p.channel[0] = SELECTED;
@@ -128,10 +140,13 @@ int main (void)
     }
 
     connected_component_reduce (&polly_img, MIN_BLOB_SIZE);
+    matrix_to_pgm (&polly_img);
+
     generate_histogram (&polly_img, range);
     convert_histogram_to_ppm (&polly_img, range);
-    matrix_to_ppm (&polly_img);
-
+    matrix_to_pgm (&polly_img);
+    
+    printf( "Frame done\n" );
 
   }
 
@@ -396,24 +411,41 @@ void convert_histogram_to_ppm (cc3_image_t * img, uint8_t * hist)
 
 
 
-void matrix_to_ppm (cc3_image_t * img)
+void matrix_to_pgm (cc3_image_t * img)
 {
-  static int cnt = 0;
-  char str[32];
+  static uint32_t pgm_cnt = 0;
+  char filename[32];
   FILE *fp;
   int width, height;
   cc3_pixel_t p;
 
+ 
+  do { 
+#ifdef VIRTUAL_CAM
+	  sprintf(filename, "c:/img%.5d.pgm", pgm_cnt);
+#else
+	  sprintf(filename, "img%.5d.pgm", pgm_cnt);
+#endif
+    	fp = fopen(filename, "r");
+    	if(fp!=NULL ) { 
+		printf( "%s already exists...\n",filename ); 
+		pgm_cnt++; 
+		fclose(fp);
+		}
+    } while(fp!=NULL);
+    pgm_cnt++; 
+
+    // print file that you are going to write to stderr
+    fprintf(stderr,"%s\r\n", filename);
+    fp = fopen(filename, "w");
+    if(fp==NULL || pgm_cnt>200 )
+    {
+	cc3_set_led(3);
+	while(1);
+    }
+  
   width = img->width;
   height = img->height;
-
-  sprintf (str, "out_%d.pgm", cnt);
-  cnt++;
-  fp = fopen (str, "w");
-  if (fp == NULL) {
-    printf ("Can't open file...\n");
-    exit (0);
-  }
   fprintf (fp, "P5\n%d %d 255\n", width, height);
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
@@ -421,6 +453,59 @@ void matrix_to_ppm (cc3_image_t * img)
       fprintf (fp, "%c", p.channel[0]);
     }
   }
+  fflush(fp);
   fclose (fp);
 
+}
+
+
+void write_raw_fifo_ppm()
+{
+  uint32_t x, y;
+  uint32_t size_x, size_y;
+  FILE *f;
+  static uint32_t ppm_cnt=0;
+  char filename[32];
+  uint8_t *row = cc3_malloc_rows(1);
+
+   do { 
+#ifdef VIRTUAL_CAM
+    	sprintf(filename, "c:/img%.5d.ppm", ppm_cnt);
+#else
+    	sprintf(filename, "img%.5d.ppm", ppm_cnt);
+#endif
+	f = fopen(filename, "r");
+    	if(f!=NULL ) { 
+		printf( "%s already exists...\n",filename ); 
+		ppm_cnt++; 
+		fclose(f);
+		}
+    } while(f!=NULL);
+    ppm_cnt++; 
+
+    // print file that you are going to write to stderr
+    fprintf(stderr,"%s\r\n", filename);
+    f = fopen(filename, "w");
+    if(f==NULL || ppm_cnt>200 )
+    {
+	cc3_set_led(3);
+	while(1);
+    }
+
+  size_x = cc3_g_current_frame.width;
+  size_y = cc3_g_current_frame.height;
+
+  fprintf(f,"P3\n%d %d\n255\n",size_x,size_y );
+  
+  for (y = 0; y < size_y; y++) {
+    cc3_pixbuf_read_rows(row, 1);
+    for (x = 0; x < size_x * 3U; x++) {
+      uint8_t p = row[x];
+      fprintf(f,"%d ",p);
+    }
+  fprintf(f,"\n");
+  }
+  fflush(f);
+  fclose(f); 
+  free(row);
 }

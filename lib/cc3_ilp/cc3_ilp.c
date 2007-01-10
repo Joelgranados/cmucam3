@@ -32,7 +32,6 @@ void cc3_send_image_direct (void)
   uint8_t *row = cc3_malloc_rows(1);
   uint8_t num_channels = cc3_g_current_frame.coi == CC3_ALL ? 3 : 1;
 
-  cc3_set_led (1);
 
   size_x = cc3_g_current_frame.width;
   size_y = cc3_g_current_frame.height;
