@@ -96,7 +96,7 @@ void init_jpeg(void) {
 
   // allocate memory for 1 row
   row = cc3_malloc_rows(1);
-  if(row==NULL) printf( "FUCK, out of memory!\n" );
+  if(row==NULL) printf( "Out of memory!\n" );
 }
 
 void capture_current_jpeg(FILE *f) {

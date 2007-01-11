@@ -25,7 +25,6 @@ ifeq ($(strip $(hal)),)
 endif
 
 INCLUDES += ../../include/cc3.h
-
 HALDIR=../../hal/$(hal)
 
 # include definitions (compiler, options, etc)

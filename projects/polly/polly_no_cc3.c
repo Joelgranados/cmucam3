@@ -33,7 +33,7 @@ int reduce(int x, int y,int steps,int remove);
 /* simple hello world, showing features and compiling*/
 int main (void)
 {
-    uint32_t start_time,val;
+    uint32_t last_time,val;
     int cnt;
     char c;
     uint8_t range[WIDTH];
@@ -116,8 +116,10 @@ int main (void)
 	connected_component_reduce(MIN_BLOB_SIZE); 
 	generate_histogram(range );
 	convert_histogram_to_ppm(range );
-	matrix_to_ppm();
-
+	//matrix_to_ppm();
+	
+ printf( "Frame done. time=%d\n",cc3_timer()-last_time );
+    last_time=cc3_timer();
  
     }
 

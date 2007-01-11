@@ -8,6 +8,7 @@
 #include <cc3_ilp.h>
 
 //#define VIRTUAL_CAM
+#define MMC_DEBUG
 
 #define COLOR_THRESH   25
 #define MIN_BLOB_SIZE  15
@@ -36,13 +37,12 @@ void write_raw_fifo_ppm();
 /* simple hello world, showing features and compiling*/
 int main (void)
 {
-  uint32_t start_time, val;
+  uint32_t last_time, val;
   char c;
   cc3_pixel_t p;
   cc3_image_t polly_img;
   cc3_image_t img;
   uint8_t range[WIDTH];
-  //uint8_t p_img[WIDTH][HEIGHT];
   uint8_t p_img[HEIGHT * WIDTH];
 
 
@@ -65,7 +65,7 @@ int main (void)
 
 
   cc3_pixbuf_set_subsample (CC3_NEAREST, 2, 2);
-  cc3_pixbuf_set_coi (CC3_RED);
+  cc3_pixbuf_set_coi (CC3_GREEN);
 
   cc3_clr_led (0);
   cc3_clr_led (1);
@@ -99,10 +99,11 @@ int main (void)
     cc3_pixel_t right_pix;
     cc3_pixel_t down_pix;
 
+#ifdef MMC_DEBUG
 	cc3_set_led(2);
 	 while(!cc3_read_button());
 	cc3_clr_led(2);
-	  
+#endif  
 
     // clear polly working image
     p.channel[0] = 0;
@@ -112,10 +113,13 @@ int main (void)
 
 
     cc3_pixbuf_load ();
+
+#ifdef MMC_DEBUG
     cc3_pixbuf_set_coi (CC3_ALL);
     write_raw_fifo_ppm();
     cc3_pixbuf_set_coi (CC3_GREEN);
     cc3_pixbuf_rewind();
+#endif
 
     cc3_pixbuf_read_rows (img.pix, cc3_g_current_frame.height);
 
@@ -131,22 +135,23 @@ int main (void)
         d = down_pix.channel[0];
         if (m < r - COLOR_THRESH || m > r + COLOR_THRESH)
           cc3_set_pixel (&polly_img, x, y, &p);
-        //p_img[x][y]=SELECTED;              
         if (m < d - COLOR_THRESH || m > d + COLOR_THRESH)
           cc3_set_pixel (&polly_img, x, y, &p);
-        //p_img[x][y]=SELECTED;              
 
       }
     }
 
     connected_component_reduce (&polly_img, MIN_BLOB_SIZE);
+#ifdef MMC_DEBUG
     matrix_to_pgm (&polly_img);
-
+#endif
     generate_histogram (&polly_img, range);
     convert_histogram_to_ppm (&polly_img, range);
+#ifdef MMC_DEBUG
     matrix_to_pgm (&polly_img);
-    
-    printf( "Frame done\n" );
+#endif
+    printf( "Frame done, time=%d\n",cc3_timer()-last_time );
+    last_time=cc3_timer();
 
   }
 
@@ -422,9 +427,9 @@ void matrix_to_pgm (cc3_image_t * img)
  
   do { 
 #ifdef VIRTUAL_CAM
-	  sprintf(filename, "c:/img%.5d.pgm", pgm_cnt);
-#else
 	  sprintf(filename, "img%.5d.pgm", pgm_cnt);
+#else
+	  sprintf(filename, "c:/img%.5d.pgm", pgm_cnt);
 #endif
     	fp = fopen(filename, "r");
     	if(fp!=NULL ) { 
@@ -437,9 +442,10 @@ void matrix_to_pgm (cc3_image_t * img)
 
     // print file that you are going to write to stderr
     fprintf(stderr,"%s\r\n", filename);
-    fp = fopen(filename, "w");
+    fp = fopen(filename, "w");  
     if(fp==NULL || pgm_cnt>200 )
     {
+	printf( "PGM Can't open file\n" );
 	cc3_set_led(3);
 	while(1);
     }
@@ -453,7 +459,6 @@ void matrix_to_pgm (cc3_image_t * img)
       fprintf (fp, "%c", p.channel[0]);
     }
   }
-  fflush(fp);
   fclose (fp);
 
 }
@@ -470,9 +475,9 @@ void write_raw_fifo_ppm()
 
    do { 
 #ifdef VIRTUAL_CAM
-    	sprintf(filename, "c:/img%.5d.ppm", ppm_cnt);
-#else
     	sprintf(filename, "img%.5d.ppm", ppm_cnt);
+#else
+    	sprintf(filename, "c:/img%.5d.ppm", ppm_cnt);
 #endif
 	f = fopen(filename, "r");
     	if(f!=NULL ) { 
@@ -485,9 +490,10 @@ void write_raw_fifo_ppm()
 
     // print file that you are going to write to stderr
     fprintf(stderr,"%s\r\n", filename);
-    f = fopen(filename, "w");
+    f = fopen(filename, "w"); 
     if(f==NULL || ppm_cnt>200 )
     {
+	printf( "PPM Can't open file\n" );
 	cc3_set_led(3);
 	while(1);
     }
@@ -505,7 +511,6 @@ void write_raw_fifo_ppm()
     }
   fprintf(f,"\n");
   }
-  fflush(f);
   fclose(f); 
   free(row);
 }
