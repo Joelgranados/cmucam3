@@ -108,19 +108,43 @@ void cc3_pixbuf_load ()
    i=0;
    do{
    // skip every other row in low-res mode
-   if(_cc3_g_current_camera_state.resolution==CC3_LOW_RES  && col_cnt>=176 )
+     if(_cc3_g_current_camera_state.resolution==CC3_LOW_RES  && col_cnt>=176 ) 
 	{
 	for(k=0; k<352; k++ )
 		{
-		val=fscanf( fp, "%d %d %d %d %d %d ",&r,&g,&b,&r2,&g2,&b2);
-		if(val==EOF) break;
+		  val = r = fgetc(fp);
+		  if(val==EOF) break;
+		  val = g = fgetc(fp);
+		  if(val==EOF) break;
+		  val = b = fgetc(fp);
+		  if(val==EOF) break;
+		  val = r2 = fgetc(fp);
+		  if(val==EOF) break;
+		  val = g2 = fgetc(fp);
+		  if(val==EOF) break;
+		  val = b2 = fgetc(fp);
+		  if(val==EOF) break;
+		  //  val=fscanf( fp, "%d %d %d %d %d %d ",&r,&g,&b,&r2,&g2,&b2);
 		}
 	col_cnt=0;
 	}
-  val=fscanf( fp, "%d %d %d %d %d %d ",&r,&g,&b,&r2,&g2,&b2);
+   //  val=fscanf( fp, "%d %d %d %d %d %d ",&r,&g,&b,&r2,&g2,&b2);
+   r = fgetc(fp);
+   g = fgetc(fp);
+   b = fgetc(fp);
+   r2 = fgetc(fp);
+   g2 = fgetc(fp);
+   val = b2 = fgetc(fp);
   // skip every other pixel in low-res mode
-  if(_cc3_g_current_camera_state.resolution ==CC3_LOW_RES  )
-	val=fscanf( fp, "%d %d %d %d %d %d ",&r,&g,&b,&r2,&g2,&b2);
+   if(_cc3_g_current_camera_state.resolution ==CC3_LOW_RES  ) {
+    r = fgetc(fp);
+    g = fgetc(fp);
+    b = fgetc(fp);
+    r2 = fgetc(fp);
+    g2 = fgetc(fp);
+    val = b2 = fgetc(fp);
+    //	val=fscanf( fp, "%d %d %d %d %d %d ",&r,&g,&b,&r2,&g2,&b2);
+   }
 
    col_cnt++;
    virtual_fifo[i++]=g;
