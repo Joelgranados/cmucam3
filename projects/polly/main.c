@@ -501,15 +501,14 @@ void write_raw_fifo_ppm()
   size_x = cc3_g_current_frame.width;
   size_y = cc3_g_current_frame.height;
 
-  fprintf(f,"P3\n%d %d\n255\n",size_x,size_y );
+  fprintf(f,"P6\n%d %d\n255\n",size_x,size_y );
   
   for (y = 0; y < size_y; y++) {
     cc3_pixbuf_read_rows(row, 1);
     for (x = 0; x < size_x * 3U; x++) {
       uint8_t p = row[x];
-      fprintf(f,"%d ",p);
+      fputc(p, f);
     }
-  fprintf(f,"\n");
   }
   fclose(f); 
   free(row);
