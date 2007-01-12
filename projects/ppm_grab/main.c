@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "cc3.h"
 
 
@@ -8,6 +9,7 @@ void capture_ppm(FILE *fp);
 int main(void) {
   int i;
   FILE *f;
+  bool light_on = true;
 
   // setup system
   cc3_system_setup();
@@ -26,11 +28,9 @@ int main(void) {
   // init
   cc3_set_led(1);
   i = 0;
+  while(!cc3_read_button());
   while(true) {
     char filename[16];
-    cc3_clr_led(1);
-    while(!cc3_read_button());
-    cc3_set_led(1);
 
     // Check if files exist, if they do then skip over them
     do {
@@ -48,10 +48,24 @@ int main(void) {
     fprintf(stderr,"%s ", filename);
     fflush(stderr);
     f = fopen(filename, "w");
-    if(f == NULL || i > 200) {
-      cc3_set_led(2);
-      while(1);
+    if(f == NULL || i > 512) {
+      fprintf(stderr, "full\n");
+
+      while (true) {
+	cc3_set_led(2);
+	cc3_wait_ms(500);
+	cc3_clr_led(2);
+	cc3_wait_ms(500);
+      }
     }
+
+
+    if (light_on) {
+      cc3_set_led (2);
+    } else {
+      cc3_clr_led (2);
+    }
+    light_on = !light_on;
     capture_ppm(f);
 
     fclose(f);
@@ -70,8 +84,6 @@ void capture_ppm(FILE *f)
   uint32_t size_x, size_y;
   uint8_t *row = cc3_malloc_rows(1);
 
-  cc3_set_led (1);
-
   size_x = cc3_g_current_frame.width;
   size_y = cc3_g_current_frame.height;
 
@@ -80,6 +92,7 @@ void capture_ppm(FILE *f)
 
   for (y = 0; y < size_y; y++) {
     cc3_pixbuf_read_rows(row, 1);
+
     for (x = 0; x < size_x * 3U; x++) {
       uint8_t p = row[x];
       fputc(p, f);
