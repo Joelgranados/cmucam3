@@ -455,7 +455,7 @@ int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list)
     else
       fail = 1;
   }
-// wait until a return and then fail
+  // wait until a return and then fail
   if (fail == 1)
     return -1;
   line_buf[length] = '\0';
