@@ -35,8 +35,8 @@ int main(void) {
   
    // Check if files exist, if they do then skip over them 
     do { 
-    //	snprintf(filename, 16, "c:/img%.5d.ppm", i);
-    	snprintf(filename, 16, "img%.5d.ppm", i);
+    	snprintf(filename, 16, "c:/img%.5d.ppm", i);
+    	//snprintf(filename, 16, "img%.5d.ppm", i);
     	f = fopen(filename, "r");
     	if(f!=NULL ) { 
 		printf( "%s already exists...\n",filename ); 
@@ -46,16 +46,18 @@ int main(void) {
     } while(f!=NULL);
 
     // print file that you are going to write to stderr
-    fprintf(stderr,"%s\r\n", filename);
+    fprintf(stderr,"%s ", filename);
+    fflush(stderr);
     f = fopen(filename, "w");
     if(f==NULL || i>200 )
     {
-	cc3_set_led(3);
+	cc3_set_led(2);
 	while(1);
     }
     capture_ppm(f);
 
     fclose(f);
+    fprintf(stderr, "\r\n");
     
     i++;
   }
@@ -78,17 +80,17 @@ void capture_ppm(FILE *f)
   size_x = cc3_g_current_frame.width;
   size_y = cc3_g_current_frame.height;
 
-  fprintf(f,"P3\n%d %d\n255\n",size_x,size_y );
+  fprintf(f,"P6\n%d %d\n255\n",size_x,size_y );
   cc3_pixbuf_load ();
-  
+
   for (y = 0; y < size_y; y++) {
     cc3_pixbuf_read_rows(row, 1);
     for (x = 0; x < size_x * 3U; x++) {
       uint8_t p = row[x];
-      fprintf(f,"%d ",p);
+      fputc(p, f);
     }
-  fprintf(f,"\n");
+    fprintf(stderr, ".");
+    fflush(stderr);
   }
-  
   free(row);
 }
