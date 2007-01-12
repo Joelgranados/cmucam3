@@ -1,8 +1,8 @@
-PROJECT = jpeg-6b
+PROJECT = jpeg-cam
 
 CSOURCES = main.c
 
-INCLUDES = 
+INCLUDES =
 
 LIBS = jpeg-6b
 
