@@ -11,15 +11,15 @@
 #include "cc3_jpg.h"
 
 //#define SERIAL_BAUD_RATE  CC3_UART_RATE_230400
-#define SERIAL_BAUD_RATE  CC3_UART_RATE_115200 
-//#define SERIAL_BAUD_RATE  CC3_UART_RATE_57600 
-//#define SERIAL_BAUD_RATE  CC3_UART_RATE_38400 
-//#define SERIAL_BAUD_RATE  CC3_UART_RATE_19200 
-//#define SERIAL_BAUD_RATE  CC3_UART_RATE_9600 
-//#define SERIAL_BAUD_RATE  CC3_UART_RATE_4800 
-//#define SERIAL_BAUD_RATE  CC3_UART_RATE_2400 
-//#define SERIAL_BAUD_RATE  CC3_UART_RATE_1200 
-//#define SERIAL_BAUD_RATE  CC3_UART_RATE_300 
+#define SERIAL_BAUD_RATE  CC3_UART_RATE_115200
+//#define SERIAL_BAUD_RATE  CC3_UART_RATE_57600
+//#define SERIAL_BAUD_RATE  CC3_UART_RATE_38400
+//#define SERIAL_BAUD_RATE  CC3_UART_RATE_19200
+//#define SERIAL_BAUD_RATE  CC3_UART_RATE_9600
+//#define SERIAL_BAUD_RATE  CC3_UART_RATE_4800
+//#define SERIAL_BAUD_RATE  CC3_UART_RATE_2400
+//#define SERIAL_BAUD_RATE  CC3_UART_RATE_1200
+//#define SERIAL_BAUD_RATE  CC3_UART_RATE_300
 
 
 #define MAX_ARGS     10
@@ -83,14 +83,13 @@ cmucam2_start:
   cc3_set_resolution(CC3_LOW_RES);
 
   printf ("%s\r", VERSION_BANNER);
-  //cc3_set_led (true);
 
   cc3_servo_init ();
   cc3_pixbuf_set_subsample (CC3_NEAREST, 2, 1);
 
   while (1) {
     cc3_channel_t old_coi;
-    
+
     printf (":");
     error = 0;
     n = cmucam2_get_command (&command, arg_list);
@@ -118,9 +117,8 @@ cmucam2_start:
           print_ACK ();
         printf ("%s\r", VERSION_BANNER);
         break;
-      
-      
-      
+
+
       case POLL_MODE:
         if (n != 1) {
           error = 1;
@@ -164,6 +162,8 @@ cmucam2_start:
             line_mode = 0;
         }
         break;
+
+
       case SEND_JPEG:
         if (n != 0 && n != 1) {
           error = 1;
@@ -171,13 +171,15 @@ cmucam2_start:
         }
         else
           print_ACK ();
-        //init_jpeg(); 
+        //init_jpeg();
   	// cc3_set_resolution(CC3_HIGH_RES);
   	//cc3_pixbuf_set_subsample (CC3_NEAREST, 1, 1);
-	
-        cc3_jpeg_send_simple();	
+
+        cc3_jpeg_send_simple();
 	printf( "JPG_END\r" );
         break;
+
+
       case SEND_FRAME:
 	old_coi = cc3_g_current_frame.coi;
         if (n == 1) {
@@ -196,6 +198,8 @@ cmucam2_start:
         cc3_send_image_direct ();
 	cc3_pixbuf_set_coi(old_coi);
         break;
+
+
       case CAMERA_REG:
         if (n % 2 != 0 || n < 2) {
           error = 1;
@@ -206,6 +210,8 @@ cmucam2_start:
         for (int i = 0; i < n; i += 2)
           cc3_set_raw_register (arg_list[i], arg_list[i + 1]);
         break;
+
+
       case VIRTUAL_WINDOW:
         if (n != 4) {
           error = 1;
@@ -213,11 +219,13 @@ cmucam2_start:
         }
         else
           print_ACK ();
-        cc3_pixbuf_set_roi (arg_list[0] * 2, 
-			    arg_list[1], 
+        cc3_pixbuf_set_roi (arg_list[0] * 2,
+			    arg_list[1],
 			    arg_list[2] * 2,
                             arg_list[3]);
         break;
+
+
       case DOWN_SAMPLE:
         if (n != 2) {
           error = 1;
@@ -227,6 +235,8 @@ cmucam2_start:
           print_ACK ();
         cc3_pixbuf_set_subsample (CC3_NEAREST, arg_list[0] * 2, arg_list[1]);
         break;
+
+
       case TRACK_COLOR:
         if (n != 0 && n != 6) {
           error = 1;
@@ -245,6 +255,7 @@ cmucam2_start:
         cmucam2_track_color (&t_pkt, poll_mode, line_mode);
         break;
 
+
       case GET_MEAN:
         if (n != 0) {
           error = 1;
@@ -254,6 +265,8 @@ cmucam2_start:
           print_ACK ();
         cmucam2_get_mean (&s_pkt, poll_mode, line_mode);
         break;
+
+
       case SET_SERVO:
         if (n != 2) {
           error = 1;
@@ -267,19 +280,18 @@ cmucam2_start:
         print_ACK ();
         break;
       }
-
     }
     else
       error = 1;
 
     if (error == 1)
       print_NCK ();
-
   }
 
 
   return 0;
 }
+
 
 void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt, uint8_t poll_mode,
                        uint8_t line_mode)
@@ -500,6 +512,4 @@ int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list)
   }
 
   return -1;
-
-
 }
