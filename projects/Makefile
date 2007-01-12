@@ -1,4 +1,4 @@
-SUBDIRS=cmucam2 hello_world jpeg-6b lua benchmark
+SUBDIRS=cmucam2 hello_world jpeg-cam lua benchmark
 
 # Build rules
 all:
