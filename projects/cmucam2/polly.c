@@ -6,12 +6,10 @@
 #include <ctype.h>
 #include <cc3.h>
 #include <cc3_ilp.h>
+#include "polly.h"
 
-#define VIRTUAL_CAM
-#define MMC_DEBUG
-
-#define COLOR_THRESH   25
-#define MIN_BLOB_SIZE  15
+//#define VIRTUAL_CAM
+//#define MMC_DEBUG
 
 #define WIDTH	88
 #define HEIGHT	72
@@ -23,19 +21,12 @@
 #define FINAL_SELECTED	1
 
 
-
-void connected_component_reduce (cc3_image_t * img, int min_blob_size);
-void generate_histogram (cc3_image_t * img, uint8_t * hist);
-void matrix_to_pgm (cc3_image_t * img);
-void convert_histogram_to_ppm (cc3_image_t * img, uint8_t * hist);
-int count (cc3_image_t * img, int x, int y, int steps);
-int reduce (cc3_image_t * img, int x, int y, int steps, int remove);
-void write_raw_fifo_ppm();
-
-
-
-/* simple hello world, showing features and compiling*/
-int main (void)
+/*
+ * WARNING: Polly only works in low-res mode with 2x2 downsampling.
+ * 	    Previous CMUcam State will be lost!
+ *
+ */
+void polly( uint8_t color_thresh, uint8_t min_blob_size )
 {
   uint32_t last_time, val;
   char c;
@@ -45,18 +36,7 @@ int main (void)
   uint8_t range[WIDTH];
   uint8_t p_img[HEIGHT * WIDTH];
 
-
-  // setup system    
-  cc3_system_setup ();
-
-  // configure uarts
-  cc3_uart_init (0, CC3_UART_RATE_115200, CC3_UART_MODE_8N1,
-                 CC3_UART_BINMODE_BINARY);
-  // Make it so that stdout and stdin are not buffered
-  val = setvbuf (stdout, NULL, _IONBF, 0);
-  val = setvbuf (stdin, NULL, _IONBF, 0);
-
-  cc3_camera_init ();
+ if(min_blob_size>30 ) return;
 
   cc3_set_colorspace (CC3_RGB);
   cc3_set_resolution (CC3_LOW_RES);
@@ -67,12 +47,6 @@ int main (void)
   cc3_pixbuf_set_subsample (CC3_NEAREST, 2, 2);
   cc3_pixbuf_set_coi (CC3_GREEN);
 
-  cc3_clr_led (0);
-  cc3_clr_led (1);
-  cc3_clr_led (2);
-
-  // sample wait command in ms 
-  cc3_wait_ms (1000);
 
   // setup an image structure 
   //img.channels=CC3_GREEN;
@@ -85,8 +59,6 @@ int main (void)
     printf ("Not enough memory...\n");
     exit (0);
   }
-  printf ("img size = %d, %d\n", cc3_g_current_frame.width,
-          cc3_g_current_frame.height);
 
   // setup polly temporary image
   polly_img.width = WIDTH;
@@ -94,7 +66,6 @@ int main (void)
   polly_img.channels = 1;
   polly_img.pix = &p_img;
 
-  while (1) {
     cc3_pixel_t mid_pix;
     cc3_pixel_t right_pix;
     cc3_pixel_t down_pix;
@@ -133,15 +104,15 @@ int main (void)
         m = mid_pix.channel[0];
         r = right_pix.channel[0];
         d = down_pix.channel[0];
-        if (m < r - COLOR_THRESH || m > r + COLOR_THRESH)
+        if (m < r - color_thresh || m > r + color_thresh)
           cc3_set_pixel (&polly_img, x, y, &p);
-        if (m < d - COLOR_THRESH || m > d + COLOR_THRESH)
+        if (m < d - color_thresh || m > d + color_thresh)
           cc3_set_pixel (&polly_img, x, y, &p);
 
       }
     }
 
-    connected_component_reduce (&polly_img, MIN_BLOB_SIZE);
+    connected_component_reduce (&polly_img, min_blob_size);
 #ifdef MMC_DEBUG
     matrix_to_pgm (&polly_img);
 #endif
@@ -150,17 +121,16 @@ int main (void)
 #ifdef MMC_DEBUG
     matrix_to_pgm (&polly_img);
 #endif
-    printf( "Frame done, time=%d\n",cc3_timer()-last_time );
-    last_time=cc3_timer();
-
-  }
+ //   printf( "Frame done, time=%d\n",cc3_timer()-last_time );
+    // send a histogram packet
+    printf( "H " );
+    for(int i=5; i<WIDTH; i+=5)
+	    printf( "%d ",HEIGHT-1-range[i] );
+    printf( "\r" );
 
 
   free (img.pix);               // don't forget to free!
 
-  while (1);
-
-  return 0;
 }
 
 int count (cc3_image_t * img, int x, int y, int steps)
@@ -501,14 +471,15 @@ void write_raw_fifo_ppm()
   size_x = cc3_g_current_frame.width;
   size_y = cc3_g_current_frame.height;
 
-  fprintf(f,"P6\n%d %d\n255\n",size_x,size_y );
+  fprintf(f,"P3\n%d %d\n255\n",size_x,size_y );
   
   for (y = 0; y < size_y; y++) {
     cc3_pixbuf_read_rows(row, 1);
     for (x = 0; x < size_x * 3U; x++) {
       uint8_t p = row[x];
-      fputc(p, f);
+      fprintf(f,"%d ",p);
     }
+  fprintf(f,"\n");
   }
   fclose(f); 
   free(row);

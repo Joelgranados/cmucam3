@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include "cc3_jpg.h"
+#include "polly.h"
 
 //#define SERIAL_BAUD_RATE  CC3_UART_RATE_230400
 #define SERIAL_BAUD_RATE  CC3_UART_RATE_115200
@@ -42,6 +43,7 @@ typedef enum {
   SEND_JPEG,
   VIRTUAL_WINDOW,
   DOWN_SAMPLE,
+  GET_POLLY,
   CMUCAM2_CMD_END               // Must be last entry so array sizes are correct
 } cmucam2_command_t;
 
@@ -255,6 +257,19 @@ cmucam2_start:
         cmucam2_track_color (&t_pkt, poll_mode, line_mode);
         break;
 
+      case GET_POLLY:
+        if (n != 2 ) {
+          error = 1;
+          break;
+        }
+        else
+          print_ACK ();
+        do {
+		polly(arg_list[0],arg_list[1]);
+   		if (!cc3_uart_has_data (0))
+      			break;
+  	    } while (poll_mode != 1);
+        break;
 
       case GET_MEAN:
         if (n != 0) {
@@ -445,6 +460,7 @@ void set_cmucam2_commands (void)
   cmucam2_cmds[DOWN_SAMPLE] = "DS";
   cmucam2_cmds[LINE_MODE] = "LM";
   cmucam2_cmds[SEND_JPEG] = "SJ";
+  cmucam2_cmds[GET_POLLY] = "GP";
 }
 
 //int32_t cmucam2_get_command(cmucam2_command_t *cmd, int32_t *arg_list)
