@@ -276,6 +276,8 @@ cmucam2_start:
           print_ACK ();
         cc3_servo_set (arg_list[0], arg_list[1]);
         break;
+
+
       default:
         print_ACK ();
         break;
