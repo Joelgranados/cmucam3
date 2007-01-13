@@ -67,10 +67,11 @@ $(PROJECT)_$(HALNAME): $(OBJS) $(HALDIR)/$(HALLIB) $(LIBFILES)
 	-Wl,-no-whole-archive \
 	$(LDFLAGS)
 
-$(OBJS): $(OBJDIR)/%.o : %.c $(INCLUDES)
-	@if [ ! -d $(OBJDIR) ]; then $(RM) $(OBJDIR); \
-                                     echo "  MKDIR   $(OBJDIR)"; \
-                                     mkdir $(OBJDIR); fi
+$(OBJDIR):
+	@echo "  MKDIR   $@"
+	mkdir $@
+
+$(OBJS): $(OBJDIR)/%.o : %.c $(INCLUDES) | $(OBJDIR)
 	@echo "  CC      $@"
 	@$(CC) $(CFLAGS) $(foreach ldir,$(LIBDIRS),-I$(ldir)) -o $@ -c $<
 
