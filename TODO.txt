@@ -8,7 +8,4 @@
   - Demo mode
 * First version snapshot
 * Lua demo
-* Security cam
 * GPIO/servo config
-* Spoonbot
-* License change
