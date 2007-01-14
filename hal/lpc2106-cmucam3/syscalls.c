@@ -47,9 +47,11 @@ static void init_mmc(void) {
 int _write (int file, char *ptr, int len);
 int _read (int file, char *ptr, int len);
 int kill(int pid, int sig);
+void _exit(int status);
 int _close(int file);
 _off_t _lseek(int file, _off_t ptr, int dir);
 int _fstat(int file, struct stat *st);
+int isatty (int file);
 int _system(const char *s);
 int _link(char *old, char *new);
 int _open(const char *name, int flags, int mode);
@@ -124,8 +126,8 @@ int _read (int file, char *ptr, int len)
 
       *ptr++ = c;
       if (c == '\n' || c == '\r') {
-	i++; 
-	break; 
+	i++;
+	break;
       }
     }
     return i;
@@ -140,8 +142,8 @@ int _read (int file, char *ptr, int len)
 
       *ptr++ = c;
       if (c == '\n' || c == '\r') {
-	i++; 
-	break; 
+	i++;
+	break;
       }
     }
     return i;
@@ -158,14 +160,14 @@ int _read (int file, char *ptr, int len)
   }
 }
 
-int kill(int pid __attribute((unused)), 
-	 int sig __attribute((unused)))
+int kill(int pid __attribute__((unused)),
+	 int sig __attribute__((unused)))
 {
   errno = EINVAL;
   return(-1);
 }
 
-void _exit(int status __attribute((unused)))
+void _exit(int status __attribute__((unused)))
 {
   // XXX: should call cc3_power_down
   while(1);
@@ -202,7 +204,7 @@ _off_t _lseek(int file, _off_t ptr, int dir)
 int _fstat(int file, struct stat *st)
 {
   if (file == DEVICE_TYPE(UART_DEVICE)) {
-    st->st_mode = S_IFCHR;	
+    st->st_mode = S_IFCHR;
     return 0;
   } else {
     errno = EIO;
@@ -211,12 +213,12 @@ int _fstat(int file, struct stat *st)
 }
 
 
-int isatty (int file) 
+int isatty (int file)
 {
   return file == DEVICE_TYPE(UART_DEVICE);
 }
 
-int _system(const char *s) 
+int _system(const char *s)
 {
   if (s == NULL) {
     return 0; /* no shell */
@@ -226,8 +228,8 @@ int _system(const char *s)
   }
 }
 
-int _link(char *old __attribute((unused)), 
-	  char *new __attribute((unused))) {
+int _link(char *old __attribute__((unused)),
+	  char *new __attribute__((unused))) {
   // we do not support hard links
   errno = EPERM;
   return -1;
@@ -300,7 +302,7 @@ int _open(const char *name, int flags, int mode)
   return result;
 }
 
-int _rename(char *oldpath, char *newpath) { 
+int _rename(char *oldpath, char *newpath) {
   int result = -1;
   char *n_oldpath;
   char *n_newpath;
@@ -336,25 +338,26 @@ int _rename(char *oldpath, char *newpath) {
   return result;
 }
 
-int _gettimeofday (struct timeval *tp __attribute((unused)), 
-		   struct timezone *tzp __attribute((unused))) {
+int _gettimeofday (struct timeval *tp __attribute__((unused)),
+		   struct timezone *tzp __attribute__((unused))) {
   return -1;
 }
 
-int _kill(int pid __attribute((unused)), 
-	  int sig __attribute((unused)))
+int _kill(int pid __attribute__((unused)),
+	  int sig __attribute__((unused)))
 {
   errno = EINVAL;
   return -1;
 }
 
-int _getpid() 
+int _getpid()
 {
   return 1;
 }
 
-int _times(struct tms *buf) {
-  clock_t ticks 
+int _times(struct tms *buf)
+{
+  clock_t ticks
     = REG(TIMER0_TC) / (1000 / CLOCKS_PER_SEC); // REG in milliseconds
   buf->tms_utime = ticks;
   buf->tms_stime = 0;
@@ -363,7 +366,8 @@ int _times(struct tms *buf) {
   return ticks;
 }
 
-int _unlink(char *name) {
+int _unlink(char *name)
+{
   int result = -1;
   char *norm = strdup(name);
 
@@ -382,12 +386,12 @@ int _unlink(char *name) {
   } else {
     errno = ENOENT;
   }
-  
+
   free(norm);
   return result;
 }
 
-int _raise(int sig __attribute((unused))) 
+int _raise(int sig __attribute__((unused)))
 {
   return 1;
 }
@@ -403,11 +407,11 @@ extern char end[];              /*  end is set in the linker command 	*/
 static void *heap_ptr;		/* Points to current end of the heap.	*/
 
 
-void *_sbrk(int nbytes) 
+void *_sbrk(int nbytes)
 {
   char *base;		/*  errno should be set to  ENOMEM on error	*/
   //uart0_write("in _sbrk\r\n");
-  
+
   //uart0_write(" nbytes = ");
   //uart0_write_hex((unsigned int) nbytes);
 
@@ -432,11 +436,10 @@ void *_sbrk(int nbytes)
   }
 
   heap_ptr = (char *)heap_ptr + nbytes;	        /*  Increase heap */
-  
+
   //uart0_write(" heap_ptr = ");
   //uart0_write_hex((unsigned int) heap_ptr);
 
   //uart0_write(" returning\r\n");
   return base;		/*  Return pointer to start of new heap area.	*/
 }
-
