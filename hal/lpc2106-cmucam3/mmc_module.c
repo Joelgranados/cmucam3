@@ -53,15 +53,19 @@ extern int errno;
 
 extern struct DRIVE_DESCRIPTION Drive;
 
-// reserved for special ops such as delete, rename
-// dir listings etc.
-static struct rdcf reserved_fcb = {
-  .ReadSector = mmcReadBlock,
-  .WriteSector = mmcWriteBlock
-};
-
 // demand allocated
 static struct rdcf *fcbs[MaxFileBuffers];
+
+static struct rdcf *allocate_1_fcb (void)
+{
+  struct rdcf *fcb = calloc(1, sizeof(struct rdcf));
+  if (fcb != NULL) {
+    fcb->ReadSector = mmcReadBlock;
+    fcb->WriteSector = mmcWriteBlock;
+  }
+
+  return fcb;
+}
 
 static int8_t allocate_fcb (void)
 {
@@ -73,11 +77,10 @@ static int8_t allocate_fcb (void)
     }
 
     // do allocation
-    fcbs[i] = calloc(1, sizeof(struct rdcf));
-
-    // initialize
-    fcbs[i]->ReadSector = mmcReadBlock;
-    fcbs[i]->WriteSector = mmcWriteBlock;
+    fcbs[i] = allocate_1_fcb();
+    if (fcbs[i] == NULL) {
+      return -1;
+    }
     return i;
   }
   return -1;
@@ -196,7 +199,15 @@ static int ioctl_dos_seek (int file, _off_t pos, int whence)
 static int ioctl_dos_unlink (char *name)
 {
   int result;
-  result = rdcf_delete (&reserved_fcb, name);
+  struct rdcf *fcb = allocate_1_fcb();
+  if (fcb == NULL) {
+    errno = ENOMEM;
+    return -1;
+  }
+
+  result = rdcf_delete (fcb, name);
+  free(fcb);
+
   if (result < 0) {
     errno = ~result;
     return -1;
@@ -207,7 +218,15 @@ static int ioctl_dos_unlink (char *name)
 static int ioctl_dos_rename (const char *old, const char *new)
 {
   int result;
-  result = rdcf_rename (&reserved_fcb, old, new);
+  struct rdcf *fcb = allocate_1_fcb();
+  if (fcb == NULL) {
+    errno = ENOMEM;
+    return -1;
+  }
+
+  result = rdcf_rename (fcb, old, new);
+  free(fcb);
+
   if (result < 0) {
     errno = ~result;
     return -1;
