@@ -88,7 +88,6 @@ static void selectMMC (void)
 
   REG (GPIO_IODIR) |= _CC3_MMC_CS;      // switch chip select to output
   REG (GPIO_IOCLR) = _CC3_MMC_CS;       // chip select (neg true)
-  cc3_set_led (true);
 }
 
 static void unselectMMC (void)
@@ -97,7 +96,6 @@ static void unselectMMC (void)
 
   REG (GPIO_IOSET) = _CC3_MMC_CS;       // chip select (neg true)
   REG (GPIO_IODIR) &= ~_CC3_MMC_CS;     // switch chip select to input
-  cc3_set_led (false);
 }
 
 static void spiPutByte (uint8_t inBuf)
