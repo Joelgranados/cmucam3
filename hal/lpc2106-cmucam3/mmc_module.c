@@ -8,7 +8,7 @@
 ******************************************************/
 
 /*
- * Copyright 2006  Anthony Rowe and Adam Goode
+ * Copyright 2006-2007  Anthony Rowe and Adam Goode
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -285,7 +285,7 @@ static int initTheDrive (void)
 
 
 DEVICE_TABLE_ENTRY mmc_driver = {
-  "mmc",                        // do not change, this is a reserved device name.
+  "mmc",   // do not change, this is a reserved device name.
   DEVICE_MMC,
   openFileOnDrive,
   closeFileOnDrive,

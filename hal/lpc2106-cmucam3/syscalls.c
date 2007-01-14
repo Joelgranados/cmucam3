@@ -1,5 +1,5 @@
 /*
- * Copyright 2006  Anthony Rowe and Adam Goode
+ * Copyright 2006-2007  Anthony Rowe and Adam Goode
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,8 @@ extern int errno;
 
 extern DEVICE_TABLE_ENTRY mmc_driver;
 
-static void init_mmc(void) {
-  mmc_driver.init();
+static int init_mmc(void) {
+  return mmc_driver.init();
 }
 
 /* prototypes */

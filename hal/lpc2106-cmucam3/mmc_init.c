@@ -8,7 +8,7 @@
 ******************************************************/
 
 /*
- * Copyright 2006  Anthony Rowe and Adam Goode
+ * Copyright 2006-2007  Anthony Rowe and Adam Goode
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
 
 
 #include <stdio.h>
-#include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include "rdcf2.h"
@@ -98,7 +98,6 @@ union MMC_IO_BUFFER {
 /*******************************************************************
  * structure vars
  *******************************************************************/
-union MMC_IO_BUFFER IoBuffer;   // scratch area for transitory file i/o.
 DRIVE_DESCRIPTION DriveDesc;
 
 
@@ -107,17 +106,17 @@ DRIVE_DESCRIPTION DriveDesc;
  * return true if error, false if everything went well.
  ********************************************************************/
 
-static void CollectDataAboutDrive (void)
+static void CollectDataAboutDrive (union MMC_IO_BUFFER *IoBuffer)
 {
   // How large are the FAT tables?
-  DriveDesc.SectorsPerFAT = IoBuffer.BootBlock.SectorsPerFAT;
+  DriveDesc.SectorsPerFAT = IoBuffer->BootBlock.SectorsPerFAT;
   // Important info to decode FAT entries into sectors.
-  DriveDesc.SectorsPerCluster = IoBuffer.BootBlock.SectorsPerCluster;
+  DriveDesc.SectorsPerCluster = IoBuffer->BootBlock.SectorsPerCluster;
   // First File Allocation Table.
   DriveDesc.FirstFatSector = DriveDesc.SectorZero +
-    IoBuffer.BootBlock.ReservedSectors;
+    IoBuffer->BootBlock.ReservedSectors;
   // "backup" copy of the First FAT. usually to undelete files.
-  if (IoBuffer.BootBlock.NumberOfFATs > 1) {
+  if (IoBuffer->BootBlock.NumberOfFATs > 1) {
     DriveDesc.SecondFatSector =
       DriveDesc.FirstFatSector + DriveDesc.SectorsPerFAT;
   }
@@ -129,27 +128,31 @@ static void CollectDataAboutDrive (void)
   if (DriveDesc.SecondFatSector == -1) {
     // only one FAT, so data follows first FAT.
     DriveDesc.RootDirSector = DriveDesc.FirstFatSector +
-      IoBuffer.BootBlock.SectorsPerFAT;
+      IoBuffer->BootBlock.SectorsPerFAT;
   }
   else {
     // data follows both FAT tables.
     DriveDesc.RootDirSector = DriveDesc.FirstFatSector +
-      (2 * IoBuffer.BootBlock.SectorsPerFAT);
+      (2 * IoBuffer->BootBlock.SectorsPerFAT);
   }
   // How many entries can be in the root directory?
-  DriveDesc.NumberRootDirEntries = IoBuffer.BootBlock.NumberRootDirEntries;
+  DriveDesc.NumberRootDirEntries = IoBuffer->BootBlock.NumberRootDirEntries;
   // where does cluster 2 begin?
   DriveDesc.DataStartSector = DriveDesc.RootDirSector +
     (DriveDesc.NumberRootDirEntries * SIZEOF_DIR_ENTRY) / RDCF_SECTOR_SIZE;
   // where does the partition end?
   DriveDesc.MaxDataSector = DriveDesc.SectorZero +
-    ((IoBuffer.BootBlock.NumberOfSectorsOnMedia) ?
-     IoBuffer.BootBlock.NumberOfSectorsOnMedia :
-     IoBuffer.BootBlock.NumberOfTotalSectors);
+    ((IoBuffer->BootBlock.NumberOfSectorsOnMedia) ?
+     IoBuffer->BootBlock.NumberOfSectorsOnMedia :
+     IoBuffer->BootBlock.NumberOfTotalSectors);
 }
 
 bool initMMCdrive (void)
-{                               // access drive and collect structure info.
+{
+  // access drive and collect structure info.
+
+  union MMC_IO_BUFFER *IoBuffer;
+
   // see if we have a card inserted.
 
   /* no detect on cmucam3 */
@@ -159,30 +162,54 @@ bool initMMCdrive (void)
      DriveDesc.IsValid = false;
      return true;
      }
-   */
+  */
   if (DriveDesc.IsValid) {
     // we already know about this drive.
     return false;
   }
-  if (mmcInit () == false)
+
+  // init temporary structure
+  IoBuffer = calloc(1, sizeof(union MMC_IO_BUFFER));
+  if (IoBuffer == NULL) {
     return true;
+  }
+
+  if (mmcInit () == false) {
+    free(IoBuffer);
+    return true;
+  }
+
   // get the partition table to find the boot block.
-  if (mmcReadBlock (0, (uint8_t *) & IoBuffer))
+  if (mmcReadBlock (0, (uint8_t *) IoBuffer)) {
+    free(IoBuffer);
     return true;
+  }
+
   // validate.
-  if (IoBuffer.PartitionTable.Signature != 0xaa55)
+  if (IoBuffer->PartitionTable.Signature != 0xaa55) {
+    free(IoBuffer);
     return true;
+  }
+
   // get the boot block now.
   DriveDesc.SectorZero =
-    IoBuffer.PartitionTable.PartitionEntry0.FirstSectorPosition;
-  if (mmcReadBlock (DriveDesc.SectorZero, (uint8_t *) & IoBuffer))
+    IoBuffer->PartitionTable.PartitionEntry0.FirstSectorPosition;
+  if (mmcReadBlock (DriveDesc.SectorZero, (uint8_t *) IoBuffer)) {
+    free(IoBuffer);
     return true;
+  }
+
   // validate.
-  if (IoBuffer.BootBlock.Signature != 0xaa55)
+  if (IoBuffer->BootBlock.Signature != 0xaa55) {
+    free(IoBuffer);
     return true;
+  }
+
   // looks good, make a note of where stuff starts at.
-  CollectDataAboutDrive ();
+  CollectDataAboutDrive (IoBuffer);
   // pass all tests before validating drive.
   DriveDesc.IsValid = true;
+
+  free(IoBuffer);
   return false;
 }
