@@ -32,7 +32,7 @@ endif
 
 
 LIBS+=
-override CFLAGS+=-I$(HALDIR)/../../include -Os -funit-at-a-time -Wall -Wstrict-prototypes -Wcast-align -Wcast-qual -Wimplicit -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wpointer-arith -Wswitch -Wredundant-decls -Wreturn-type -Wshadow -Wstrict-prototypes -Wunused -Wextra -Werror-implicit-function-declaration -ffreestanding -std=gnu99 -g -fdata-sections -ffunction-sections
+override CFLAGS+=-I$(HALDIR)/../../include -Os -pipe -funit-at-a-time -Wall -Wstrict-prototypes -Wcast-align -Wcast-qual -Wimplicit -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wpointer-arith -Wswitch -Wredundant-decls -Wreturn-type -Wshadow -Wstrict-prototypes -Wunused -Wextra -Werror-implicit-function-declaration -ffreestanding -std=gnu99 -g -fdata-sections -ffunction-sections
 override LDFLAGS+=-lm
 
 HALLIB=libhal-$(HALNAME).a

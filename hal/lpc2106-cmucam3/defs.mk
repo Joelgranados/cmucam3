@@ -38,7 +38,7 @@ ifeq ($(strip $(thumb)),1)
 endif
 
 LIBS+=
-override CFLAGS+=-I$(HALDIR)/../../include -Os -funit-at-a-time -mcpu=arm7tdmi-s -Wall -Wstrict-prototypes -Wcast-align -Wcast-qual -Wimplicit -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wpointer-arith -Wswitch -Wredundant-decls -Wreturn-type -Wshadow -Wstrict-prototypes -Wunused -Wextra -Werror-implicit-function-declaration -ffreestanding -std=gnu99 -g -fdata-sections -ffunction-sections -msoft-float -mthumb-interwork $(THUMB_FLAGS)
+override CFLAGS+=-I$(HALDIR)/../../include -Os -pipe -funit-at-a-time -mcpu=arm7tdmi-s -Wall -Wstrict-prototypes -Wcast-align -Wcast-qual -Wimplicit -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wpointer-arith -Wswitch -Wredundant-decls -Wreturn-type -Wshadow -Wstrict-prototypes -Wunused -Wextra -Werror-implicit-function-declaration -ffreestanding -std=gnu99 -g -fdata-sections -ffunction-sections -msoft-float -mthumb-interwork $(THUMB_FLAGS)
 override LDFLAGS+=-nostartfiles -lm -T$(HALDIR)/lpc2106-rom.ln -mcpu=arm7tdmi-s -msoft-float $(THUMB_FLAGS)
 
 HALLIB=libhal-$(HALNAME).a
