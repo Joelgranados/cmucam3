@@ -41,9 +41,9 @@ LIBS+=
 override CFLAGS+=-I$(HALDIR)/../../include -Os -pipe -funit-at-a-time \
 	-Wall -Wstrict-prototypes -Wcast-align -Wcast-qual \
 	-Wimplicit -Wmissing-declarations -Wmissing-prototypes \
-	-Wnested-externs -Wpointer-arith -Wswitch -Wredundant-decls \
+	-Wnested-externs -Wpointer-arith -Wswitch -Wno-redundant-decls \
 	-Wreturn-type -Wshadow -Wstrict-prototypes -Wunused -Wextra \
-	-Werror-implicit-function-declaration -Wno-redundant-decls \
+	-Werror-implicit-function-declaration \
 	-ffreestanding -std=gnu99 -g -fdata-sections -ffunction-sections \
 	-mcpu=arm7tdmi-s \
 	-msoft-float -mthumb-interwork $(THUMB_FLAGS)
