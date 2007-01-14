@@ -38,11 +38,10 @@
 #include "rdcf2.h"
 
 #define MMC_CMD_SIZE 8
-uint8_t MMCCmd[MMC_CMD_SIZE];
 
-uint8_t cmdReset[] = { 0x40, 0x00, 0x00, 0x00, 0x00, 0x95 };
-uint8_t cmdInitCard[] = { 0x41, 0x00, 0x00, 0x00, 0x00, 0xFF };
-uint8_t cmdSetBlock[] = { CMD16, 0, 0, 2, 0, 0xff };
+static const uint8_t cmdReset[] = { 0x40, 0x00, 0x00, 0x00, 0x00, 0x95 };
+static const uint8_t cmdInitCard[] = { 0x41, 0x00, 0x00, 0x00, 0x00, 0xFF };
+static const uint8_t cmdSetBlock[] = { CMD16, 0, 0, 2, 0, 0xff };
 
 /******************************************************
  *
@@ -80,8 +79,6 @@ void cc3_spi0_init (void)
  *
 ******************************************************/
 
-static unsigned char dummyReader;
-
 static void selectMMC (void)
 {                               // select SPI target and light the LED.
   //printf("selectMMC\r\n");
@@ -101,7 +98,9 @@ static void unselectMMC (void)
 static void spiPutByte (uint8_t inBuf)
 {                               // spit a byte of data at the MMC.
   //printf("spiPutByte 0x%x ", inBuf);
+  uint8_t dummyReader;
   uint32_t to;
+
   to = 0;
   REG (SPI_SPDR) = SPI_SPDR_MASK & inBuf;
   while (!(REG (SPI_SPSR) & _CC3_SPI_SPIF));    // wait for bit
@@ -240,6 +239,8 @@ bool mmcInit (void)
 ******************************************************/
 bool mmcReadBlock (long sector, uint8_t * buf)
 {
+  uint8_t MMCCmd[MMC_CMD_SIZE];
+
   sector <<= 1;
   selectMMC ();
   MMCCmd[0] = CMD17;
@@ -306,6 +307,8 @@ static uint8_t getWriteResultCode (void)
 bool mmcWriteBlock (long sector, const uint8_t * buf)
 {
   int result = 0;
+  uint8_t MMCCmd[MMC_CMD_SIZE];
+
   sector <<= 1;
   selectMMC ();
   MMCCmd[0] = CMD24;
