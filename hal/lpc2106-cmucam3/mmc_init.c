@@ -34,7 +34,7 @@
 
 #define SIZEOF_DIR_ENTRY	32
 
-extern struct rdcf fcbs[MaxFileBuffers];
+extern struct rdcf fcbs[MaxFileBuffers + 1];
 
 /*******************************************************************
  * structure defs
