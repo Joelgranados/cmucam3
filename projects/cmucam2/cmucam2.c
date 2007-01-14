@@ -258,14 +258,20 @@ cmucam2_start:
         break;
 
       case GET_POLLY:
-        if (n != 2 ) {
+        if (n != 5 ) {
           error = 1;
           break;
         }
         else
           print_ACK ();
         do {
-		polly(arg_list[0],arg_list[1]);
+		polly_config_t p_config;
+		p_config.color_thresh=arg_list[0];
+		p_config.min_blob_size=arg_list[1];
+		p_config.connectivity=arg_list[2];
+		p_config.horizontal_edges=arg_list[3];
+		p_config.vertical_edges=arg_list[4];
+		polly(p_config);
    		if (!cc3_uart_has_data (0))
       			break;
   	    } while (poll_mode != 1);

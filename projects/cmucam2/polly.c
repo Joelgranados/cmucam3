@@ -11,8 +11,6 @@
 //#define VIRTUAL_CAM
 //#define MMC_DEBUG
 
-#define WIDTH	88
-#define HEIGHT	72
 
 // Constants for connected component blob reduce
 #define SELECTED	255
@@ -26,17 +24,20 @@
  * 	    Previous CMUcam State will be lost!
  *
  */
-void polly( uint8_t color_thresh, uint8_t min_blob_size )
+int polly( polly_config_t config )
 {
   uint32_t last_time, val;
   char c;
   cc3_pixel_t p;
   cc3_image_t polly_img;
   cc3_image_t img;
-  uint8_t range[WIDTH];
-  uint8_t p_img[HEIGHT * WIDTH];
+  uint8_t *range;
+  cc3_pixel_t mid_pix;
+  cc3_pixel_t right_pix;
+  cc3_pixel_t down_pix;
 
- if(min_blob_size>30 ) return;
+ // limit the recursive depth
+ if(config.min_blob_size>30 ) return 0;
 
   cc3_set_colorspace (CC3_RGB);
   cc3_set_resolution (CC3_LOW_RES);
@@ -61,14 +62,17 @@ void polly( uint8_t color_thresh, uint8_t min_blob_size )
   }
 
   // setup polly temporary image
-  polly_img.width = WIDTH;
-  polly_img.height = HEIGHT;
+  polly_img.width = img.width;
+  polly_img.height = img.height;
   polly_img.channels = 1;
-  polly_img.pix = &p_img;
+  polly_img.pix = malloc(polly_img.width*polly_img.height);
+  if(polly_img.pix==NULL)
+	return 0;
+  
+  range = malloc(polly_img.width);
+  if(range==NULL)
+	return 0;
 
-    cc3_pixel_t mid_pix;
-    cc3_pixel_t right_pix;
-    cc3_pixel_t down_pix;
 
 #ifdef MMC_DEBUG
 	cc3_set_led(2);
@@ -78,8 +82,8 @@ void polly( uint8_t color_thresh, uint8_t min_blob_size )
 
     // clear polly working image
     p.channel[0] = 0;
-    for (int y = 0; y < HEIGHT; y++)
-      for (int x = 0; x < WIDTH; x++)
+    for (int y = 0; y < polly_img.height; y++)
+      for (int x = 0; x < polly_img.width; x++)
         cc3_set_pixel (&polly_img, x, y, &p);
 
 
@@ -102,21 +106,34 @@ void polly( uint8_t color_thresh, uint8_t min_blob_size )
         cc3_get_pixel (&img, x + 1, y, &right_pix);
         cc3_get_pixel (&img, x, y + 1, &down_pix);
         m = mid_pix.channel[0];
-        r = right_pix.channel[0];
-        d = down_pix.channel[0];
-        if (m < r - color_thresh || m > r + color_thresh)
-          cc3_set_pixel (&polly_img, x, y, &p);
-        if (m < d - color_thresh || m > d + color_thresh)
-          cc3_set_pixel (&polly_img, x, y, &p);
+	if(config.horizontal_edges==1)
+		{
+        	r = right_pix.channel[0];
+        	if (m < r - config.color_thresh || m > r + config.color_thresh)
+          		cc3_set_pixel (&polly_img, x, y, &p);
+		}
+	if(config.vertical_edges==1)
+		{
+        	d = down_pix.channel[0];
+        	if (m < d - config.color_thresh || m > d + config.color_thresh)
+          		cc3_set_pixel (&polly_img, x, y, &p);
+		}
 
       }
     }
 
-    connected_component_reduce (&polly_img, min_blob_size);
+    if(config.min_blob_size>1)
+	{
+	ccr_config_t cc_config;
+	cc_config.max_depth=30;
+	cc_config.min_blob_size=config.min_blob_size;
+	cc_config.connectivity=config.connectivity;
+    	connected_component_reduce (&polly_img, cc_config);
+	}
 #ifdef MMC_DEBUG
     matrix_to_pgm (&polly_img);
 #endif
-    generate_histogram (&polly_img, range);
+    generate_polly_histogram (&polly_img, range);
     convert_histogram_to_ppm (&polly_img, range);
 #ifdef MMC_DEBUG
     matrix_to_pgm (&polly_img);
@@ -124,8 +141,8 @@ void polly( uint8_t color_thresh, uint8_t min_blob_size )
  //   printf( "Frame done, time=%d\n",cc3_timer()-last_time );
     // send a histogram packet
     printf( "H " );
-    for(int i=5; i<WIDTH; i+=5)
-	    printf( "%d ",HEIGHT-1-range[i] );
+    for(int i=5; i<polly_img.width; i+=5)
+	    printf( "%d ",polly_img.height-range[i] );
     printf( "\r" );
 
 
@@ -173,6 +190,9 @@ int count (cc3_image_t * img, int x, int y, int steps)
       size += count (img, x, y + 1, steps);
   }
 
+// stored in a global so it doesn't get pushed onto the stack
+if( g_cc_conf.connectivity==L8_CONNECTED)
+{
   if (x > 1 && y > 1) {
     cc3_get_pixel (img, x - 1, y - 1, &p);
     if (p.channel[0] == SELECTED)
@@ -193,6 +213,7 @@ int count (cc3_image_t * img, int x, int y, int steps)
     if (p.channel[0] == SELECTED)
       size += count (img, x + 1, y + 1, steps);
   }
+}
 
   return size;
 }
@@ -243,6 +264,9 @@ int reduce (cc3_image_t * img, int x, int y, int steps, int remove)
       size += reduce (img, x, y + 1, steps, remove);
   }
 
+// stored in a global so it doesn't get pushed onto the stack
+if( g_cc_conf.connectivity==L8_CONNECTED)
+{
   if (x > 1 && y > 1) {
     cc3_get_pixel (img, x - 1, y - 1, &p);
     if (p.channel[0] == MARKED)
@@ -263,17 +287,23 @@ int reduce (cc3_image_t * img, int x, int y, int steps, int remove)
     if (p.channel[0] == MARKED)
       size += reduce (img, x + 1, y + 1, steps, remove);
   }
-
+}
   return size;
 }
 
 
 
-void connected_component_reduce (cc3_image_t * img, int min_blob_size)
+void connected_component_reduce (cc3_image_t * img, ccr_config_t conf)
 {
   int x, y, size;
   int width, height;
   cc3_pixel_t p;
+
+  // Only uses connectivity globally, but the other values are
+  // copied in case we need them around later
+  g_cc_conf.connectivity=conf.connectivity;
+  g_cc_conf.max_depth=conf.connectivity;
+  g_cc_conf.min_blob_size=conf.connectivity;
 
   width = img->width;
   height = img->height;
@@ -282,11 +312,11 @@ void connected_component_reduce (cc3_image_t * img, int min_blob_size)
     for (x = 0; x < width; x++) {
       cc3_get_pixel (img, x, y, &p);
       if (p.channel[0] == SELECTED) {
-        size = count (img, x, y, min_blob_size);
-        if (size < min_blob_size)
-          reduce (img, x, y, min_blob_size, 1); // Delete marked
+        size = count (img, x, y, conf.max_depth);
+        if (size < conf.min_blob_size)
+          reduce (img, x, y, conf.max_depth,1); // Delete marked
         else
-          reduce (img, x, y, min_blob_size, 0); // Finalize marked
+          reduce (img, x, y,conf.max_depth, 0); // Finalize marked
       }
     }
 
@@ -303,7 +333,7 @@ void connected_component_reduce (cc3_image_t * img, int min_blob_size)
 }
 
 
-void generate_histogram (cc3_image_t * img, uint8_t * hist)
+void generate_polly_histogram (cc3_image_t * img, uint8_t * hist)
 {
   int x, y;
   int width, height;
@@ -321,7 +351,6 @@ void generate_histogram (cc3_image_t * img, uint8_t * hist)
     for (y = height - 1; y > 0; y--) {
       cc3_get_pixel (img, x, y, &p);
       if (p.channel[0] == SELECTED)
-        //if(p_img[x][y]==SELECTED)
         break;
     }
     hist[x] = (height - 1 - y);
@@ -334,7 +363,6 @@ void generate_histogram (cc3_image_t * img, uint8_t * hist)
     for (y = height - 1; y > 0; y--) {
       cc3_get_pixel (img, x, y, &p);
       if (p.channel[0] == SELECTED)
-        //if(p_img[x][y]==SELECTED)
         break;
     }
     hist[x] = (height - 1 - y);

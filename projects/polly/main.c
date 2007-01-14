@@ -133,8 +133,8 @@ int main (void)
         m = mid_pix.channel[0];
         r = right_pix.channel[0];
         d = down_pix.channel[0];
-        if (m < r - COLOR_THRESH || m > r + COLOR_THRESH)
-          cc3_set_pixel (&polly_img, x, y, &p);
+        //if (m < r - COLOR_THRESH || m > r + COLOR_THRESH)
+         // cc3_set_pixel (&polly_img, x, y, &p);
         if (m < d - COLOR_THRESH || m > d + COLOR_THRESH)
           cc3_set_pixel (&polly_img, x, y, &p);
 
@@ -143,7 +143,7 @@ int main (void)
 
     connected_component_reduce (&polly_img, MIN_BLOB_SIZE);
 #ifdef MMC_DEBUG
-    matrix_to_pgm (&polly_img);
+//    matrix_to_pgm (&polly_img);
 #endif
     generate_histogram (&polly_img, range);
     convert_histogram_to_ppm (&polly_img, range);
@@ -202,7 +202,7 @@ int count (cc3_image_t * img, int x, int y, int steps)
     if (p.channel[0] == SELECTED)
       size += count (img, x, y + 1, steps);
   }
-
+/*
   if (x > 1 && y > 1) {
     cc3_get_pixel (img, x - 1, y - 1, &p);
     if (p.channel[0] == SELECTED)
@@ -223,7 +223,7 @@ int count (cc3_image_t * img, int x, int y, int steps)
     if (p.channel[0] == SELECTED)
       size += count (img, x + 1, y + 1, steps);
   }
-
+*/
   return size;
 }
 
@@ -272,7 +272,7 @@ int reduce (cc3_image_t * img, int x, int y, int steps, int remove)
     if (p.channel[0] == MARKED)
       size += reduce (img, x, y + 1, steps, remove);
   }
-
+/*
   if (x > 1 && y > 1) {
     cc3_get_pixel (img, x - 1, y - 1, &p);
     if (p.channel[0] == MARKED)
@@ -293,7 +293,7 @@ int reduce (cc3_image_t * img, int x, int y, int steps, int remove)
     if (p.channel[0] == MARKED)
       size += reduce (img, x + 1, y + 1, steps, remove);
   }
-
+*/
   return size;
 }
 
