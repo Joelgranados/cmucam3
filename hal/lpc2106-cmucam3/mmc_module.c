@@ -31,6 +31,7 @@
  *
 ********************************************************************/
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
 
@@ -52,17 +53,31 @@ extern int errno;
 
 extern struct DRIVE_DESCRIPTION Drive;
 
-// note, last file buffer is reserved
-// for special ops such as delete, rename
+// reserved for special ops such as delete, rename
 // dir listings etc.
-struct rdcf fcbs[MaxFileBuffers + 1];
+static struct rdcf reserved_fcb = {
+  .ReadSector = mmcReadBlock,
+  .WriteSector = mmcWriteBlock
+};
+
+// demand allocated
+static struct rdcf *fcbs[MaxFileBuffers];
 
 static int8_t allocate_fcb (void)
-{                               // find free fcb and return it or -1 if none available.
+{
+  // find free fcb and return it or -1 if none available.
   int i;
   for (i = 0; i < MaxFileBuffers; i++) {
-    if (fcbs[i].BufferInUse)
+    if (fcbs[i] != NULL) {
       continue;
+    }
+
+    // do allocation
+    fcbs[i] = calloc(1, sizeof(struct rdcf));
+
+    // initialize
+    fcbs[i]->ReadSector = mmcReadBlock;
+    fcbs[i]->WriteSector = mmcWriteBlock;
     return i;
   }
   return -1;
@@ -84,8 +99,10 @@ static int openFileOnDrive (const char *name, int flags,
     errno = ENOBUFS;
     return -1;
   }
-  result = rdcf_open (&fcbs[handle], name, flags);
+  result = rdcf_open (fcbs[handle], name, flags);
   if (result != 0) {
+    free(fcbs[handle]);
+    fcbs[handle] = NULL;
     errno = ~result;
     return -1;
   }
@@ -95,16 +112,33 @@ static int openFileOnDrive (const char *name, int flags,
 static int closeFileOnDrive (int file)
 {
   int result;
+  int fcbs_offset;
+  struct rdcf *fcb;
+
   // is a drive still there?
   if (!DriveDesc.IsValid) {
     errno = ENODEV;
     return -1;
   }
-  result = rdcf_close (&fcbs[file & 0xff]);
+
+  fcbs_offset = file & 0xff;
+  fcb = fcbs[fcbs_offset];
+  if (fcb == NULL) {
+    errno = EBADF;
+    return -1;
+  }
+
+  result = rdcf_close (fcb);
+
   if (result) {
+    free(fcb);
+    fcbs[fcbs_offset] = NULL;
     errno = ~result;
     return -1;
   }
+
+  free(fcb);
+  fcbs[fcbs_offset] = NULL;
   return 0;
 }
 
@@ -116,7 +150,7 @@ static _ssize_t readFromDrive (int file, void *ptr, size_t len)
     errno = ENODEV;
     return -1;
   }
-  result = rdcf_read (&fcbs[file & 0xff], ptr, len);
+  result = rdcf_read (fcbs[file & 0xff], ptr, len);
   if (result < 0) {
     errno = ~result;
     return -1;
@@ -132,7 +166,7 @@ static _ssize_t writeToDrive (int file, const void *ptr, size_t len)
     errno = ENODEV;
     return -1;
   }
-  result = rdcf_write (&fcbs[file & 0xff], ptr, len);
+  result = rdcf_write (fcbs[file & 0xff], ptr, len);
   if (result < 0) {
     errno = ~result;
     return -1;
@@ -145,12 +179,12 @@ static int ioctl_dos_seek (int file, _off_t pos, int whence)
   int result;
   switch (whence) {
   case SEEK_SET:
-    result = rdcf_seek (&fcbs[file & 0xff], pos);
+    result = rdcf_seek (fcbs[file & 0xff], pos);
     if (result < 0) {
       errno = ~result;
       return -1;
     }
-    return fcbs[file & 0xff].position;
+    return fcbs[file & 0xff]->position;
   case SEEK_CUR:               // not implemented.
   case SEEK_END:               // not implemented.
     break;
@@ -162,7 +196,7 @@ static int ioctl_dos_seek (int file, _off_t pos, int whence)
 static int ioctl_dos_unlink (char *name)
 {
   int result;
-  result = rdcf_delete (&fcbs[MaxFileBuffers], name);
+  result = rdcf_delete (&reserved_fcb, name);
   if (result < 0) {
     errno = ~result;
     return -1;
@@ -173,7 +207,7 @@ static int ioctl_dos_unlink (char *name)
 static int ioctl_dos_rename (const char *old, const char *new)
 {
   int result;
-  result = rdcf_rename (&fcbs[MaxFileBuffers], old, new);
+  result = rdcf_rename (&reserved_fcb, old, new);
   if (result < 0) {
     errno = ~result;
     return -1;
@@ -184,10 +218,10 @@ static int ioctl_dos_rename (const char *old, const char *new)
 static int ioctl_dos_flush_dir (int file)
 {                               // flush dir entry associated with file.
   int result;
-  if ((file & 0xff) < 0 || (file & 0xff) >= MaxFileBuffers) {
+  if ((file & 0xff) < 0 || (file & 0xff) > MaxFileBuffers) {
     return -1;
   }
-  result = rdcf_flush_directory (&fcbs[file & 0xff]);
+  result = rdcf_flush_directory (fcbs[file & 0xff]);
   if (result < 0) {
     errno = ~result;
     return -1;

@@ -656,7 +656,6 @@ functions are defined in alphabetical order.
 int rdcf_close(struct rdcf *f)
 {
 	if ((f->result=setjmp(f->error)) != 0) return f->result;
-	if (f->BufferInUse == false) error_exit(f, ~EBADFD);
 	if (f->mode & WRITTEN) {
 		f->buffer_status = EMPTY;
 		f->file.attribute |= RDCF_ARCHIVE;
@@ -665,7 +664,6 @@ int rdcf_close(struct rdcf *f)
 		update_directory_entry(f, (f->file.size) ? 0 : 1);
 		flush_buffer(f);
 	}
-	f->BufferInUse = false;
 	return 0;
 }
 
@@ -767,7 +765,6 @@ int rdcf_open(struct rdcf *f, const char *spec, unsigned mode)
 		check_write_access(f);
 	}
 	f->last_cluster = EMPTY_CLUSTER;
-	f->BufferInUse = true;
 	f->position = 0;
 	f->cluster = f->file.first_cluster;
 	if (mode & _FAPPEND) {
@@ -791,7 +788,6 @@ int rdcf_read(struct rdcf *f, void *buf, int count)
 	uint32_t position = f->position;
 	char *buffer = buf;
 	if ((f->result=setjmp(f->error)) != 0) return f->result;
-	if (f->BufferInUse == false) error_exit(f, ~EBADF);
 	if ((f->mode & RDCF_READ) == 0) error_exit(f, ~EBADFD);
 	f->buffer_status = EMPTY;
 	while (unread_bytes>0) {
@@ -848,7 +844,6 @@ static int real_rdcf_write(struct rdcf *f, const uint8_t *buf, int count)
 	unsigned first_possibly_empty_cluster = 2;
 	const char *buffer = buf;
 	if ((f->result=setjmp(f->error)) != 0) return f->result;
-	if (f->BufferInUse == false) error_exit(f, ~EBADF);
 	f->buffer_status = EMPTY;
 	if ((f->mode & RDCF_WRITE) == 0) error_exit(f, ~EBADFD);
 	while (unwritten_bytes>0) {
@@ -914,7 +909,6 @@ int	result;
 int rdcf_flush_directory(struct rdcf *f)
 {
 	if ((f->result=setjmp(f->error)) != 0) return f->result;
-	if (f->BufferInUse == false) return 0;
 	rdcf_get_date_and_time(&f->file.date_and_time);
 		// do not allow empty files.
 	update_directory_entry(f, (f->file.size) ? 0 : 1);

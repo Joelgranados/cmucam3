@@ -102,7 +102,6 @@ struct rdcf
 {
 		/* values that must be initialized by the calling program */
 	union 	IO_BUFFER buffer;
-	bool		BufferInUse;
 		// hardware access.
 	bool	(*ReadSector)(long sector, uint8_t * buf);
 	bool	(*WriteSector)(long sector, const uint8_t * buf);

@@ -34,8 +34,6 @@
 
 #define SIZEOF_DIR_ENTRY	32
 
-extern struct rdcf fcbs[MaxFileBuffers + 1];
-
 /*******************************************************************
  * structure defs
  *******************************************************************/
@@ -104,21 +102,6 @@ union MMC_IO_BUFFER IoBuffer;   // scratch area for transitory file i/o.
 DRIVE_DESCRIPTION DriveDesc;
 
 
-/*******************************************************************
- * routines specific to rdcf2 operation.
- *******************************************************************/
-
-static void init_rdcf2_struct (void)
-{
-  int i;
-  // remember to do the reserved fcb as well.
-  for (i = 0; i < MaxFileBuffers + 1; i++) {
-    fcbs[i].ReadSector = mmcReadBlock;
-    fcbs[i].WriteSector = mmcWriteBlock;
-    fcbs[i].BufferInUse = false;
-  }
-}
-
 /********************************************************************
  * initMMCdrive
  * return true if error, false if everything went well.
@@ -183,8 +166,6 @@ bool initMMCdrive (void)
   }
   if (mmcInit () == false)
     return true;
-  // init fcbs.
-  init_rdcf2_struct ();
   // get the partition table to find the boot block.
   if (mmcReadBlock (0, (uint8_t *) & IoBuffer))
     return true;
