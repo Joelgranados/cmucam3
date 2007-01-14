@@ -261,8 +261,10 @@ typedef int boolean;
 /* Capability options common to encoder and decoder: */
 
 #define DCT_ISLOW_SUPPORTED	/* slow but accurate integer algorithm */
-#define DCT_IFAST_SUPPORTED	/* faster, less accurate integer method */
+#undef  DCT_IFAST_SUPPORTED	/* faster, less accurate integer method */
 #undef  DCT_FLOAT_SUPPORTED	/* floating-point: accurate, fast on fast HW */
+
+#define JDCT_FASTEST  JDCT_ISLOW
 
 /* Encoder capability options: */
 
