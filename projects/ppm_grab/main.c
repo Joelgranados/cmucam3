@@ -8,6 +8,7 @@ void capture_ppm(FILE *fp);
 
 int main(void) {
   int i;
+  int result;
   FILE *f;
   bool light_on = true;
 
@@ -40,7 +41,10 @@ int main(void) {
       if (f != NULL) {
 	printf( "%s already exists...\n",filename );
 	i++;
-	fclose(f);
+	result = fclose(f);
+	if (result) {
+	  perror("first fclose failed");
+	}
       }
     } while(f != NULL);
 
@@ -48,8 +52,13 @@ int main(void) {
     fprintf(stderr,"%s ", filename);
     fflush(stderr);
     f = fopen(filename, "w");
-    if(f == NULL || i > 512) {
-      fprintf(stderr, "full\n");
+
+    if (f == NULL || i > 512) {
+      if (f == NULL) {
+	perror("crap");
+      } else {
+	fprintf(stderr, "full\n");
+      }
 
       while (true) {
 	cc3_set_led(2);
@@ -68,7 +77,10 @@ int main(void) {
     light_on = !light_on;
     capture_ppm(f);
 
-    fclose(f);
+    result = fclose(f);
+    if (result) {
+      perror("second fclose failed");
+    }
     fprintf(stderr, "\r\n");
 
     i++;
