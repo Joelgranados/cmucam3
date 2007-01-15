@@ -30,7 +30,6 @@
  * This is the device interface for the MMC drive.
  *
 ********************************************************************/
-#include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -39,7 +38,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "ioctl.h"
 #include "devices.h"
 #include "spi.h"
 #include "rdcf2.h"
@@ -49,11 +47,15 @@
 #undef errno
 extern int errno;
 
-#define DEVICE_MMC 1
-
 extern struct DRIVE_DESCRIPTION Drive;
 
-// demand allocated
+static int mmc_init (void)
+{
+  // init the drive system & software.
+  return initMMCdrive();
+}
+
+// demand allocated file control blocks
 static struct rdcf *fcbs[MaxFileBuffers];
 
 static struct rdcf *allocate_1_fcb (void)
@@ -69,7 +71,7 @@ static struct rdcf *allocate_1_fcb (void)
 
 static int8_t allocate_fcb (void)
 {
-  // find free fcb and return it or -1 if none available.
+  // find free fcb and return it or -1 if none available
   int i;
   for (i = 0; i < MaxFileBuffers; i++) {
     if (fcbs[i] != NULL) {
@@ -86,11 +88,25 @@ static int8_t allocate_fcb (void)
   return -1;
 }
 
-static int openFileOnDrive (const char *name, int flags,
-                            int always666 __attribute ((unused)))
+static bool mmc_recognize (const char *name)
+{
+  // filename starts with "C:/"
+  return name[0] == 'C' && name[1] == ':' && name[2] == '/';
+}
+
+static const char *remove_prefix (const char *name)
+{
+  // take away the "C:/"
+  return name + 3;
+}
+
+static int mmc_open (const char *name, int flags,
+		     int mode __attribute__ ((unused)))
 {
   int result;
   int handle;
+
+  mmc_init();
 
   // is a drive still there?
   if (!DriveDesc.IsValid) {
@@ -102,21 +118,23 @@ static int openFileOnDrive (const char *name, int flags,
     errno = ENOBUFS;
     return -1;
   }
-  result = rdcf_open (fcbs[handle], name, flags);
+
+  result = rdcf_open (fcbs[handle], remove_prefix(name), flags);
   if (result != 0) {
     free(fcbs[handle]);
     fcbs[handle] = NULL;
     errno = ~result;
     return -1;
   }
-  return DEVICE (DEVICE_MMC) | handle;
+  return handle;
 }
 
-static int closeFileOnDrive (int file)
+static int mmc_close (int file)
 {
   int result;
-  int fcbs_offset;
   struct rdcf *fcb;
+
+  mmc_init();
 
   // is a drive still there?
   if (!DriveDesc.IsValid) {
@@ -124,9 +142,8 @@ static int closeFileOnDrive (int file)
     return -1;
   }
 
-  fcbs_offset = file & 0xff;
-  fcb = fcbs[fcbs_offset];
-  if (fcb == NULL) {
+  fcb = fcbs[file];
+  if (file > MaxFileBuffers || fcb == NULL) {
     errno = EBADF;
     return -1;
   }
@@ -135,25 +152,28 @@ static int closeFileOnDrive (int file)
 
   if (result) {
     free(fcb);
-    fcbs[fcbs_offset] = NULL;
+    fcbs[file] = NULL;
     errno = ~result;
     return -1;
   }
 
   free(fcb);
-  fcbs[fcbs_offset] = NULL;
+  fcbs[file] = NULL;
   return 0;
 }
 
-static _ssize_t readFromDrive (int file, void *ptr, size_t len)
+static ssize_t mmc_read (int file, void *ptr, size_t len)
 {
   int result;
+
+  mmc_init();
+
   // is a drive still there?
   if (!DriveDesc.IsValid) {
     errno = ENODEV;
     return -1;
   }
-  result = rdcf_read (fcbs[file & 0xff], ptr, len);
+  result = rdcf_read (fcbs[file], ptr, len);
   if (result < 0) {
     errno = ~result;
     return -1;
@@ -161,15 +181,18 @@ static _ssize_t readFromDrive (int file, void *ptr, size_t len)
   return result;
 }
 
-static _ssize_t writeToDrive (int file, const void *ptr, size_t len)
+static ssize_t mmc_write (int file, const void *ptr, size_t len)
 {
   int result;
+
+  mmc_init();
+
   // is a drive still there?
   if (!DriveDesc.IsValid) {
     errno = ENODEV;
     return -1;
   }
-  result = rdcf_write (fcbs[file & 0xff], ptr, len);
+  result = rdcf_write (fcbs[file], ptr, len);
   if (result < 0) {
     errno = ~result;
     return -1;
@@ -177,17 +200,26 @@ static _ssize_t writeToDrive (int file, const void *ptr, size_t len)
   return result;
 }
 
-static int ioctl_dos_seek (int file, _off_t pos, int whence)
+static off_t mmc_lseek (int file, off_t pos, int whence)
 {
   int result;
+
+  mmc_init();
+
+  // is a drive still there?
+  if (!DriveDesc.IsValid) {
+    errno = ENODEV;
+    return -1;
+  }
+
   switch (whence) {
   case SEEK_SET:
-    result = rdcf_seek (fcbs[file & 0xff], pos);
+    result = rdcf_seek (fcbs[file], pos);
     if (result < 0) {
       errno = ~result;
       return -1;
     }
-    return fcbs[file & 0xff]->position;
+    return fcbs[file]->position;
   case SEEK_CUR:               // not implemented.
   case SEEK_END:               // not implemented.
     break;
@@ -196,103 +228,100 @@ static int ioctl_dos_seek (int file, _off_t pos, int whence)
   return -1;
 }
 
-static int ioctl_dos_unlink (char *name)
+static int mmc_unlink (const char *name)
 {
-  int result;
-  struct rdcf *fcb = allocate_1_fcb();
-  if (fcb == NULL) {
-    errno = ENOMEM;
-    return -1;
-  }
+  mmc_init();
 
-  result = rdcf_delete (fcb, name);
-  free(fcb);
-
-  if (result < 0) {
-    errno = ~result;
-    return -1;
-  }
-  return 0;
-}
-
-static int ioctl_dos_rename (const char *old, const char *new)
-{
-  int result;
-  struct rdcf *fcb = allocate_1_fcb();
-  if (fcb == NULL) {
-    errno = ENOMEM;
-    return -1;
-  }
-
-  result = rdcf_rename (fcb, old, new);
-  free(fcb);
-
-  if (result < 0) {
-    errno = ~result;
-    return -1;
-  }
-  return 0;
-}
-
-static int ioctl_dos_flush_dir (int file)
-{                               // flush dir entry associated with file.
-  int result;
-  if ((file & 0xff) < 0 || (file & 0xff) > MaxFileBuffers) {
-    return -1;
-  }
-  result = rdcf_flush_directory (fcbs[file & 0xff]);
-  if (result < 0) {
-    errno = ~result;
-    return -1;
-  }
-  return 0;
-}
-
-
-static int ioctlDrive (int file, int cmd, void *ptr)
-{
   // is a drive still there?
   if (!DriveDesc.IsValid) {
     errno = ENODEV;
     return -1;
   }
-  switch (cmd) {
-  case IOCTL_MMC_SEEK:
-    // ptr is to a structure containing two pointers to pointers.
-    return ioctl_dos_seek (file, *(_off_t *) ((long *) ptr)[0],
-                           *(int *) ((long *) ptr)[1]);
-  case IOCTL_MMC_UNLINK:
-    // ptr is the address of a pointer to filename string.
-    return ioctl_dos_unlink ((char *) ((long *) ptr)[0]);
-  case IOCTL_MMC_RENAME:
-    return ioctl_dos_rename ((const char *) ((long *) ptr)[0],
-                             (const char *) ((long *) ptr)[1]);
-  case IOCTL_MMC_FLUSH_DIR:
-    return ioctl_dos_flush_dir (file);
+
+  int result;
+  struct rdcf *fcb = allocate_1_fcb();
+  if (fcb == NULL) {
+    return -1;
   }
-  // anything not implemented is "INVALID".
-  errno = EINVAL;
+
+  result = rdcf_delete (fcb, remove_prefix(name));
+  free(fcb);
+
+  if (result < 0) {
+    errno = ~result;
+    return -1;
+  }
+  return 0;
+}
+
+static int mmc_rename (const char *old, const char *new)
+{
+  mmc_init();
+
+  // is a drive still there?
+  if (!DriveDesc.IsValid) {
+    errno = ENODEV;
+    return -1;
+  }
+
+  int result;
+  struct rdcf *fcb = allocate_1_fcb();
+  if (fcb == NULL) {
+    return -1;
+  }
+
+  result = rdcf_rename (fcb, remove_prefix(old), remove_prefix(new));
+  free(fcb);
+
+  if (result < 0) {
+    errno = ~result;
+    return -1;
+  }
+  return 0;
+}
+
+// TODO: activate
+static int mmc_flush_dir (int file)
+{
+  // flush dir entry associated with file.
+
+  mmc_init();
+
+  // is a drive still there?
+  if (!DriveDesc.IsValid) {
+    errno = ENODEV;
+    return -1;
+  }
+
+  int result;
+  if (file < 0 || file > MaxFileBuffers) {
+    return -1;
+  }
+  result = rdcf_flush_directory (fcbs[file]);
+  if (result < 0) {
+    errno = ~result;
+    return -1;
+  }
+  return 0;
+}
+
+static int mmc_fstat (int file __attribute__((unused)),
+		      struct stat *st __attribute__((unused)))
+{
+  errno = EIO;
   return -1;
 }
 
-static int initTheDrive (void)
-{
-  // initialize the SPI0 controller.
-  cc3_spi0_init ();
-  // init the drive system & software.
-  return initMMCdrive ();
-}
-
-
-DEVICE_TABLE_ENTRY mmc_driver = {
-  "mmc",   // do not change, this is a reserved device name.
-  DEVICE_MMC,
-  openFileOnDrive,
-  closeFileOnDrive,
-  readFromDrive,
-  writeToDrive,
-  initTheDrive,
-  ioctlDrive
+_cc3_device_driver_t _cc3_mmc_driver = {
+  .id        = _CC3_DEVICE_MMC,
+  .is_tty    = false,
+  .open      = mmc_open,
+  .close     = mmc_close,
+  .read      = mmc_read,
+  .write     = mmc_write,
+  .recognize = mmc_recognize,
+  .lseek     = mmc_lseek,
+  .unlink    = mmc_unlink,
+  .rename    = mmc_rename,
+  .fstat     = mmc_fstat
 };
-
-// vi:nowrap

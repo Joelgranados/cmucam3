@@ -768,3 +768,9 @@ bool cc3_read_button (void)
 {
   return 1;
 }
+
+void cc3_filesystem_init (void)
+{
+  // nothing to initialize
+  return;
+}

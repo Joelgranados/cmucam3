@@ -76,6 +76,8 @@ cmucam2_start:
   line_mode = 0;
   cc3_system_setup ();
 
+  cc3_filesystem_init();
+
   cc3_uart_init (0,
                  SERIAL_BAUD_RATE,
                  CC3_UART_MODE_8N1, CC3_UART_BINMODE_BINARY);

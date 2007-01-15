@@ -24,9 +24,8 @@
 #include <sys/time.h>
 #include <sys/times.h>
 
-#include "serial.h"
+#include "LPC2100.h"
 #include "devices.h"
-#include "mmc_ioctl.h"
 
 #include <errno.h>
 #undef errno
@@ -37,19 +36,13 @@ extern int errno;
 // uart0_write_hex(stack_ptr);
 
 
-extern DEVICE_TABLE_ENTRY mmc_driver;
-
-static int init_mmc(void) {
-  return mmc_driver.init();
-}
-
 /* prototypes */
-int _write (int file, char *ptr, int len);
+int _write (int file, const char *ptr, int len);
 int _read (int file, char *ptr, int len);
 int kill(int pid, int sig);
 void _exit(int status);
 int _close(int file);
-_off_t _lseek(int file, _off_t ptr, int dir);
+_off_t _lseek(int file, _off_t offset, int dir);
 int _fstat(int file, struct stat *st);
 int isatty (int file);
 int _system(const char *s);
@@ -67,97 +60,28 @@ void *_sbrk(int nbytes);
 
 
 /* implementation */
-int _write (int file, char *ptr, int len)
+int _write (int file, const char *ptr, int len)
 {
-  int i = 0;
-
-  //uart0_write("in _write\r\n");
-
-  switch (file) {
-  case 1:   // non-redirected stdout
-  case 2:   // non-redirected stderr
-  case DEVICE(UART_DEVICE) | 0:
-    for (i = 0; i < len; i++) {
-      if (_cc3_uart0_binmode == CC3_UART_BINMODE_TEXT
-	  && *ptr == '\n') {
-	uart0_putc('\r');
-      }
-      uart0_putc(*ptr++);
-    }
-    return i;
-
-  case DEVICE(UART_DEVICE) | 1:
-    for (i = 0; i < len; i++) {
-      if (_cc3_uart1_binmode == CC3_UART_BINMODE_TEXT
-	  && *ptr == '\n') {
-	uart1_putc('\r');
-      }
-      uart1_putc(*ptr++);
-    }
-    return i;
-
-  default:
-    // MMC?
-    if (DEVICE_TYPE(file) == mmc_driver.device_type) {
-      init_mmc();
-      return mmc_driver.write(file, ptr, len);
-    } else {
-      errno = EBADF;
-      return -1;
-    }
+  _cc3_device_driver_t *dev = _cc3_get_driver_for_file_number(file);
+  if (dev == NULL) {
+    errno = EBADF;
+    return -1;
   }
+
+  return dev->write(_cc3_get_internal_file_number(file),
+		    ptr, len);
 }
 
 int _read (int file, char *ptr, int len)
 {
-  int i = 0;
-  char c;
-
-  //uart0_write("in _read\r\n");
-  switch (file) {
-  case 0:   // non-redirected stdin
-  case DEVICE(UART_DEVICE) | 0:
-    for (i = 0; i < len; i++) {
-      c = uart0_getc();
-      if (_cc3_uart0_binmode == CC3_UART_BINMODE_TEXT
-	  && c == '\r') {
-	c = '\n';
-      }
-
-      *ptr++ = c;
-      if (c == '\n' || c == '\r') {
-	i++;
-	break;
-      }
-    }
-    return i;
-
-  case DEVICE(UART_DEVICE) | 1:
-    for (i = 0; i < len; i++) {
-      c = uart1_getc();
-      if (_cc3_uart1_binmode == CC3_UART_BINMODE_TEXT
-	  && c == '\r') {
-	c = '\n';
-      }
-
-      *ptr++ = c;
-      if (c == '\n' || c == '\r') {
-	i++;
-	break;
-      }
-    }
-    return i;
-
-  default:
-    // MMC?
-    if (DEVICE_TYPE(file) == mmc_driver.device_type) {
-      init_mmc();
-      return mmc_driver.read(file, ptr, len);
-    } else {
-      errno = EBADF;
-      return -1;
-    }
+  _cc3_device_driver_t *dev = _cc3_get_driver_for_file_number(file);
+  if (dev == NULL) {
+    errno = EBADF;
+    return -1;
   }
+
+  return dev->read(_cc3_get_internal_file_number(file),
+		   ptr, len);
 }
 
 int kill(int pid __attribute__((unused)),
@@ -175,47 +99,50 @@ void _exit(int status __attribute__((unused)))
 
 int _close(int file)
 {
-  // MMC?
-  if (DEVICE_TYPE(file) == mmc_driver.device_type) {
-    init_mmc();
-    return mmc_driver.close(file);
-  } else {
-    return 0;
+  _cc3_device_driver_t *dev = _cc3_get_driver_for_file_number(file);
+  if (dev == NULL) {
+    errno = EBADF;
+    return -1;
   }
+
+  return dev->close(_cc3_get_internal_file_number(file));
 }
 
-_off_t _lseek(int file, _off_t ptr, int dir)
+_off_t _lseek(int file, _off_t offset, int dir)
 {
-  // MMC?
-  if (DEVICE_TYPE(file) == mmc_driver.device_type) {
-    struct ioctl_seek seeker;
-
-    seeker.pos = &ptr;
-    seeker.whence = &dir;
-
-    init_mmc();
-
-    return mmc_driver.ioctl(file, IOCTL_MMC_SEEK, &seeker);
-  } else {
-    return 0;
+  _cc3_device_driver_t * dev = _cc3_get_driver_for_file_number(file);
+  if (dev == NULL) {
+    errno = EBADF;
+    return -1;
   }
+
+  return dev->lseek(_cc3_get_internal_file_number(file),
+		    offset,
+		    dir);
 }
 
 int _fstat(int file, struct stat *st)
 {
-  if (file == DEVICE_TYPE(UART_DEVICE)) {
-    st->st_mode = S_IFCHR;
-    return 0;
-  } else {
-    errno = EIO;
+  _cc3_device_driver_t * dev = _cc3_get_driver_for_file_number(file);
+  if (dev == NULL) {
+    errno = EBADF;
     return -1;
   }
+
+  return dev->fstat(_cc3_get_internal_file_number(file),
+		    st);
 }
 
 
 int isatty (int file)
 {
-  return file == DEVICE_TYPE(UART_DEVICE);
+  _cc3_device_driver_t * dev = _cc3_get_driver_for_file_number(file);
+  if (dev == NULL) {
+    errno = EBADF;
+    return -1;
+  }
+
+  return dev->is_tty ? 1 : 0;
 }
 
 int _system(const char *s)
@@ -238,24 +165,6 @@ int _link(char *old __attribute__((unused)),
 
 
 
-static bool is_mmc_filename(const char *name) {
-  // filename starts with "c:/"
-  return name[0] == 'C' && name[1] == ':' && name[2] == '/';
-}
-
-static int process_uart_filename(const char *name) {
-  int uart;
-  int result;
-  char buf[2];
-
-  result = sscanf(name, "COM%3d:%c", &uart, buf);
-  if (result != 1) {
-    return -1;
-  }
-
-  return uart;
-}
-
 static void normalize_filename(char *name) {
   // make all caps, and change '\' to '/'
   int i = 0;
@@ -273,29 +182,22 @@ static void normalize_filename(char *name) {
 int _open(const char *name, int flags, int mode)
 {
   int result = -1;
-  int uart_num;
   char *norm = strdup(name);
+  _cc3_device_driver_t *dev;
 
   if (norm == NULL) {
-    errno = ENOMEM;
     return result;
   }
 
   normalize_filename(norm);
 
-  if (is_mmc_filename(norm)) {
-    // skip "c:/" part
-    init_mmc();
-    result = mmc_driver.open(&norm[3], flags, mode);
-  } else if ((uart_num = process_uart_filename(norm)) != -1) {
-    // extract from "COMxx:"
-    if (uart_num < cc3_get_uart_count()) {
-      result = DEVICE(UART_DEVICE) | uart_num;
-    } else {
-      errno = ENODEV;
-    }
-  } else {
+  dev = _cc3_get_driver_for_name(norm);
+  if (dev == NULL) {
     errno = ENOENT;
+    result = -1;
+  } else {
+    result = _cc3_make_file_number(dev,
+				   dev->open(name, flags, mode));
   }
 
   free(norm);
@@ -307,32 +209,38 @@ int _rename(char *oldpath, char *newpath) {
   char *n_oldpath;
   char *n_newpath;
 
+  _cc3_device_driver_t *dev1;
+  _cc3_device_driver_t *dev2;
+
+  // normalize paths
   n_oldpath = strdup(oldpath);
   if (n_oldpath == NULL) {
-    errno = ENOMEM;
     return -1;
   }
   n_newpath = strdup(newpath);
   if (n_newpath == NULL) {
     free(n_oldpath);
-    errno = ENOMEM;
     return -1;
   }
-
   normalize_filename(n_oldpath);
   normalize_filename(n_newpath);
 
-  if (is_mmc_filename(n_oldpath) && is_mmc_filename(n_newpath)) {
-    struct ioctl_rename renamer;
-    renamer.oldname = &n_oldpath[3];  // skip "c:/"
-    renamer.newname = n_newpath;
+  // get the device drivers for the paths
+  dev1 = _cc3_get_driver_for_name(n_oldpath);
+  dev2 = _cc3_get_driver_for_name(n_newpath);
 
-    init_mmc();
-    result = mmc_driver.ioctl(0, IOCTL_MMC_RENAME, &renamer);
+  if (dev1 != dev2) {
+    // make sure the devices are the same
+    errno = EXDEV;
+  } else if (dev1 == NULL || dev2 == NULL) {
+    // make sure the drivers exist
+    errno = ENOENT;
   } else {
-    errno = EINVAL;
+    // pass it down
+    result = dev1->rename(n_oldpath, n_newpath);
   }
 
+  // done
   free(n_oldpath);
   free(n_newpath);
   return result;
@@ -370,19 +278,19 @@ int _unlink(char *name)
 {
   int result = -1;
   char *norm = strdup(name);
+  _cc3_device_driver_t *dev;
 
   if (norm == NULL) {
-    errno = ENOMEM;
     return -1;
   }
 
+  // normalize
   normalize_filename(norm);
 
-  if (is_mmc_filename(norm)) {
-    long ptr = (long) &norm[3];  // skip "c:/"
-
-    init_mmc();
-    result = mmc_driver.ioctl(0, IOCTL_MMC_UNLINK, &ptr);
+  // get device
+  dev = _cc3_get_driver_for_name(norm);
+  if (dev != NULL) {
+    result = dev->unlink(name);
   } else {
     errno = ENOENT;
   }

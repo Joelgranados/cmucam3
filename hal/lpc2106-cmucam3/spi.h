@@ -8,7 +8,7 @@
 ******************************************************/
 
 /*
- * Copyright 2006  Anthony Rowe and Adam Goode
+ * Copyright 2006-2007  Anthony Rowe and Adam Goode
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@
 #define SSP_RXRIS		BIT(2)
 #define SSP_TXRIS		BIT(3)
 
-void cc3_spi0_init(void);
+void _cc3_spi0_init(void);
 
 #endif  // INC_SPI_H
 

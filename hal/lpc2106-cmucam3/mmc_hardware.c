@@ -8,7 +8,7 @@
 ******************************************************/
 
 /*
- * Copyright 2006  Anthony Rowe and Adam Goode
+ * Copyright 2006-2007  Anthony Rowe and Adam Goode
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,28 +43,16 @@ static const uint8_t cmdReset[] = { 0x40, 0x00, 0x00, 0x00, 0x00, 0x95 };
 static const uint8_t cmdInitCard[] = { 0x41, 0x00, 0x00, 0x00, 0x00, 0xFF };
 static const uint8_t cmdSetBlock[] = { CMD16, 0, 0, 2, 0, 0xff };
 
-/******************************************************
- *
- * EXT2 routines to detect card insertion / removal
- *
-******************************************************/
 
-
-/******************************************************
- *
- * spi0Init - transport media to communicate with
- * the Flash drive.
- *
-******************************************************/
-void cc3_spi0_init (void)
+void _cc3_spi0_init (void)
 {                               // setup basic operation of the SPI0 controller.
   // set pins for SPI0 operation.
-  // REG(PCB_PINSEL0) = REG(PCB_PINSEL0) | _CC3_SPI_PINSEL;
   REG (PCB_PINSEL0) =
     ((~_CC3_SPI_MASK) & REG (PCB_PINSEL0)) | _CC3_SPI_PINSEL;
-  //REG(PCB_PINSEL0) = 0x5500;
+
   // set clock rate to approx 7.4975 MHz?
   REG (SPI_SPCCR) = 8;
+
   // just turn on master mode for now.
   // clock is rising edge, pre-drive data bit before clock.
   // Most significant bit shifted out first.

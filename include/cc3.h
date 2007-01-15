@@ -207,5 +207,9 @@ uint8_t cc3_gpio_set_pin(uint8_t pin);
 uint8_t cc3_gpio_get_pin(uint8_t pin);
 
 
+// call this if you want to use a filesystem
+// without it, fopen won't really work
+void cc3_filesystem_init (void);
+
 
 #endif

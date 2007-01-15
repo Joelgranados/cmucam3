@@ -29,6 +29,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+
+#include "spi.h"
 #include "rdcf2.h"
 #include "mmc_hardware.h"
 
@@ -101,11 +103,6 @@ union MMC_IO_BUFFER {
 DRIVE_DESCRIPTION DriveDesc;
 
 
-/********************************************************************
- * initMMCdrive
- * return true if error, false if everything went well.
- ********************************************************************/
-
 static void CollectDataAboutDrive (union MMC_IO_BUFFER *IoBuffer)
 {
   // How large are the FAT tables?
@@ -147,6 +144,11 @@ static void CollectDataAboutDrive (union MMC_IO_BUFFER *IoBuffer)
      IoBuffer->BootBlock.NumberOfTotalSectors);
 }
 
+/********************************************************************
+ * initMMCdrive
+ * return true if error, false if everything went well.
+ ********************************************************************/
+
 bool initMMCdrive (void)
 {
   // access drive and collect structure info.
@@ -154,7 +156,6 @@ bool initMMCdrive (void)
   union MMC_IO_BUFFER *IoBuffer;
 
   // see if we have a card inserted.
-
   /* no detect on cmucam3 */
   /*
      if (IO0PIN & MMC_DETECT_BIT) {
@@ -163,6 +164,10 @@ bool initMMCdrive (void)
      return true;
      }
   */
+
+  // initialize the SPI0 controller.
+  _cc3_spi0_init();
+
   if (DriveDesc.IsValid) {
     // we already know about this drive.
     return false;

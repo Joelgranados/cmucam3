@@ -16,10 +16,11 @@
 include defs.mk
 
 CSOURCES=interrupt.c cc3.c cc3_hal.c syscalls.c serial.c \
-	servo.c rdcf2.c mmc_init.c mmc_hardware.c mmc_module.c gpio.c
-INCLUDES=cc3_hal.h devices.h ioctl.h lpc_config.h rdcf2.h servo.h \
+	servo.c rdcf2.c mmc_init.c mmc_hardware.c mmc_driver.c gpio.c \
+	devices.c uart_driver.c
+INCLUDES=cc3_hal.h devices.h lpc_config.h rdcf2.h servo.h \
 	cc3_pin_defines.h interrupt.h LPC2100.h mmc_hardware.h serial.h spi.h \
-	mmc_ioctl.h gpio.h
+	gpio.h
 ASMSOURCES=startup.s
 
 

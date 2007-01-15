@@ -36,9 +36,12 @@
  * Important defines for the configuration of RDCF.
  * uncomment to activate them.
 ******************************************************/
-
 #define RDCF_SECTOR_SIZE	512
+
+// make sure this is not over 256
 #define MaxFileBuffers		5
+
+
 // RDCF_FLUSH_DIR_AFTER_WRITE makes a big performance hit!
 // try using the IOCTL_MMC_FLUSH_DIRS on a timer instead.
 //#define RDCF_FLUSH_DIR_AFTER_WRITE

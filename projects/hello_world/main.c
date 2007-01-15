@@ -19,6 +19,9 @@ int main (void)
     // setup system    
     cc3_system_setup ();
 
+    // init filesystem driver
+    cc3_filesystem_init();
+
     // configure uarts
     cc3_uart_init (0, CC3_UART_RATE_115200,CC3_UART_MODE_8N1,CC3_UART_BINMODE_TEXT);
     // Make it so that stdout and stdin are not buffered
@@ -49,11 +52,19 @@ int main (void)
     c=getchar();
     if(c=='y' || c=='Y' )
     { 
-    	printf("\nMMC test...\n");
-    	fp = fopen("c:/test.txt", "w");
-    	fprintf( fp, "This will be written to the MMC...\n" ); 
-    	fclose(fp);
-    	printf( "A string was written to test.txt on the mmc card.\n" );
+      int result;
+      printf("\nMMC test...\n");
+      fp = fopen("c:/test.txt", "w");
+      if (fp == NULL) {
+	perror("fopen failed");
+      }
+      fprintf( fp, "This will be written to the MMC...\n" );
+
+      result = fclose(fp);
+      if (result == EOF) {
+	perror("fclose failed");
+      }
+      printf( "A string was written to test.txt on the mmc card.\n" );
     }
 
     // sample showing how to read button

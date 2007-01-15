@@ -34,9 +34,6 @@
 #include "lpc_config.h"
 #include "cc3.h"
 
-// as in "devices.h"
-#define UART_DEVICE    2
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // UART defines

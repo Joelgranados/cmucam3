@@ -21,7 +21,9 @@ int main(void) {
 		 CC3_UART_BINMODE_TEXT);
 
   cc3_camera_init ();
-   
+
+  cc3_filesystem_init();
+
   //cc3_set_colorspace(CC3_YCRCB);
   cc3_set_resolution(CC3_HIGH_RES);
   // cc3_pixbuf_set_subsample (CC3_NEAREST, 2, 2);
