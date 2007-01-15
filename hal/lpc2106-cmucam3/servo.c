@@ -39,7 +39,7 @@ static uint32_t servo_mask;
  *
  * Returns 1 upon success.
  * Returns -1 if the servo or position is out of bounds.
- * 
+ *
  *  The servo will physically move on the next servo cycle.
  *  The servo operates at 50hz.
  */
@@ -70,12 +70,12 @@ void cc3_servo_init ()
     // Setup timer1 to handle servos
     REG (TIMER1_TCR) = 0;       // turn off timer
     REG (TIMER1_TC) = 0;        // clear counter
-    REG (TIMER1_PC) = 0;        // clear prescale count 
-    REG (TIMER1_PR) = (int) (((FOSC * PLL_M) / 1000) / SERVO_RESOLUTION);       // 1 tick is  
+    REG (TIMER1_PC) = 0;        // clear prescale count
+    REG (TIMER1_PR) = (int) (((FOSC * PLL_M) / 1000) / SERVO_RESOLUTION);       // 1 tick is
 
-    REG (TIMER1_IR) = 0x01;     // Clear pending interrupt on MR0 
-    REG (TIMER1_MCR) = 0x01;    // Interrupt on MR0 and reset TC 
-    REG (TIMER1_MR0) = SERVO_RESOLUTION * SERVO_PERIOD; // interrupt every 20 ms  
+    REG (TIMER1_IR) = 0x01;     // Clear pending interrupt on MR0
+    REG (TIMER1_MCR) = 0x01;    // Interrupt on MR0 and reset TC
+    REG (TIMER1_MR0) = SERVO_RESOLUTION * SERVO_PERIOD; // interrupt every 20 ms
     REG (TIMER1_TCR) = 1;       // start the timer
     enable_servo_interrupt ();
 }
@@ -112,19 +112,19 @@ void _cc3_servo_lo (uint8_t n)
 {
     switch (n) {
     case 0:
-        if(servo_mask&0x1) 
+        if(servo_mask&0x1)
            REG (GPIO_IOCLR) = _CC3_SERVO_0;
         break;
     case 1:
-        if(servo_mask&0x2) 
+        if(servo_mask&0x2)
         REG (GPIO_IOCLR) = _CC3_SERVO_1;
         break;
     case 2:
-        if(servo_mask&0x4) 
+        if(servo_mask&0x4)
         REG (GPIO_IOCLR) = _CC3_SERVO_2;
         break;
     case 3:
-        if(servo_mask&0x8) 
+        if(servo_mask&0x8)
         REG (GPIO_IOCLR) = _CC3_SERVO_3;
         break;
     }
@@ -134,7 +134,7 @@ void _cc3_servo_lo (uint8_t n)
 /**
  * cc3_disable()
  *
- * This function disables the servo interrupt and 
+ * This function disables the servo interrupt and
  * sets the servo lines low.
  */
 void cc3_servo_disable ()
@@ -166,7 +166,7 @@ void _cc3_servo_int ()
     if (ct == (SERVO_RESOLUTION * SERVO_PERIOD)) {
         // First time interrupt called, rising edge for all
         REG (TIMER1_TC) = 0;
-        REG (TIMER1_MR0) = SERVO_RESOLUTION;    // schedule next wakeup for 1ms  
+        REG (TIMER1_MR0) = SERVO_RESOLUTION;    // schedule next wakeup for 1ms
         _cc3_servo_hi_all ();
     	// Copy current values into working values to avoid changes while
 	// in the scheduling loop
@@ -185,14 +185,12 @@ void _cc3_servo_int ()
             if (servo_tmp[i] <= (ct+safety))
                 _cc3_servo_lo (i);
         }
-	// If all pins have been serviced, set a new interrupt for the 
+	// If all pins have been serviced, set a new interrupt for the
 	// next servo period 20ms later
         if (min == SERVO_RESOLUTION + 1) {
             REG (TIMER1_MR0) = SERVO_RESOLUTION * SERVO_PERIOD;
-        }                       // interrupt every 20 ms  
+        }                       // interrupt every 20 ms
         else
             REG (TIMER1_MR0) = SERVO_RESOLUTION + min;
     }
-
-
 }
