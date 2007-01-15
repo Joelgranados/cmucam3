@@ -101,13 +101,13 @@ void _cc3_uart1_setup(uint16_t baud, uint8_t mode, uint8_t fmode)
   REG(UART1_LCR )= (mode & ~(1<<UART0_LCR_DLAB)); // clear DLAB "on-the-fly"
   // setup FIFO Control Register (fifo-enabled + xx trig) 
   REG(UART1_FCR) = fmode;
-  uart0_write("setting uart1\r\n" );
-  uart0_write("mode: " ); uart0_write_hex(mode); 
-  uart0_write("\r\nfmode: " ); uart0_write_hex(fmode); 
+  //  uart0_write("setting uart1\r\n" );
+  //  uart0_write("mode: " ); uart0_write_hex(mode); 
+  //  uart0_write("\r\nfmode: " ); uart0_write_hex(fmode); 
 
 }
 
-uint8_t cc3_get_uart_count(void) 
+uint8_t cc3_get_uart_count(void)
 {
   return 2;
 }
