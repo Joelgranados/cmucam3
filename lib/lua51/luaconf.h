@@ -810,6 +810,8 @@ union luai_Cast { double l_d; long l_l; };
 ** without modifying the main part of the file.
 */
 
+/* disable verifier and save some ROM space */
+#define LUAC_TRUST_BINARIES
 
 
 #endif
