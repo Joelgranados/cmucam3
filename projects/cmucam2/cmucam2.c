@@ -277,6 +277,7 @@ cmucam2_start:
   	    } while (poll_mode != 1);
         break;
 
+
       case GET_MEAN:
         if (n != 0) {
           error = 1;

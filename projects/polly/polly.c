@@ -99,14 +99,17 @@ int polly( polly_config_t config )
 #endif
 
     cc3_pixbuf_read_rows (img.pix, cc3_g_current_frame.height);
-    blur.size=3;
-    blur.mat[0][0]=1; blur.mat[0][1]=1; blur.mat[0][2]=1;
-    blur.mat[1][0]=1; blur.mat[1][1]=1; blur.mat[1][2]=1;
-    blur.mat[2][0]=1; blur.mat[2][1]=1; blur.mat[2][2]=1;
-    val=convolve(img,blur);
-    if(val==0)
+    if(config.blur==1)
 	{
-	printf( "convolve failed\n" );
+    	blur.size=3;
+    	blur.mat[0][0]=1; blur.mat[0][1]=1; blur.mat[0][2]=1;
+    	blur.mat[1][0]=1; blur.mat[1][1]=1; blur.mat[1][2]=1;
+    	blur.mat[2][0]=1; blur.mat[2][1]=1; blur.mat[2][2]=1;
+    	val=convolve(img,blur);
+    	if(val==0)
+		{
+		printf( "convolve failed\n" );
+		}
 	} 
     p.channel[0] = SELECTED;
     for (int y = 0; y < img.height - 3; y++) {
@@ -146,7 +149,7 @@ int polly( polly_config_t config )
     generate_polly_histogram (&polly_img, range);
     convert_histogram_to_ppm (&polly_img, range);
 #ifdef MMC_DEBUG
-//    matrix_to_pgm (&polly_img);
+    matrix_to_pgm (&polly_img);
 #endif
  //   printf( "Frame done, time=%d\n",cc3_timer()-last_time );
     // send a histogram packet
@@ -379,7 +382,7 @@ void generate_polly_histogram (cc3_image_t * img, uint8_t * hist)
     if (y > height - 5)
       break;
   }
-
+/*
   // Downsample Histogram 
   for (x = 0; x < width - 5; x += 5) {
     int min;
@@ -391,7 +394,7 @@ void generate_polly_histogram (cc3_image_t * img, uint8_t * hist)
     for (int i = 0; i < 5; i++)
       hist[x + i] = min;
   }
-
+*/
 
 
 
