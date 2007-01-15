@@ -23,74 +23,86 @@
 #include "cc3_jpg.h"
 #include <jpeglib.h>
 
+typedef struct {
+  struct jpeg_compress_struct cinfo;
+  struct jpeg_error_mgr jerr;
+} cc3_jpeg_t;
 
-static void destroy_jpeg(void);
-static void init_jpeg(void); 
-static void capture_current_jpeg(FILE *f); 
+
+static void destroy_jpeg(cc3_jpeg_t *cj);
+static cc3_jpeg_t *init_jpeg (void);
+static void capture_current_jpeg(cc3_jpeg_t *cj, FILE *f);
 
 void cc3_jpeg_send_simple(void) {
-
-
   // init jpeg
-  init_jpeg();
+  cc3_jpeg_t *cj = init_jpeg();
 
-  capture_current_jpeg(stdout);
+  capture_current_jpeg(cj, stdout);
 
-  destroy_jpeg();
+  destroy_jpeg(cj);
 }
 
 
-static struct jpeg_compress_struct cinfo;
-static struct jpeg_error_mgr jerr;
 
-//static cc3_pixel_t *row;
-uint8_t *row;
+static cc3_jpeg_t *init_jpeg(void) {
+  cc3_jpeg_t *cj = malloc(sizeof(cc3_jpeg_t));
+  if (cj == NULL) {
+    return NULL;
+  }
 
-static void init_jpeg(void) {
-  cinfo.err = jpeg_std_error(&jerr);
-  jpeg_create_compress(&cinfo);
+  // init error structure
+  cj->cinfo.err = jpeg_std_error(&cj->jerr);
+
+  // init jpeg structure
+  jpeg_create_compress(&cj->cinfo);
 
   // parameters for jpeg image
-  cinfo.image_width = cc3_g_current_frame.width;
-  cinfo.image_height = cc3_g_current_frame.height;
+  cj->cinfo.image_width = cc3_g_current_frame.width;
+  cj->cinfo.image_height = cc3_g_current_frame.height;
+
   //printf( "image width=%d image height=%d\n", cinfo.image_width, cinfo.image_height );
-  cinfo.input_components = 3;
+  cj->cinfo.input_components = 3;
  // cinfo.in_color_space = JCS_YCbCr;
-  cinfo.in_color_space = JCS_RGB;
+  cj->cinfo.in_color_space = JCS_RGB;
 
   // set image quality, etc.
-  jpeg_set_defaults(&cinfo);
-  jpeg_set_quality(&cinfo, 85, true);
+  jpeg_set_defaults(&cj->cinfo);
+  jpeg_set_quality(&cj->cinfo, 85, true);
 
-  // allocate memory for 1 row
-  row = cc3_malloc_rows(1);
-  if(row==NULL) printf( "FUCK, out of memory!\n" );
+  // return
+  return cj;
 }
 
-static void capture_current_jpeg(FILE *f) {
+static void capture_current_jpeg(cc3_jpeg_t *cj, FILE *f) {
   JSAMPROW row_pointer[1];
-  row_pointer[0] = row;
+
+  // allocate memory for 1 row
+  row_pointer[0] = cc3_malloc_rows(1);
+  if (row_pointer[0] == NULL) {
+    return;
+  }
 
   // output is file
-  jpeg_stdio_dest(&cinfo, f);
+  jpeg_stdio_dest(&cj->cinfo, f);
 
   // capture a frame to the FIFO
   cc3_pixbuf_load();
 
   // read and compress
-  jpeg_start_compress(&cinfo, TRUE);
-  while (cinfo.next_scanline < cinfo.image_height) {
-    cc3_pixbuf_read_rows(row, 1);
-    jpeg_write_scanlines(&cinfo, row_pointer, 1);
+  jpeg_start_compress(&cj->cinfo, TRUE);
+  while (cj->cinfo.next_scanline < cj->cinfo.image_height) {
+    cc3_pixbuf_read_rows(row_pointer[0], 1);
+    jpeg_write_scanlines(&cj->cinfo, row_pointer, 1);
   }
 
   // finish
-  jpeg_finish_compress(&cinfo);
+  jpeg_finish_compress(&cj->cinfo);
+
+  free(row_pointer[0]);
 }
 
 
-
-static void destroy_jpeg(void) {
-  jpeg_destroy_compress(&cinfo);
-  free(row);
+static void destroy_jpeg(cc3_jpeg_t *cj) {
+  jpeg_destroy_compress(&cj->cinfo);
+  free(cj);
 }
