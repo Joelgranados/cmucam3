@@ -91,6 +91,10 @@ SECTIONS
   _end = . ;
   PROVIDE (end = .);
 
+  _heap_end = ORIGIN(RAM) + LENGTH(RAM);
+  PROVIDE (heap_end = ORIGIN(RAM) + LENGTH(RAM));
+
+
   /* Stabs debugging sections.  */
   .stab          0 : { *(.stab) }
   .stabstr       0 : { *(.stabstr) }

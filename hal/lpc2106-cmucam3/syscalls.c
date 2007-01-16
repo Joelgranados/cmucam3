@@ -308,9 +308,14 @@ int _raise(int sig __attribute__((unused)))
 /* exciting memory management! */
 
 
-extern char end[];              /*  end is set in the linker command 	*/
+extern char end[];              /* end is set in the linker command 	*/
 				/* file and is the end of statically 	*/
 				/* allocated data (thus start of heap).	*/
+
+extern char heap_end[];         /* heap_end is also set in the linker   */
+                                /* and represents the physical end of   */
+                                /* ram (and the ultimate limit of the   */
+                                /* heap).                               */
 
 static void *heap_ptr;		/* Points to current end of the heap.	*/
 
@@ -338,7 +343,7 @@ void *_sbrk(int nbytes)
   //uart0_write(" base = ");
   //uart0_write_hex((unsigned int) base);
 
-  if (base + nbytes >= (char *) 0x40010000) {
+  if (base + nbytes >= (char *) heap_end) {
     errno = ENOMEM;
     return (void *) -1;
   }
