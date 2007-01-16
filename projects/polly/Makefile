@@ -2,10 +2,10 @@
 
 
 # C files to compile
-CSOURCES=main.c polly.c conv.c
+CSOURCES=main.c polly.c conv.c lreg.c
 
 # header files
-INCLUDES=polly.h conv.h
+INCLUDES=polly.h conv.h lreg.h
 
 # header files
 LIBS=cc3_ilp

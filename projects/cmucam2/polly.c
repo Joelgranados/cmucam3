@@ -156,7 +156,9 @@ int polly( polly_config_t config )
     printf( "\r" );
 
 
-  free (img.pix);               // don't forget to free!
+  free (img.pix);            
+  free (polly_img.pix);     
+  free (range);               
 
 }
 
