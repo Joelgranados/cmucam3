@@ -14,7 +14,8 @@
 
 
 export hal=lpc2106-cmucam3
-HALNAME=$(hal)$(THUMB_SUFFIX)
+#HALNAME=$(hal)$(THUMB_SUFFIX)
+HALNAME=$(hal)
 
 COMPILER_PREFIX=arm-none-eabi-
 
@@ -29,11 +30,11 @@ ifeq ($(strip $(HALDIR)),)
 endif
 
 
-DASH_THUMB=-thumb
-ifeq ($(strip $(thumb)),1)
-  THUMB_FLAGS=-mthumb
-  THUMB_SUFFIX=$(DASH_THUMB)
-endif
+#DASH_THUMB=-thumb
+#ifeq ($(strip $(thumb)),1)
+#  THUMB_FLAGS=-mthumb
+#  THUMB_SUFFIX=$(DASH_THUMB)
+#endif
 
 LIBS+=
 override CFLAGS+=-I$(HALDIR)/../../include -Os -pipe -funit-at-a-time \
@@ -44,9 +45,9 @@ override CFLAGS+=-I$(HALDIR)/../../include -Os -pipe -funit-at-a-time \
 	-Werror-implicit-function-declaration \
 	-ffreestanding -std=gnu99 -g -fdata-sections -ffunction-sections \
 	-mcpu=arm7tdmi-s \
-	-msoft-float -mthumb-interwork $(THUMB_FLAGS)
+	-msoft-float -mthumb-interwork
 
 override LDFLAGS+=-nostartfiles -lm -T$(HALDIR)/lpc2106-rom.ln \
-	-mcpu=arm7tdmi-s -msoft-float $(THUMB_FLAGS)
+	-mcpu=arm7tdmi-s -msoft-float
 
 HALLIB=libhal-$(HALNAME).a

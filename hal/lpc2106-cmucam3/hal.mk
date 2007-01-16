@@ -24,15 +24,19 @@ INCLUDES=cc3_hal.h devices.h lpc_config.h rdcf2.h servo.h \
 ASMSOURCES=startup.s
 
 
-COBJS=$(patsubst %.c, %$(THUMB_SUFFIX).o,$(CSOURCES))
-ASMOBJS=$(patsubst %.s, %$(THUMB_SUFFIX).o,$(ASMSOURCES))
+#COBJS=$(patsubst %.c, %$(THUMB_SUFFIX).o,$(CSOURCES))
+#ASMOBJS=$(patsubst %.s, %$(THUMB_SUFFIX).o,$(ASMSOURCES))
+COBJS=$(patsubst %.c, %.o,$(CSOURCES))
+ASMOBJS=$(patsubst %.s, %.o,$(ASMSOURCES))
 
 all: $(HALLIB)
 
-$(ASMOBJS): %$(THUMB_SUFFIX).o : %.s $(INCLUDES)
+#$(ASMOBJS): %$(THUMB_SUFFIX).o : %.s $(INCLUDES)
+$(ASMOBJS): %.o : %.s $(INCLUDES)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-$(COBJS): %$(THUMB_SUFFIX).o : %.c $(INCLUDES)
+#$(COBJS): %$(THUMB_SUFFIX).o : %.c $(INCLUDES)
+$(COBJS): %.o : %.c $(INCLUDES)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 $(HALLIB): $(COBJS) $(ASMOBJS)
