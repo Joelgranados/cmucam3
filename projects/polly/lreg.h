@@ -5,7 +5,7 @@
 
 
 typedef struct {
-   double r;  // correlation 
+   double r_sqr;  // correlation squared
    double a;  // intercept 
    double b;  // slope 
    double stddevPoints;  

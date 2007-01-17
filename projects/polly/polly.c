@@ -159,10 +159,12 @@ int polly( polly_config_t config )
 
      printf( "a=%f\n",reg_line.a );     
      printf( "b=%f\n",reg_line.b );     
-     printf( "r=%f\n",reg_line.r );     
-     printf( "bError=%f\n",reg_line.bError );     
-     printf( "stddevPoints=%f\n",reg_line.stddevPoints);     
+     printf( "r^2=%f\n",reg_line.r_sqr );     
 
+     double distance;
+     distance=reg_line.a+reg_line.b*(polly_img.width/2);
+     printf( "distance = %f\n",distance ); 
+    
     convert_histogram_to_ppm (&polly_img, range);
 
 

@@ -1,4 +1,4 @@
-#include "lreg.h"
+#include "cc3_math.h"
 
 
 #define iter1(N) \
@@ -8,7 +8,7 @@
         root |= 2 << (N); \
     }
 
-uint32_t isqrt (uint32_t n)
+uint32_t cc3_isqrt (uint32_t n)
 {
     uint32_t root = 0, try;
     iter1 (15);    iter1 (14);    iter1 (13);    iter1 (12);
@@ -20,7 +20,7 @@ uint32_t isqrt (uint32_t n)
 
 
 
-double lreg_mean( uint8_t data[], uint32_t size ) 
+double cc3_mean( uint8_t data[], uint32_t size ) 
 {
 
   double mean = 0.0;
@@ -57,7 +57,7 @@ double lreg_mean( uint8_t data[], uint32_t size )
 
  */
 
-void lreg(uint8_t x_data[], uint8_t y_data[], uint8_t size,reg_data_t *reg_out )
+void cc3_linear_reg(uint8_t x_data[], uint8_t y_data[], uint8_t size,cc3_linear_reg_data_t *reg_out )
 {
 
 
@@ -108,36 +108,17 @@ void lreg(uint8_t x_data[], uint8_t y_data[], uint8_t size,reg_data_t *reg_out )
     
 
     // slope
-    double b = SSxy / SSxx;
+    double m = SSxy / SSxx;
     // intercept
-    double a = muY - b * muX;
-
-    // standard deviation of the points
-   // printf( "1 sqrt( %f )=",(SSyy - b * SSxy)/(size-2));
-   // double stddevPoints = isqrt( (SSyy - b * SSxy)/(size-2) );
-   // printf( "%f\n",stddevPoints);
-
-    // Error of the slope
-   // printf( "2 sqrt( %f )=",SSxx);
-   // double bError = stddevPoints / isqrt( SSxx );
-   // printf( "%f\n",isqrt( SSxx));
+    double b = muY - m * muX;
 
     double r2Numerator = (size * Sxy) - (Sx * Sy);
     double r2Denominator = ((size*SSx) - (Sx * Sx))*((size*SSy) - (Sy * Sy));
     double r2 = (r2Numerator * r2Numerator) / r2Denominator;
 
-    //double signB = (b < 0) ? -1.0 : 1.0;
-    //printf( "3 sqrt(%f)=",r2);
-    //double r = signB * isqrt(r2);
-    //printf( "%f\n",r);
-
     reg_out->r_sqr = r2; 
-    reg_out->a = a; 
     reg_out->b = b; 
-    reg_out->bError = 0; 
-    reg_out->stddevPoints= 0; 
-    //reg_out->bError = bError; 
-    //reg_out->stddevPoints= stddevPoints; 
+    reg_out->m = m; 
   } // if N > 0
 
 } // lineInfo
