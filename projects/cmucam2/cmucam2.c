@@ -23,9 +23,10 @@
 //#define SERIAL_BAUD_RATE  CC3_UART_RATE_300
 
 
-#define MAX_ARGS     10
-#define MAX_LINE     128
-#define VERSION_BANNER "CMUcam2 v1.00 c6"
+static const int MAX_ARGS = 10;
+static const int MAX_LINE = 128;
+
+static const char *VERSION_BANNER = "CMUcam2 v1.00 c6";
 
 typedef enum {
   RETURN,
@@ -49,31 +50,33 @@ typedef enum {
 
 char *cmucam2_cmds[CMUCAM2_CMD_END];
 
-void cmucam2_get_mean (cc3_color_info_pkt_t * t_pkt, uint8_t poll_mode,
-                       uint8_t line_mode);
-void cmucam2_write_s_packet (cc3_color_info_pkt_t * pkt);
-void cmucam2_track_color (cc3_track_pkt_t * t_pkt, uint8_t poll_mode,
-                          uint8_t line_mode);
-int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list);
-void set_cmucam2_commands (void);
-void print_ACK (void);
-void print_NCK (void);
-void cmucam2_write_t_packet (cc3_track_pkt_t * pkt);
+static void cmucam2_get_mean (cc3_color_info_pkt_t * t_pkt,
+			      bool poll_mode,
+			      bool line_mode);
+static void cmucam2_write_s_packet (cc3_color_info_pkt_t * pkt);
+static void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
+				 bool poll_mode,
+				 bool line_mode);
+static int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list);
+static void set_cmucam2_commands (void);
+static void print_ACK (void);
+static void print_NCK (void);
+static void cmucam2_write_t_packet (cc3_track_pkt_t * pkt);
 
 int main (void)
 {
   int32_t command;
   int32_t val, n;
   uint32_t arg_list[MAX_ARGS];
-  uint8_t error, poll_mode, line_mode;
+  bool error, poll_mode, line_mode;
   cc3_track_pkt_t t_pkt;
   cc3_color_info_pkt_t s_pkt;
 
   set_cmucam2_commands ();
 
 cmucam2_start:
-  poll_mode = 0;
-  line_mode = 0;
+  poll_mode = false;
+  line_mode = false;
   cc3_system_setup ();
 
   cc3_filesystem_init();
@@ -91,18 +94,18 @@ cmucam2_start:
   cc3_servo_init ();
   cc3_pixbuf_set_subsample (CC3_NEAREST, 2, 1);
 
-  while (1) {
+  while (true) {
     cc3_channel_t old_coi;
 
     printf (":");
-    error = 0;
+    error = false;
     n = cmucam2_get_command (&command, arg_list);
     if (n != -1) {
       switch (command) {
 
       case RESET:
         if (n != 0) {
-          error = 1;
+          error = true;
           break;
         }
         else
@@ -114,7 +117,7 @@ cmucam2_start:
 
       case GET_VERSION:
         if (n != 0) {
-          error = 1;
+          error = true;
           break;
         }
         else
@@ -125,21 +128,21 @@ cmucam2_start:
 
       case POLL_MODE:
         if (n != 1) {
-          error = 1;
+          error = true;
           break;
         }
         else
           print_ACK ();
         if (arg_list[0] == 1)
-          poll_mode = 1;
+          poll_mode = true;
         else
-          poll_mode = 0;
+          poll_mode = false;
         break;
 
 
 	case HI_RES:
         if (n != 1) {
-          error = 1;
+          error = true;
           break;
         }
         else
@@ -153,7 +156,7 @@ cmucam2_start:
 
       case LINE_MODE:
         if (n != 2) {
-          error = 1;
+          error = true;
           break;
         }
         else
@@ -161,16 +164,16 @@ cmucam2_start:
         // FIXME: Make bitmasks later
         if (arg_list[0] == 0) {
           if (arg_list[1] == 1)
-            line_mode = 1;
+            line_mode = true;
           else
-            line_mode = 0;
+            line_mode = false;
         }
         break;
 
 
       case SEND_JPEG:
         if (n != 0 && n != 1) {
-          error = 1;
+          error = true;
           break;
         }
         else
@@ -188,13 +191,13 @@ cmucam2_start:
 	old_coi = cc3_g_current_frame.coi;
         if (n == 1) {
 	  if (arg_list[0] > 4) {
-            error = 1;
+            error = true;
             break;
           }
 	  cc3_pixbuf_set_coi(arg_list[0]);
 	}
         else if (n > 1) {
-          error = 1;
+          error = true;
           break;
         }
         else
@@ -206,7 +209,7 @@ cmucam2_start:
 
       case CAMERA_REG:
         if (n % 2 != 0 || n < 2) {
-          error = 1;
+          error = true;
           break;
         }
         else
@@ -218,7 +221,7 @@ cmucam2_start:
 
       case VIRTUAL_WINDOW:
         if (n != 4) {
-          error = 1;
+          error = true;
           break;
         }
         else
@@ -232,7 +235,7 @@ cmucam2_start:
 
       case DOWN_SAMPLE:
         if (n != 2) {
-          error = 1;
+          error = true;
           break;
         }
         else
@@ -243,7 +246,7 @@ cmucam2_start:
 
       case TRACK_COLOR:
         if (n != 0 && n != 6) {
-          error = 1;
+          error = true;
           break;
         }
         else
@@ -261,7 +264,7 @@ cmucam2_start:
 
       case GET_POLLY:
         if (n != 5 ) {
-          error = 1;
+          error = true;
           break;
         }
         else
@@ -276,13 +279,13 @@ cmucam2_start:
 		polly(p_config);
    		if (!cc3_uart_has_data (0))
       			break;
-  	    } while (poll_mode != 1);
+  	    } while (!poll_mode);
         break;
 
 
       case GET_MEAN:
         if (n != 0) {
-          error = 1;
+          error = true;
           break;
         }
         else
@@ -293,7 +296,7 @@ cmucam2_start:
 
       case SET_SERVO:
         if (n != 2) {
-          error = 1;
+          error = true;
           break;
         }
         else
@@ -308,9 +311,9 @@ cmucam2_start:
       }
     }
     else
-      error = 1;
+      error = true;
 
-    if (error == 1)
+    if (error)
       print_NCK ();
   }
 
@@ -319,8 +322,9 @@ cmucam2_start:
 }
 
 
-void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt, uint8_t poll_mode,
-                       uint8_t line_mode)
+void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
+		       bool poll_mode,
+                       bool line_mode)
 {
   cc3_image_t img;
   img.channels = 3;
@@ -338,13 +342,14 @@ void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt, uint8_t poll_mode,
     }
     if (!cc3_uart_has_data (0))
       break;
-  } while (poll_mode != 1);
+  } while (!poll_mode);
 
   free (img.pix);
 }
 
-void cmucam2_track_color (cc3_track_pkt_t * t_pkt, uint8_t poll_mode,
-                          uint8_t line_mode)
+void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
+			  bool poll_mode,
+                          bool line_mode)
 {
   cc3_image_t img;
   uint16_t i;
@@ -360,7 +365,7 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt, uint8_t poll_mode,
       uint8_t *lm;
       lm_width = 0;
       lm_height = 0;
-      if (line_mode == 1) {
+      if (line_mode) {
         lm = &t_pkt->binary_scanline;
         lm_width = img.width / 8;
         if (img.width % 8 != 0)
@@ -378,7 +383,7 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt, uint8_t poll_mode,
       }
       while (cc3_pixbuf_read_rows (img.pix, 1)) {
         cc3_track_color_scanline (&img, t_pkt);
-        if (line_mode == 1) {
+        if (line_mode) {
 
           for (int j = 0; j < lm_width; j++) {
             //      printf( "%d ",lm[j] );
@@ -390,7 +395,7 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt, uint8_t poll_mode,
         }
       }
       cc3_track_color_scanline_finish (t_pkt);
-      if (line_mode == 1) {
+      if (line_mode) {
         putchar (0xAA);
         putchar (0xAA);
       }
@@ -399,7 +404,7 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt, uint8_t poll_mode,
     }
     if (!cc3_uart_has_data (0))
       break;
-  } while (poll_mode != 1);
+  } while (!poll_mode);
 
   free (img.pix);
 }
@@ -522,7 +527,7 @@ int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list)
   if (fail == 1)
     return -1;
   argc = 0;
-  while (1) {
+  while (true) {
     /* extract string from string sequence */
     token = strtok (NULL, " \r\n");
     /* check if there is nothing else to extract */
