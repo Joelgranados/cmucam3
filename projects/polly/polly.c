@@ -10,7 +10,6 @@
 #include "conv.h"
 #include "lreg.h"
 
-#define VIRTUAL_CAM
 #define MMC_DEBUG
 
 

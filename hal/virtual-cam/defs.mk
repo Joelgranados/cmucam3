@@ -38,7 +38,8 @@ override CFLAGS+=-I$(HALDIR)/../../include -Os -pipe -funit-at-a-time \
 	-Wnested-externs -Wpointer-arith -Wswitch -Wno-redundant-decls \
 	-Wreturn-type -Wshadow -Wstrict-prototypes -Wunused -Wextra \
 	-Werror-implicit-function-declaration \
-	-ffreestanding -std=gnu99 -g -fdata-sections -ffunction-sections
+	-ffreestanding -std=gnu99 -g -fdata-sections -ffunction-sections \
+	-DVIRTUAL_CAM
 
 override LDFLAGS+=-lm
 

@@ -8,7 +8,6 @@
 #include <cc3_ilp.h>
 #include "polly.h"
 
-#define VIRTUAL_CAM
 #define MMC_DEBUG
 
 

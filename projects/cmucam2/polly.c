@@ -9,7 +9,6 @@
 #include "polly.h"
 #include "conv.h"
 
-#define VIRTUAL_CAM
 #define MMC_DEBUG
 
 
