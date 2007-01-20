@@ -561,6 +561,7 @@ drive specifications.
 static const char * initialize_fcb(struct rdcf *f, const char * spec)
 {
 	f->buffer_status = EMPTY;
+	f->first_possibly_empty_cluster = 2;
 	read_file_system_information(f);
 	return spec;
 }
@@ -587,6 +588,9 @@ static void release_FAT_entries(struct rdcf *f)
 	if (j != EMPTY_CLUSTER) {
 		while (j < f->last_cluster_mark && j) {
 			unsigned k = FAT_entry(f,j);
+			if (j < f->first_possibly_empty_cluster) {
+			  f->first_possibly_empty_cluster = j;
+			}
 			set_FAT_entry(f,j,EMPTY_CLUSTER);
 			j = k;
 		}
@@ -841,7 +845,6 @@ static int real_rdcf_write(struct rdcf *f, const uint8_t *buf, int count)
 	uint32_t size = f->file.size;
 	uint32_t position = f->position;
 	unsigned unwritten_bytes = count;
-	unsigned first_possibly_empty_cluster = 2;
 	const char *buffer = buf;
 	if ((f->result=setjmp(f->error)) != 0) return f->result;
 	f->buffer_status = EMPTY;
@@ -853,9 +856,9 @@ static int real_rdcf_write(struct rdcf *f, const uint8_t *buf, int count)
 		if (n>rest_of_sector) n = rest_of_sector;
 		if (f->cluster == EMPTY_CLUSTER || f->cluster >= f->last_cluster_mark) {
 			unsigned new_cluster =
-				add_new_cluster(f, f->last_cluster, first_possibly_empty_cluster);
+				add_new_cluster(f, f->last_cluster, f->first_possibly_empty_cluster);
 			if (new_cluster == EMPTY_CLUSTER) break;
-			first_possibly_empty_cluster = new_cluster+1;
+			f->first_possibly_empty_cluster = new_cluster+1;
 			f->cluster = f->last_cluster = new_cluster;
 			if (f->file.first_cluster==EMPTY_CLUSTER)
 			f->file.first_cluster = new_cluster;

@@ -132,7 +132,7 @@ struct rdcf
   uint16_t cluster;
   uint16_t last_cluster;
   uint32_t sector_in_buffer;
-  
+  uint32_t first_possibly_empty_cluster;
   jmp_buf error;
 };
 
