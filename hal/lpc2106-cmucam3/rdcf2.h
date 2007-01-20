@@ -1,11 +1,11 @@
 /*-----------------------------------------------------------------------------
-          RDCF: A Reentrant DOS-Compatible File System, Version 2.0
-   Public Domain - No Restrictions on Use by Philip J. Erdelsky pje@acm.org
-                               January 15, 1993
+  RDCF: A Reentrant DOS-Compatible File System, Version 2.0
+  Public Domain - No Restrictions on Use by Philip J. Erdelsky pje@acm.org
+  January 15, 1993
 
- Nov 11, 2005 -- Tom Walsh <tom@openharware.net>
-    Adapted for use under gcc + ARM + NewLib.
------------------------------------------------------------------------------*/
+  Nov 11, 2005 -- Tom Walsh <tom@openharware.net>
+  Adapted for use under gcc + ARM + NewLib.
+  -----------------------------------------------------------------------------*/
 
 /*
  * Copyright 2006  Anthony Rowe and Adam Goode
@@ -35,7 +35,7 @@
 /******************************************************
  * Important defines for the configuration of RDCF.
  * uncomment to activate them.
-******************************************************/
+ ******************************************************/
 #define RDCF_SECTOR_SIZE	512
 
 // make sure this is not over 256
@@ -51,7 +51,7 @@
 
 /******************************************************
  * end of user defines, change nothing below.
-******************************************************/
+ ******************************************************/
 
 struct rdcf_date_and_time
 {
@@ -67,12 +67,12 @@ struct rdcf_file_information
 {
   uint8_t spec[13];
   uint8_t attribute;
-    #define RDCF_READ_ONLY  0x01
-    #define RDCF_HIDDEN     0x02
-    #define RDCF_SYSTEM     0x04
-    #define RDCF_VOLUME     0x08
-    #define RDCF_DIRECTORY  0x10
-    #define RDCF_ARCHIVE    0x20
+#define RDCF_READ_ONLY  0x01
+#define RDCF_HIDDEN     0x02
+#define RDCF_SYSTEM     0x04
+#define RDCF_VOLUME     0x08
+#define RDCF_DIRECTORY  0x10
+#define RDCF_ARCHIVE    0x20
   struct rdcf_date_and_time date_and_time;
   uint16_t first_cluster;
   uint32_t size;
@@ -94,69 +94,70 @@ struct directory
 };
 
 union IO_BUFFER {
-	struct directory dir[RDCF_SECTOR_SIZE / sizeof(struct directory)];
-	uint16_t fat[RDCF_SECTOR_SIZE/2];
-	uint8_t  buf[RDCF_SECTOR_SIZE];
+  struct directory dir[RDCF_SECTOR_SIZE / sizeof(struct directory)];
+  uint16_t fat[RDCF_SECTOR_SIZE/2];
+  uint8_t buf[RDCF_SECTOR_SIZE];
 };
 
 /* FCB (File Control Block) */
 
 struct rdcf
 {
-		/* values that must be initialized by the calling program */
-	union 	IO_BUFFER buffer;
-		// hardware access.
-	bool	(*ReadSector)(long sector, uint8_t * buf);
-	bool	(*WriteSector)(long sector, const uint8_t * buf);
-		/* file information */
-	struct 	rdcf_file_information file;
-		/* result codes */
-	uint32_t		position;
-	uint16_t	drive_error;
-	int16_t		result;
-		/* file system information */
-	uint8_t		drive;
-	uint32_t		first_FAT_sector;
-	uint16_t	sectors_per_FAT;
-	uint32_t		first_directory_sector;
-	uint32_t		first_data_sector;
-	uint32_t	sectors_per_cluster;
-	uint16_t	maximum_cluster_number;
-	uint16_t	last_cluster_mark;
-		/* internal use only */
-	uint8_t		mode;
-	uint16_t	directory_first_cluster;
-	uint16_t	directory_cluster;
-	uint16_t	directory_index;
-	uint8_t		buffer_status;
-	uint16_t	cluster;
-	uint16_t	last_cluster;
-	uint32_t		sector_in_buffer;
-	jmp_buf error;
+  /* values that must be initialized by the calling program */
+  union  IO_BUFFER buffer;
+  // hardware access.
+  bool (*ReadSector)(long sector, uint8_t * buf);
+  bool (*WriteSector)(long sector, const uint8_t * buf);
+  /* file information */
+  struct rdcf_file_information file;
+  /* result codes */
+  uint32_t position;
+  uint16_t drive_error;
+  int16_t result;
+  /* file system information */
+  uint8_t drive;
+  uint32_t first_FAT_sector;
+  uint16_t sectors_per_FAT;
+  uint32_t first_directory_sector;
+  uint32_t first_data_sector;
+  uint32_t sectors_per_cluster;
+  uint16_t maximum_cluster_number;
+  uint16_t last_cluster_mark;
+  /* internal use only */
+  uint8_t mode;
+  uint16_t directory_first_cluster;
+  uint16_t directory_cluster;
+  uint16_t directory_index;
+  uint8_t buffer_status;
+  uint16_t cluster;
+  uint16_t last_cluster;
+  uint32_t sector_in_buffer;
+  
+  jmp_buf error;
 };
 
-	// description of partion file system is on.
+// description of partion file system is on.
 typedef struct {
-		// is drive present?
-	uint8_t		IsValid;
-		// How large are the FAT tables?
-	uint16_t	SectorsPerFAT;
-		// Important info to decode FAT entries into sectors.
-	uint8_t		SectorsPerCluster;
-		// Quick reference to BootBlock, if need be.
-	uint32_t	SectorZero;
-		// First File Allocation Table.
-	uint32_t	FirstFatSector;
-		// "backup" copy of the First FAT. usually to undelete files.
-	uint32_t	SecondFatSector;
-		// Where does the actual drive data area start?
-	uint32_t	RootDirSector;
-		// How many entries can be in the root directory?
-	uint16_t	NumberRootDirEntries;
-		// where does data (cluster 2) actually reside?
-	uint32_t	DataStartSector;
-		// What is the last data sector?
-	uint32_t	MaxDataSector;
+  // is drive present?
+  uint8_t IsValid;
+  // How large are the FAT tables?
+  uint16_t SectorsPerFAT;
+  // Important info to decode FAT entries into sectors.
+  uint8_t SectorsPerCluster;
+  // Quick reference to BootBlock, if need be.
+  uint32_t SectorZero;
+  // First File Allocation Table.
+  uint32_t FirstFatSector;
+  // "backup" copy of the First FAT. usually to undelete files.
+  uint32_t SecondFatSector;
+  // Where does the actual drive data area start?
+  uint32_t RootDirSector;
+  // How many entries can be in the root directory?
+  uint16_t NumberRootDirEntries;
+  // where does data (cluster 2) actually reside?
+  uint32_t DataStartSector;
+  // What is the last data sector?
+  uint32_t MaxDataSector;
 } DRIVE_DESCRIPTION;
 
 extern DRIVE_DESCRIPTION DriveDesc;
@@ -164,8 +165,8 @@ extern DRIVE_DESCRIPTION DriveDesc;
 
 /* modes for rdcf_open() */
 
-#define RDCF_READ			1
-#define RDCF_WRITE		2
+#define RDCF_READ   1
+#define RDCF_WRITE  2
 
 /* modes for rdcf_sort_directory() */
 
@@ -197,4 +198,4 @@ long rdcf_free_space(struct rdcf *);
 #endif
 
 
-#endif	//INC_RDCF_H
+#endif //INC_RDCF_H
