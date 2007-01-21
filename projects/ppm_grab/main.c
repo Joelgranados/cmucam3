@@ -97,6 +97,10 @@ void capture_ppm(FILE *f)
 {
   uint32_t x, y;
   uint32_t size_x, size_y;
+
+  uint32_t time, time2;
+  int write_time;
+
   uint8_t *row = cc3_malloc_rows(1);
 
   size_x = cc3_g_current_frame.width;
@@ -105,15 +109,25 @@ void capture_ppm(FILE *f)
   fprintf(f,"P6\n%d %d\n255\n",size_x,size_y );
   cc3_pixbuf_load ();
 
+  time = cc3_timer();
   for (y = 0; y < size_y; y++) {
     cc3_pixbuf_read_rows(row, 1);
 
     for (x = 0; x < size_x * 3U; x++) {
       uint8_t p = row[x];
-      fputc(p, f);
+      if (fputc(p, f) == EOF) {
+	perror("fputc failed");
+      }
     }
     fprintf(stderr, ".");
     fflush(stderr);
   }
+  time2 = cc3_timer();
+  write_time = time2 - time;
+
   free(row);
+
+  fprintf(stderr, "\n"
+	  "write_time  %10d\n",
+	  write_time);
 }
