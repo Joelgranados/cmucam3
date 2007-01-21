@@ -65,8 +65,8 @@ void cc3_linear_reg(uint8_t x_data[], uint8_t y_data[], uint8_t size,cc3_linear_
 
 
 
-    double muX = lreg_mean( x_data,size );
-    double muY = lreg_mean( y_data,size );
+    double muX = cc3_mean( x_data,size );
+    double muY = cc3_mean( y_data,size );
 
 
     //     N-1

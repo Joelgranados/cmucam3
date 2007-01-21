@@ -9,7 +9,6 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include "cc3_jpg.h"
-#include "polly.h"
 
 //#define SERIAL_BAUD_RATE  CC3_UART_RATE_230400
 #define SERIAL_BAUD_RATE  CC3_UART_RATE_115200
@@ -269,7 +268,7 @@ cmucam2_start:
         }
         else
           print_ACK ();
-        do {
+        /*do {
 		polly_config_t p_config;
 		p_config.color_thresh=arg_list[0];
 		p_config.min_blob_size=arg_list[1];
@@ -279,7 +278,7 @@ cmucam2_start:
 		polly(p_config);
    		if (!cc3_uart_has_data (0))
       			break;
-  	    } while (!poll_mode);
+  	    } while (!poll_mode);*/
         break;
 
 

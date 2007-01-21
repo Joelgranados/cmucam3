@@ -6,9 +6,8 @@ uint32_t i,j,k,l,mat_div;
 cc3_pixel_t p;
 
 mat_div=filter.size*filter.size;
-printf( "convolution\n" );
-printf( "img = %d, %d\n",img.width,img.height );
-printf( "filter = %d\n",filter.size);
+if(img.height-filter.size<0 ) return 0;
+if(img.width-filter.size<0 ) return 0;
 
 for(j=0; j<img.height-filter.size+1; j++ )
 	for(i=0; i<img.width-filter.size+1; i++ )
@@ -24,5 +23,5 @@ for(j=0; j<img.height-filter.size+1; j++ )
 	p.channel[0]=tmp / mat_div;
 	cc3_set_pixel (&img, i, j, &p);		
 	}
-
+return 1;
 }
