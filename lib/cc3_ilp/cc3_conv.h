@@ -8,10 +8,11 @@
 
 typedef struct{
 uint8_t mat[MAX_KERNEL_SIZE][MAX_KERNEL_SIZE];
+uint8_t divisor;
 uint32_t size;
 } cc3_kernel_t;
 
 
-int convolve(cc3_image_t img, cc3_kernel_t kernel);
+int cc3_convolve_img(cc3_image_t img, cc3_kernel_t kernel);
 
 #endif

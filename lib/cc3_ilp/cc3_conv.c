@@ -19,7 +19,7 @@ if(kernel.size>MAX_KERNEL_SIZE) return 0;
 if( img.height<kernel.size+1 ) return 0;
 if( img.width<kernel.size+1 ) return 0;
 
-mat_div=kernel.size*kernel.size;
+mat_div=kernel.divisor;
 for(j=0; j<img.height-kernel.size+1; j++ )
 	for(i=0; i<img.width-kernel.size+1; i++ )
 	{
