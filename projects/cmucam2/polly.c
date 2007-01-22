@@ -6,11 +6,12 @@
 #include <ctype.h>
 #include <cc3.h>
 #include <cc3_ilp.h>
+#include <cc3_conv.h>
 #include "polly.h"
-#include "conv.h"
 
-#define MMC_DEBUG
+//#define MMC_DEBUG
 
+ccr_config_t g_cc_conf;
 
 // Constants for connected component blob reduce
 #define SELECTED	255
@@ -26,16 +27,17 @@
  */
 int polly( polly_config_t config )
 {
-  uint32_t last_time, val;
+  uint32_t last_time, val,i;
   char c;
-  filter_t blur;
+  cc3_kernel_t blur;
   cc3_pixel_t p;
   cc3_image_t polly_img;
   cc3_image_t img;
-  uint8_t *range;
+  
   cc3_pixel_t mid_pix;
   cc3_pixel_t right_pix;
   cc3_pixel_t down_pix;
+ 
 
  // limit the recursive depth
  if(config.min_blob_size>30 ) return 0;
@@ -70,8 +72,7 @@ int polly( polly_config_t config )
   if(polly_img.pix==NULL)
 	return 0;
   
-  range = malloc(polly_img.width);
-  if(range==NULL)
+  if(config.histogram==NULL)
 	return 0;
 
 
@@ -98,14 +99,18 @@ int polly( polly_config_t config )
 #endif
 
     cc3_pixbuf_read_rows (img.pix, cc3_g_current_frame.height);
-    blur.size=3;
-    blur.mat[0][0]=1; blur.mat[0][1]=1; blur.mat[0][2]=1;
-    blur.mat[1][0]=1; blur.mat[1][1]=1; blur.mat[1][2]=1;
-    blur.mat[2][0]=1; blur.mat[2][1]=1; blur.mat[2][2]=1;
-    val=convolve(img,blur);
-    if(val==0)
+    if(config.blur==1)
 	{
-	printf( "convolve failed\n" );
+    	blur.size=3;
+    	blur.mat[0][0]=1; blur.mat[0][1]=1; blur.mat[0][2]=1;
+    	blur.mat[1][0]=1; blur.mat[1][1]=1; blur.mat[1][2]=1;
+    	blur.mat[2][0]=1; blur.mat[2][1]=1; blur.mat[2][2]=1;
+	blur.divisor=9;
+    	val=cc3_convolve_img(img,blur);
+    	if(val==0)
+		{
+		printf( "convolve failed\n" );
+		}
 	} 
     p.channel[0] = SELECTED;
     for (int y = 0; y < img.height - 3; y++) {
@@ -142,8 +147,26 @@ int polly( polly_config_t config )
 #ifdef MMC_DEBUG
     matrix_to_pgm (&polly_img);
 #endif
-    generate_polly_histogram (&polly_img, range);
-    convert_histogram_to_ppm (&polly_img, range);
+    generate_polly_histogram (&polly_img, config.histogram);
+  
+    /*x_axis = malloc(polly_img.width);
+    for(i=0; i<polly_img.width; i++ )
+    	x_axis[i]=i;
+    
+
+     lreg(x_axis, config.histogram, polly_img.width,&reg_line);
+
+     printf( "a=%f\n",reg_line.a );     
+     printf( "b=%f\n",reg_line.b );     
+     printf( "r^2=%f\n",reg_line.r_sqr );     
+
+     double distance;
+     distance=reg_line.a+reg_line.b*(polly_img.width/2);
+     printf( "distance = %f\n",distance ); 
+    
+    convert_histogram_to_ppm (&polly_img, config.histogram);
+
+
 #ifdef MMC_DEBUG
 //    matrix_to_pgm (&polly_img);
 #endif
@@ -151,13 +174,13 @@ int polly( polly_config_t config )
     // send a histogram packet
     printf( "H " );
     for(int i=5; i<polly_img.width; i+=5)
-	    printf( "%d ",polly_img.height-range[i] );
+ 	    printf( "%d ",polly_img.height-config.histogram[i] );
     printf( "\r" );
+*/
 
-
-  free (img.pix);            
-  free (polly_img.pix);     
-  free (range);               
+  free (img.pix);               // don't forget to free!
+  free (polly_img.pix);               
+ // free (x_axis);             
 
 }
 
@@ -382,23 +405,20 @@ void generate_polly_histogram (cc3_image_t * img, uint8_t * hist)
   }
 
   // Downsample Histogram 
-  for (x = 0; x < width - 5; x += 5) {
-    int min;
-    min = 100;
-    for (int i = 0; i < 5; i++) {
-      if (hist[x + i] < min)
-        min = hist[x + i];
-    }
-    for (int i = 0; i < 5; i++)
-      hist[x + i] = min;
-  }
-
-
-
+//  for (x = 0; x < width - 5; x += 5) {
+//    int min;
+//    min = 100;
+//    for (int i = 0; i < 5; i++) {
+//      if (hist[x + i] < min)
+//        min = hist[x + i];
+//    }
+//    for (int i = 0; i < 5; i++)
+//      hist[x + i] = min;
+// }
 
 
 }
-
+/*
 void convert_histogram_to_ppm (cc3_image_t * img, uint8_t * hist)
 {
   int x, y;
@@ -422,7 +442,7 @@ void convert_histogram_to_ppm (cc3_image_t * img, uint8_t * hist)
     }
   }
 }
-
+*/
 
 
 void matrix_to_pgm (cc3_image_t * img)

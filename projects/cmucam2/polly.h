@@ -1,3 +1,6 @@
+#ifndef _POLLY_H_
+#define _POLLY_H_
+
 // Constants for connected component blob reduce
 #define SELECTED	255
 #define NOT_SELECTED	0
@@ -13,6 +16,8 @@ typedef struct {
 	uint8_t connectivity;
 	uint8_t horizontal_edges;
 	uint8_t vertical_edges;
+	uint8_t blur;
+	uint8_t *histogram;
 } polly_config_t;
 
 typedef struct {
@@ -21,7 +26,6 @@ typedef struct {
 	uint8_t connectivity;
 } ccr_config_t;
 
-ccr_config_t g_cc_conf;
 
 int polly( polly_config_t config);
 void connected_component_reduce (cc3_image_t * img, ccr_config_t config);
@@ -33,4 +37,4 @@ int reduce (cc3_image_t * img, int x, int y, int steps, int remove);
 void write_raw_fifo_ppm();
 
 
-
+#endif

@@ -8,7 +8,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include "cc3_jpg.h"
+#include <cc3_jpg.h>
+#include <cc3_math.h>
+#include "polly.h"
 
 //#define SERIAL_BAUD_RATE  CC3_UART_RATE_230400
 #define SERIAL_BAUD_RATE  CC3_UART_RATE_115200
@@ -262,23 +264,45 @@ cmucam2_start:
         break;
 
       case GET_POLLY:
-        if (n != 5 ) {
+        if (n != 6 ) {
           error = true;
           break;
         }
         else
           print_ACK ();
-        /*do {
-		polly_config_t p_config;
-		p_config.color_thresh=arg_list[0];
-		p_config.min_blob_size=arg_list[1];
-		p_config.connectivity=arg_list[2];
-		p_config.horizontal_edges=arg_list[3];
-		p_config.vertical_edges=arg_list[4];
-		polly(p_config);
-   		if (!cc3_uart_has_data (0))
-      			break;
-  	    } while (!poll_mode);*/
+ 	{
+		uint8_t *x_axis;
+  		polly_config_t p_config;
+		cc3_linear_reg_data_t reg_line;
+ 		x_axis = malloc(cc3_g_current_frame.width);
+         
+  		p_config.color_thresh=arg_list[0]; //20;
+  		p_config.min_blob_size=arg_list[1]; //20;
+  		p_config.connectivity=arg_list[2]; //0;
+  		p_config.horizontal_edges=arg_list[3]; //0;
+  		p_config.vertical_edges=arg_list[4]; //1;
+  		p_config.blur=arg_list[5]; //1;
+  		p_config.histogram=malloc(cc3_g_current_frame.width); 
+		for(uint32_t i=0; i<cc3_g_current_frame.width; i++ ) x_axis[i]=i;
+        	do {
+			polly(p_config);
+     			cc3_linear_reg(x_axis, p_config.histogram, cc3_g_current_frame.width,&reg_line);
+
+			// return linear regression offset value   
+     			printf( "P %f ",reg_line.b );  
+     			// return linear regression slope
+			printf( "%f ",reg_line.m );    
+		       	// return r squared value	
+     			printf( "%f ",reg_line.r_sqr );     
+			// return distance to line at middle of image
+     			double distance=reg_line.m*(cc3_g_current_frame.width/2)+reg_line.b;
+     			printf( " %f\r",distance ); 
+    
+   			if (!cc3_uart_has_data (0))
+      				break;
+  	    	} while (!poll_mode);
+  		free(p_config.histogram); 
+	}
         break;
 
 
