@@ -63,7 +63,8 @@ int main (void)
      	double distance;
  	cc3_linear_reg_data_t reg_line;
 
-        polly(p_config);  // p_config.histogram gets filled with the return data
+        polly(p_config);  
+	// p_config.histogram gets filled with the return data
 
     	for(i=0; i<cc3_g_current_frame.width; i++ )
     		x_axis[i]=i;
