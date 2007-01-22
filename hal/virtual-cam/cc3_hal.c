@@ -33,6 +33,8 @@ virtual_fifo_index=0;
 }
 
 _cc3_camera_state_t _cc3_g_current_camera_state;
+uint8_t virtual_fifo[VIRTUAL_FIFO_SIZE];
+uint32_t virtual_fifo_index;
 
 
 /*****************************************

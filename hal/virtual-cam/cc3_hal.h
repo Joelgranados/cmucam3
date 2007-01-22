@@ -32,8 +32,8 @@
 
 // allocate big virtual frame buffer
 #define VIRTUAL_FIFO_SIZE    (640*480*3)
-uint8_t virtual_fifo[VIRTUAL_FIFO_SIZE];
-uint32_t virtual_fifo_index;
+extern uint8_t virtual_fifo[VIRTUAL_FIFO_SIZE];
+extern uint32_t virtual_fifo_index;
 
 typedef enum {
     _CC3_OV6620 = 0xC0,
