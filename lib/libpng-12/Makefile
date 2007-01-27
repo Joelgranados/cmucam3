@@ -6,7 +6,7 @@ CSOURCES = png.c pngerror.c pngget.c pngmem.c pngpread.c \
 
 INCLUDES = png.h pngconf.h
 
-LIBS = zlib
+LIBS += zlib
 
 
 

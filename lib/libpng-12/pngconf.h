@@ -89,7 +89,7 @@
  */
 
 #ifndef PNG_ZBUF_SIZE
-#  define PNG_ZBUF_SIZE 8192
+#  define PNG_ZBUF_SIZE 2048
 #endif
 
 /* Enable if you want a write-only libpng */
@@ -106,12 +106,14 @@
 
 /* Enabled by default in 1.2.0.  You can disable this if you don't need to
    support PNGs that are embedded in MNG datastreams */
+#define PNG_NO_MNG_FEATURES
 #if !defined(PNG_1_0_X) && !defined(PNG_NO_MNG_FEATURES)
 #  ifndef PNG_MNG_FEATURES_SUPPORTED
 #    define PNG_MNG_FEATURES_SUPPORTED
 #  endif
 #endif
 
+#define PNG_NO_FLOATING_POINT_SUPPORTED
 #ifndef PNG_NO_FLOATING_POINT_SUPPORTED
 #  ifndef PNG_FLOATING_POINT_SUPPORTED
 #    define PNG_FLOATING_POINT_SUPPORTED
@@ -124,8 +126,8 @@
  * large file), zlib needs to know how big of a chunk it can use, and
  * libpng thus makes sure to check any memory allocation to verify it
  * will fit into memory.
-#define PNG_MAX_MALLOC_64K
  */
+#define PNG_MAX_MALLOC_64K
 #if defined(MAXSEG_64K) && !defined(PNG_MAX_MALLOC_64K)
 #  define PNG_MAX_MALLOC_64K
 #endif
@@ -531,6 +533,7 @@
 
 #if defined(PNG_READ_SUPPORTED)
 
+#define PNG_READ_TRANSFORMS_NOT_SUPPORTED
 #if !defined(PNG_READ_TRANSFORMS_NOT_SUPPORTED) && \
       !defined(PNG_NO_READ_TRANSFORMS)
 #  define PNG_READ_TRANSFORMS_SUPPORTED
@@ -619,6 +622,7 @@
 
 #if defined(PNG_WRITE_SUPPORTED)
 
+#define PNG_WRITE_TRANSFORMS_NOT_SUPPORTED
 # if !defined(PNG_WRITE_TRANSFORMS_NOT_SUPPORTED) && \
     !defined(PNG_NO_WRITE_TRANSFORMS)
 #  define PNG_WRITE_TRANSFORMS_SUPPORTED
@@ -657,6 +661,7 @@
 #  endif
 #endif /* PNG_WRITE_TRANSFORMS_SUPPORTED */
 
+#define PNG_NO_WRITE_INTERLACING_SUPPORTED
 #if !defined(PNG_NO_WRITE_INTERLACING_SUPPORTED) && \
     !defined(PNG_WRITE_INTERLACING_SUPPORTED)
 #define PNG_WRITE_INTERLACING_SUPPORTED  /* not required for PNG-compliant
@@ -729,6 +734,8 @@
  * PNG_NO_MMX_CODE disables the use of MMX code without changing the API.
  * When MMX code is off, then optimized C replacement functions are used.
 */
+
+#define PNG_NO_MMX_CODE
 #if defined(PNG_READ_SUPPORTED) && !defined(PNG_NO_ASSEMBLER_CODE)
 #  ifndef PNG_ASSEMBLER_CODE_SUPPORTED
 #    define PNG_ASSEMBLER_CODE_SUPPORTED
