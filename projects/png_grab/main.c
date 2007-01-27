@@ -34,7 +34,7 @@ int main(void) {
   // init
   cc3_set_led(1);
   i = 0;
-  //  while(!cc3_read_button());
+  while(!cc3_read_button());
   while(true) {
     char filename[16];
 
@@ -131,6 +131,13 @@ void capture_png(FILE *f)
 
   size_x = cc3_g_current_frame.width;
   size_y = cc3_g_current_frame.height;
+
+  // these are the max values that work within
+  // the memory constraints of LPC2106
+  //
+  // mem_usage = (1 << (window_bits + 2)) + (1 << (mem_level + 9))
+  png_set_compression_mem_level(png_ptr, 5);
+  png_set_compression_window_bits(png_ptr, 11);
 
   // more png
   png_init_io(png_ptr, f);
