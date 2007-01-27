@@ -22,6 +22,11 @@
  * #define the symbol if yes, #undef it if no.
  */
 
+/*
+ * Don't use getenv, we are embedded.
+ */
+#define NO_GETENV
+
 /* Does your compiler support function prototypes?
  * (If not, you also need to use ansi2knr, see install.doc)
  */

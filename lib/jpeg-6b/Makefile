@@ -10,7 +10,7 @@ CSOURCES = jcapimin.c jcapistd.c jccoefct.c jccolor.c jcdctmgr.c jchuff.c \
         jquant2.c jutils.c jmemmgr.c jmemnobs.c
 
 INCLUDES = jchuff.h jdhuff.h jdct.h jerror.h jinclude.h jmemsys.h jmorecfg.h \
-        jpegint.h jpeglib.h jversion.h cdjpeg.h cderror.h transupp.h
+        jpegint.h jpeglib.h jversion.h cdjpeg.h cderror.h transupp.h jconfig.h
 
 
 
