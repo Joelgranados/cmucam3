@@ -41,6 +41,7 @@ int _write (int file, const char *ptr, int len);
 int _read (int file, char *ptr, int len);
 int kill(int pid, int sig);
 void _exit(int status);
+void abort(void);
 int _close(int file);
 _off_t _lseek(int file, _off_t offset, int dir);
 int _fstat(int file, struct stat *st);
@@ -56,7 +57,6 @@ int _times(struct tms *buf);
 int _unlink(char *name);
 int _raise(int sig);
 void *_sbrk(int nbytes);
-
 
 
 /* implementation */
@@ -95,6 +95,11 @@ void _exit(int status __attribute__((unused)))
 {
   // XXX: should call cc3_power_down
   while(1);
+}
+
+void abort(void)
+{
+  _exit(1);
 }
 
 int _close(int file)
