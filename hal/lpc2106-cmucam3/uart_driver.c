@@ -2,7 +2,7 @@
 #include "devices.h"
 #include "serial.h"
 
-#include <stdio.h>
+#include <stdlib.h>
 
 #include <errno.h>
 #undef errno
@@ -13,16 +13,18 @@ extern int errno;
 static const int max_uarts = 16;
 
 static int process_uart_filename(const char *name) {
-  int uart;
-  int result;
-  char buf[2];
-
-  result = sscanf(name, "COM%3d:%c", &uart, buf);
-  if (result != 1) {
-    return -1;
+  // parse "COMx:"
+  if (name[0] == 'C' && name[1] == 'O' && name[2] == 'M') {
+    char *endptr;
+    int uart = strtol(name + 3,
+		      &endptr,
+		      10);
+    if (endptr[0] == ':' && endptr[1] == '\0') {
+      return uart;
+    }
   }
 
-  return uart;
+  return -1;
 }
 
 static int uart_open (const char *name,
