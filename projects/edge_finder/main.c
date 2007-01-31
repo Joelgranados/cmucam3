@@ -159,7 +159,7 @@ int main (void)
         if(cnt<30) conf=100;
 	if(avg_error>3.0) conf=75;	
 	//if(reg_line.r_sqr<.2) conf=100;	
-	draw_line_img(reg_line.b,reg_line.m,distance,conf);
+//	draw_line_img(reg_line.b,reg_line.m,distance,conf);
     //	convert_histogram_to_ppm (&polly_img, config.histogram);
 	
 	}

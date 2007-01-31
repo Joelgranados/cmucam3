@@ -11,7 +11,7 @@ INCLUDES=polly.h
 LIBS=cc3_ilp
 
 # the name of this project
-PROJECT=zedge_finder
+PROJECT=edge_finder
 
 
 # Thumb mode
