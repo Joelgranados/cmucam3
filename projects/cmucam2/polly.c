@@ -106,7 +106,7 @@ int polly( polly_config_t config )
     	blur.mat[1][0]=1; blur.mat[1][1]=1; blur.mat[1][2]=1;
     	blur.mat[2][0]=1; blur.mat[2][1]=1; blur.mat[2][2]=1;
 	blur.divisor=9;
-    	val=cc3_convolve_img(img,blur);
+    	val=cc3_convolve_img(&img,blur);
     	if(val==0)
 		{
 		printf( "convolve failed\n" );

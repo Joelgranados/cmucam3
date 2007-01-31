@@ -7,17 +7,19 @@
 #include <cc3.h>
 #include <cc3_ilp.h>
 #include <cc3_math.h>
+#include <cc3_img_writer.h>
 #include "polly.h"
 
 //#define MMC_DEBUG
 
+void draw_line_img(double b,double m,double distance,uint8_t conf);
 
 /* simple hello world, showing features and compiling*/
 int main (void)
 {
   uint32_t last_time, val,i;
   char c;
-  uint8_t *x_axis;
+  uint8_t *x_axis,*h,cnt,conf;
   polly_config_t p_config;
 
   // setup system    
@@ -50,9 +52,10 @@ int main (void)
   // sample wait command in ms 
   cc3_wait_ms (1000);
   x_axis = malloc(cc3_g_current_frame.width);
+  h = malloc(cc3_g_current_frame.width);
          
-  p_config.color_thresh=20;
-  p_config.min_blob_size=20;
+  p_config.color_thresh=10;
+  p_config.min_blob_size=30;
   p_config.connectivity=0;
   p_config.horizontal_edges=0;
   p_config.vertical_edges=1;
@@ -66,11 +69,21 @@ int main (void)
         polly(p_config);  
 	// p_config.histogram gets filled with the return data
 
+	// Prune away points on the histogram that are outliers so they don't
+	// get added into the regression line.
+	cnt=0;
     	for(i=0; i<cc3_g_current_frame.width; i++ )
-    		x_axis[i]=i;
-    
+	{
+		if(p_config.histogram[i]>0 && p_config.histogram[i]<71)
+		{
+			h[cnt]=p_config.histogram[i];
+			x_axis[cnt]=i;
+			cnt++;
+		}
+	}
 
-     	cc3_linear_reg(x_axis, p_config.histogram, cc3_g_current_frame.width,&reg_line);
+	printf( "cnt = %d\n",cnt );
+     	cc3_linear_reg(x_axis, h, cnt,&reg_line);
 
      	printf( "b=%f\n",reg_line.b );     
      	printf( "m=%f\n",reg_line.m );     
@@ -78,7 +91,11 @@ int main (void)
 
      	distance=reg_line.m*(cc3_g_current_frame.width/2)+reg_line.b;
      	printf( "distance = %f\n",distance ); 
-    
+  
+        conf=255;	
+        if(cnt<20) conf=100;
+	if(reg_line.r_sqr<.3) conf=100;	
+	draw_line_img(reg_line.b,reg_line.m,distance,conf);
     //	convert_histogram_to_ppm (&polly_img, config.histogram);
 	
 	}
@@ -86,3 +103,34 @@ int main (void)
   return 0;
 }
 
+void draw_line_img(double b,double m,double distance,uint8_t conf)
+{
+cc3_image_t img;
+cc3_pixel_t p;
+uint32_t x;
+int32_t y;
+
+  img.channels = 1;
+  img.width = cc3_g_current_frame.width;
+  img.height = cc3_g_current_frame.height;    
+  img.pix = cc3_malloc_rows (cc3_g_current_frame.height);
+  if (img.pix == NULL) {
+    printf ("Not enough memory...\n");
+    exit (0);
+  }
+
+  p.channel[0]=0;
+  for(y=0; y<img.height; y++)
+	  for(x=0; x<img.width; x++ )
+		cc3_set_pixel (&img, x, y, &p);	
+
+  p.channel[0]=conf;
+	  for(x=0; x<img.width; x++ )
+		{
+		y=(uint32_t)(m*x+b);
+		if(y<0 || y>img.height) y=0;
+		y=img.height-y;
+		cc3_set_pixel (&img, x, y, &p);	
+		}
+cc3_img_write_file_create(&img);
+}

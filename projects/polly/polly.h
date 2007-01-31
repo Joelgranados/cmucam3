@@ -17,7 +17,7 @@ typedef struct {
 	uint8_t horizontal_edges;
 	uint8_t vertical_edges;
 	uint8_t blur;
-	uint8_t *histogram;
+	int8_t *histogram;
 } polly_config_t;
 
 typedef struct {
@@ -29,9 +29,9 @@ typedef struct {
 
 int polly( polly_config_t config);
 void connected_component_reduce (cc3_image_t * img, ccr_config_t config);
-void generate_polly_histogram (cc3_image_t * img, uint8_t * hist);
+void generate_polly_histogram (cc3_image_t * img, int8_t * hist);
 void matrix_to_pgm (cc3_image_t * img);
-void convert_histogram_to_ppm (cc3_image_t * img, uint8_t * hist);
+void convert_histogram_to_ppm (cc3_image_t * img, int8_t * hist);
 int count (cc3_image_t * img, int x, int y, int steps);
 int reduce (cc3_image_t * img, int x, int y, int steps, int remove);
 void write_raw_fifo_ppm();

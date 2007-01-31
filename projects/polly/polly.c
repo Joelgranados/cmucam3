@@ -7,9 +7,11 @@
 #include <cc3.h>
 #include <cc3_ilp.h>
 #include <cc3_conv.h>
+#include <cc3_img_writer.h>
 #include "polly.h"
 
 #define MMC_DEBUG
+
 
 ccr_config_t g_cc_conf;
 
@@ -106,10 +108,13 @@ int polly( polly_config_t config )
     	blur.mat[1][0]=1; blur.mat[1][1]=1; blur.mat[1][2]=1;
     	blur.mat[2][0]=1; blur.mat[2][1]=1; blur.mat[2][2]=1;
 	blur.divisor=9;
-    	val=cc3_convolve_img(img,blur);
+	//val=cc3_img_write_file_create(&img);
+    	val=cc3_convolve_img(&img,blur);
+	//val=cc3_img_write_file_create(&img);
     	if(val==0)
 		{
 		printf( "convolve failed\n" );
+		exit(0);
 		}
 	} 
     p.channel[0] = SELECTED;
@@ -367,7 +372,7 @@ void connected_component_reduce (cc3_image_t * img, ccr_config_t conf)
 }
 
 
-void generate_polly_histogram (cc3_image_t * img, uint8_t * hist)
+void generate_polly_histogram (cc3_image_t * img, int8_t * hist)
 {
   int x, y;
   int width, height;
@@ -456,7 +461,7 @@ void matrix_to_pgm (cc3_image_t * img)
  
   do { 
 #ifdef VIRTUAL_CAM
-	  sprintf(filename, "img%.5d.pgm", pgm_cnt);
+	  sprintf(filename, "img%.5da.pgm", pgm_cnt);
 #else
 	  sprintf(filename, "c:/img%.5d.pgm", pgm_cnt);
 #endif
