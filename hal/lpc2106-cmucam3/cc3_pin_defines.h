@@ -64,7 +64,7 @@
 #define _CC3_SERVO_2 		0x00080000	
 #define _CC3_SERVO_3 		0x00100000	
 
-#define _CC3_LED_0	        0x20	
+#define _CC3_LED_0	        0x40	
 #define _CC3_LED_1	        _CC3_SERVO_2 
 #define _CC3_LED_2	       	_CC3_SERVO_3 
 
