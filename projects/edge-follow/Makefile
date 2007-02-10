@@ -2,16 +2,16 @@
 
 
 # C files to compile
-CSOURCES=main.c
+CSOURCES=main.c polly.c
 
 # header files
-INCLUDES=
+INCLUDES=polly.h
 
 # header files
-LIBS=
+LIBS=cc3_ilp
 
 # the name of this project
-PROJECT=led_test
+PROJECT=edge-follow
 
 
 # Thumb mode

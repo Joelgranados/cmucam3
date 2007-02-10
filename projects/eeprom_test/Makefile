@@ -11,7 +11,7 @@ INCLUDES=LPC2k_ee.h
 LIBS=cc3_ilp
 
 # the name of this project
-PROJECT=eeprom_test
+PROJECT=eeprom-test
 
 
 # Thumb mode

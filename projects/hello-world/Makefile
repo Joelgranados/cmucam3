@@ -11,7 +11,7 @@ INCLUDES=
 LIBS=cc3_ilp
 
 # the name of this project
-PROJECT=hello_world
+PROJECT=hello-world
 
 
 # Thumb mode

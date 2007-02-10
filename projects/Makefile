@@ -1,4 +1,4 @@
-SUBDIRS=cmucam2 hello_world jpeg-cam benchmark
+SUBDIRS=cmucam2 hello-world jpeg-cam benchmark
 
 # Build rules
 all:

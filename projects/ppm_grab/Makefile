@@ -1,4 +1,4 @@
-PROJECT = ppm_grab
+PROJECT = ppm-grab
 
 CSOURCES = main.c
 

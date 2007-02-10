@@ -1,4 +1,4 @@
-PROJECT = png_grab
+PROJECT = png-grab
 
 CSOURCES = main.c
 
