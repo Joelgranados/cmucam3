@@ -51,9 +51,9 @@
 #define StatusDataCrcError		0xb     // crc error on data block.
 #define StatusDataWriteError	0xd     // write error on media (?).
 
-bool mmcInit (void);
-bool mmcWriteBlock (long sector, const uint8_t * buf);
-bool mmcReadBlock (long sector, uint8_t * buf);
-bool initMMCdrive (void);
+bool _cc3_mmc_block_write (uint32_t sector, const uint8_t * buf);
+bool _cc3_mmc_block_read  (uint32_t sector, uint8_t * buf);
+bool _cc3_mmc_init (void);
+void _cc3_mmc_idle (void);
 
 #endif

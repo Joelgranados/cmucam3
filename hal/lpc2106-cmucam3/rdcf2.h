@@ -106,8 +106,8 @@ struct rdcf
   /* values that must be initialized by the calling program */
   union  IO_BUFFER buffer;
   // hardware access.
-  bool (*ReadSector)(long sector, uint8_t * buf);
-  bool (*WriteSector)(long sector, const uint8_t * buf);
+  bool (*ReadSector)(uint32_t sector, uint8_t * buf);
+  bool (*WriteSector)(uint32_t sector, const uint8_t * buf);
   /* file information */
   struct rdcf_file_information file;
   /* result codes */

@@ -110,7 +110,5 @@
 #define SSP_RXRIS		BIT(2)
 #define SSP_TXRIS		BIT(3)
 
-void _cc3_spi0_init(void);
-
 #endif  // INC_SPI_H
 

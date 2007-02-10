@@ -49,12 +49,6 @@ extern int errno;
 
 extern struct DRIVE_DESCRIPTION Drive;
 
-static int mmc_init (void)
-{
-  // init the drive system & software.
-  return initMMCdrive();
-}
-
 // demand allocated file control blocks
 static struct rdcf *fcbs[MaxFileBuffers];
 
@@ -62,8 +56,8 @@ static struct rdcf *allocate_1_fcb (void)
 {
   struct rdcf *fcb = calloc(1, sizeof(struct rdcf));
   if (fcb != NULL) {
-    fcb->ReadSector = mmcReadBlock;
-    fcb->WriteSector = mmcWriteBlock;
+    fcb->ReadSector = _cc3_mmc_block_read;
+    fcb->WriteSector = _cc3_mmc_block_write;
   }
 
   return fcb;
@@ -106,26 +100,31 @@ static int mmc_open (const char *name, int flags,
   int result;
   int handle;
 
-  mmc_init();
+  _cc3_mmc_init();
 
   // is a drive still there?
   if (!DriveDesc.IsValid) {
+    _cc3_mmc_idle();
     errno = ENODEV;
     return -1;
   }
   // find a buffer to use.
   if ((handle = allocate_fcb ()) == -1) {
+    _cc3_mmc_idle();
     errno = ENOBUFS;
     return -1;
   }
 
   result = rdcf_open (fcbs[handle], remove_prefix(name), flags);
   if (result != 0) {
+    _cc3_mmc_idle();
     free(fcbs[handle]);
     fcbs[handle] = NULL;
     errno = ~result;
     return -1;
   }
+
+  _cc3_mmc_idle();
   return handle;
 }
 
@@ -134,16 +133,18 @@ static int mmc_close (int file)
   int result;
   struct rdcf *fcb;
 
-  mmc_init();
+  _cc3_mmc_init();
 
   // is a drive still there?
   if (!DriveDesc.IsValid) {
+    _cc3_mmc_idle();
     errno = ENODEV;
     return -1;
   }
 
   fcb = fcbs[file];
   if (file > MaxFileBuffers || fcb == NULL) {
+    _cc3_mmc_idle();
     errno = EBADF;
     return -1;
   }
@@ -151,6 +152,7 @@ static int mmc_close (int file)
   result = rdcf_close (fcb);
 
   if (result) {
+    _cc3_mmc_idle();
     free(fcb);
     fcbs[file] = NULL;
     errno = ~result;
@@ -159,6 +161,8 @@ static int mmc_close (int file)
 
   free(fcb);
   fcbs[file] = NULL;
+
+  _cc3_mmc_idle();
   return 0;
 }
 
@@ -166,18 +170,22 @@ static ssize_t mmc_read (int file, void *ptr, size_t len)
 {
   int result;
 
-  mmc_init();
+  _cc3_mmc_init();
 
   // is a drive still there?
   if (!DriveDesc.IsValid) {
+    _cc3_mmc_idle();
     errno = ENODEV;
     return -1;
   }
   result = rdcf_read (fcbs[file], ptr, len);
   if (result < 0) {
+    _cc3_mmc_idle();
     errno = ~result;
     return -1;
   }
+
+  _cc3_mmc_idle();
   return result;
 }
 
@@ -185,18 +193,22 @@ static ssize_t mmc_write (int file, const void *ptr, size_t len)
 {
   int result;
 
-  mmc_init();
+  _cc3_mmc_init();
 
   // is a drive still there?
   if (!DriveDesc.IsValid) {
+    _cc3_mmc_idle();
     errno = ENODEV;
     return -1;
   }
   result = rdcf_write (fcbs[file], ptr, len);
   if (result < 0) {
+    _cc3_mmc_idle();
     errno = ~result;
     return -1;
   }
+
+  _cc3_mmc_idle();
   return result;
 }
 
@@ -204,10 +216,11 @@ static off_t mmc_lseek (int file, off_t pos, int whence)
 {
   int result;
 
-  mmc_init();
+  _cc3_mmc_init();
 
   // is a drive still there?
   if (!DriveDesc.IsValid) {
+    _cc3_mmc_idle();
     errno = ENODEV;
     return -1;
   }
@@ -216,24 +229,29 @@ static off_t mmc_lseek (int file, off_t pos, int whence)
   case SEEK_SET:
     result = rdcf_seek (fcbs[file], pos);
     if (result < 0) {
+      _cc3_mmc_idle();
       errno = ~result;
       return -1;
     }
+    _cc3_mmc_idle();
     return fcbs[file]->position;
   case SEEK_CUR:               // not implemented.
   case SEEK_END:               // not implemented.
     break;
   }
+
+  _cc3_mmc_idle();
   errno = EINVAL;
   return -1;
 }
 
 static int mmc_unlink (const char *name)
 {
-  mmc_init();
+  _cc3_mmc_init();
 
   // is a drive still there?
   if (!DriveDesc.IsValid) {
+    _cc3_mmc_idle();
     errno = ENODEV;
     return -1;
   }
@@ -241,6 +259,7 @@ static int mmc_unlink (const char *name)
   int result;
   struct rdcf *fcb = allocate_1_fcb();
   if (fcb == NULL) {
+    _cc3_mmc_idle();
     return -1;
   }
 
@@ -248,18 +267,22 @@ static int mmc_unlink (const char *name)
   free(fcb);
 
   if (result < 0) {
+    _cc3_mmc_idle();
     errno = ~result;
     return -1;
   }
+
+  _cc3_mmc_idle();
   return 0;
 }
 
 static int mmc_rename (const char *old, const char *new)
 {
-  mmc_init();
+  _cc3_mmc_init();
 
   // is a drive still there?
   if (!DriveDesc.IsValid) {
+    _cc3_mmc_idle();
     errno = ENODEV;
     return -1;
   }
@@ -267,6 +290,7 @@ static int mmc_rename (const char *old, const char *new)
   int result;
   struct rdcf *fcb = allocate_1_fcb();
   if (fcb == NULL) {
+    _cc3_mmc_idle();
     return -1;
   }
 
@@ -274,9 +298,12 @@ static int mmc_rename (const char *old, const char *new)
   free(fcb);
 
   if (result < 0) {
+    _cc3_mmc_idle();
     errno = ~result;
     return -1;
   }
+
+  _cc3_mmc_idle();
   return 0;
 }
 
@@ -285,23 +312,28 @@ static int mmc_flush_dir (int file)
 {
   // flush dir entry associated with file.
 
-  mmc_init();
+  _cc3_mmc_init();
 
   // is a drive still there?
   if (!DriveDesc.IsValid) {
+    _cc3_mmc_idle();
     errno = ENODEV;
     return -1;
   }
 
   int result;
   if (file < 0 || file > MaxFileBuffers) {
+    _cc3_mmc_idle();
     return -1;
   }
   result = rdcf_flush_directory (fcbs[file]);
   if (result < 0) {
+    _cc3_mmc_idle();
     errno = ~result;
     return -1;
   }
+
+  _cc3_mmc_idle();
   return 0;
 }
 

@@ -25,6 +25,7 @@
  */
 
 
+#include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -44,8 +45,122 @@ static const uint8_t cmdInitCard[] = { 0x41, 0x00, 0x00, 0x00, 0x00, 0xFF };
 static const uint8_t cmdSetBlock[] = { CMD16, 0, 0, 2, 0, 0xff };
 
 
-void _cc3_spi0_init (void)
-{                               // setup basic operation of the SPI0 controller.
+#define SIZEOF_DIR_ENTRY	32
+
+/*******************************************************************
+ * structure defs
+ *******************************************************************/
+
+struct PARTITION_ENTRY {
+  // single partition entry for MMC.
+  uint8_t BootActive;
+  uint32_t FirstPartitionSector:24;
+  uint8_t FileSystemDescriptor;
+  uint32_t LastPartitionSector:24;
+  uint32_t FirstSectorPosition;
+  uint32_t NumberSectorsInPartition;
+} __attribute__ ((packed));
+
+
+struct PARTITION_TABLE {
+  uint8_t BootCode[446];
+  struct PARTITION_ENTRY PartitionEntry0;
+  struct PARTITION_ENTRY PartitionEntry1;
+  struct PARTITION_ENTRY PartitionEntry2;
+  struct PARTITION_ENTRY PartitionEntry3;
+  uint16_t Signature;
+} __attribute__ ((packed));
+
+
+struct BOOTSECTOR_ENTRY {
+  // this description is for an MMC boot block not for MSDOS per se.
+  uint32_t JumpCommand:24;
+  char OEM_NAME[8];
+  uint16_t BytesPerSector;
+  uint8_t SectorsPerCluster;
+  uint16_t ReservedSectors;
+  uint8_t NumberOfFATs;
+  uint16_t NumberRootDirEntries;
+  uint16_t NumberOfSectorsOnMedia;
+  uint8_t MediaDescriptor;
+  uint16_t SectorsPerFAT;
+  uint16_t SectorsPerTrack;
+  uint16_t NumberOfHeads;
+  uint32_t NumberOfHiddenSectors;
+  uint32_t NumberOfTotalSectors;
+  uint8_t DriveNumber;
+  uint8_t __RESERVED__;
+  uint8_t ExtendedBootSignature;
+  uint32_t VolumeID;
+  char VolumeLabel[11];
+  char FileSystemType[8];
+  uint8_t LoadProgramCode[448];
+  uint16_t Signature;
+} __attribute__ ((packed));
+
+struct DATABUFFER {
+  uint8_t data[RDCF_SECTOR_SIZE];
+};
+
+// re-use buffer area, don't waste RAM.
+union MMC_IO_BUFFER {
+  struct BOOTSECTOR_ENTRY BootBlock;
+  struct PARTITION_TABLE PartitionTable;
+};
+
+
+/*******************************************************************
+ * structure vars
+ *******************************************************************/
+DRIVE_DESCRIPTION DriveDesc;
+
+
+static void CollectDataAboutDrive (union MMC_IO_BUFFER *IoBuffer)
+{
+  // How large are the FAT tables?
+  DriveDesc.SectorsPerFAT = IoBuffer->BootBlock.SectorsPerFAT;
+  // Important info to decode FAT entries into sectors.
+  DriveDesc.SectorsPerCluster = IoBuffer->BootBlock.SectorsPerCluster;
+  // First File Allocation Table.
+  DriveDesc.FirstFatSector = DriveDesc.SectorZero +
+    IoBuffer->BootBlock.ReservedSectors;
+  // "backup" copy of the First FAT. usually to undelete files.
+  if (IoBuffer->BootBlock.NumberOfFATs > 1) {
+    DriveDesc.SecondFatSector =
+      DriveDesc.FirstFatSector + DriveDesc.SectorsPerFAT;
+  }
+  else {
+    // nope, only one FAT...
+    DriveDesc.SecondFatSector = -1;
+  }
+  // Where does the actual drive data area start?
+  if (DriveDesc.SecondFatSector == -1) {
+    // only one FAT, so data follows first FAT.
+    DriveDesc.RootDirSector = DriveDesc.FirstFatSector +
+      IoBuffer->BootBlock.SectorsPerFAT;
+  }
+  else {
+    // data follows both FAT tables.
+    DriveDesc.RootDirSector = DriveDesc.FirstFatSector +
+      (2 * IoBuffer->BootBlock.SectorsPerFAT);
+  }
+  // How many entries can be in the root directory?
+  DriveDesc.NumberRootDirEntries = IoBuffer->BootBlock.NumberRootDirEntries;
+  // where does cluster 2 begin?
+  DriveDesc.DataStartSector = DriveDesc.RootDirSector +
+    (DriveDesc.NumberRootDirEntries * SIZEOF_DIR_ENTRY) / RDCF_SECTOR_SIZE;
+  // where does the partition end?
+  DriveDesc.MaxDataSector = DriveDesc.SectorZero +
+    ((IoBuffer->BootBlock.NumberOfSectorsOnMedia) ?
+     IoBuffer->BootBlock.NumberOfSectorsOnMedia :
+     IoBuffer->BootBlock.NumberOfTotalSectors);
+}
+
+
+
+static void spi0_init (void)
+{
+  // setup basic operation of the SPI0 controller.
   // set pins for SPI0 operation.
   REG (PCB_PINSEL0) =
     ((~_CC3_SPI_MASK) & REG (PCB_PINSEL0)) | _CC3_SPI_PINSEL;
@@ -58,6 +173,7 @@ void _cc3_spi0_init (void)
   // Most significant bit shifted out first.
   REG (SPI_SPCR) = 0x20;        // bit 5 (master mode), all others 0
 }
+
 
 /******************************************************
  *
@@ -183,7 +299,7 @@ static bool mmcStatus (uint8_t response)
  * Returns true if all went well or false if not good.
  *
 ******************************************************/
-bool mmcInit (void)
+static bool mmcInit (void)
 {
   unsigned int count;
   bool result;
@@ -216,7 +332,7 @@ bool mmcInit (void)
 
 /******************************************************
  *
- * mmcReadBlock
+ * _cc3_mmc_block_read
  *
  * called with:
  *  sector number to read, target buffer addr
@@ -225,7 +341,7 @@ bool mmcInit (void)
  * return true on error, false if all went well.
  *
 ******************************************************/
-bool mmcReadBlock (long sector, uint8_t * buf)
+bool _cc3_mmc_block_read (uint32_t sector, uint8_t * buf)
 {
   uint8_t MMCCmd[MMC_CMD_SIZE];
 
@@ -282,7 +398,7 @@ static uint8_t getWriteResultCode (void)
 
 /******************************************************
  *
- * mmcWriteBlock
+ * _cc3_mmc_block_write
  *
  * called with:
  *   sector to write and source buffer.
@@ -292,7 +408,7 @@ static uint8_t getWriteResultCode (void)
  *
 ******************************************************/
 
-bool mmcWriteBlock (long sector, const uint8_t * buf)
+bool _cc3_mmc_block_write (uint32_t sector, const uint8_t * buf)
 {
   int result = 0;
   uint8_t MMCCmd[MMC_CMD_SIZE];
@@ -337,4 +453,85 @@ bool mmcWriteBlock (long sector, const uint8_t * buf)
   return false;
 }
 
-// vi:nowrap:
+
+
+/********************************************************************
+ * _cc3_mmc_init
+ * return true if error, false if everything went well.
+ ********************************************************************/
+bool _cc3_mmc_init (void)
+{
+  // access drive and collect structure info.
+
+  union MMC_IO_BUFFER *IoBuffer;
+
+  // see if we have a card inserted.
+  /* no detect on cmucam3 */
+  /*
+     if (IO0PIN & MMC_DETECT_BIT) {
+     // drive disappeared!
+     DriveDesc.IsValid = false;
+     return true;
+     }
+  */
+
+  // initialize the SPI0 controller.
+  spi0_init();
+
+  if (DriveDesc.IsValid) {
+    // we already know about this drive.
+    return false;
+  }
+
+  // init temporary structure
+  IoBuffer = calloc(1, sizeof(union MMC_IO_BUFFER));
+  if (IoBuffer == NULL) {
+    return true;
+  }
+
+  if (mmcInit () == false) {
+    free(IoBuffer);
+    return true;
+  }
+
+  // get the partition table to find the boot block.
+  if (_cc3_mmc_block_read (0, (uint8_t *) IoBuffer)) {
+    free(IoBuffer);
+    return true;
+  }
+
+  // validate.
+  if (IoBuffer->PartitionTable.Signature != 0xaa55) {
+    free(IoBuffer);
+    return true;
+  }
+
+  // get the boot block now.
+  DriveDesc.SectorZero =
+    IoBuffer->PartitionTable.PartitionEntry0.FirstSectorPosition;
+  if (_cc3_mmc_block_read (DriveDesc.SectorZero, (uint8_t *) IoBuffer)) {
+    free(IoBuffer);
+    return true;
+  }
+
+  // validate.
+  if (IoBuffer->BootBlock.Signature != 0xaa55) {
+    free(IoBuffer);
+    return true;
+  }
+
+  // looks good, make a note of where stuff starts at.
+  CollectDataAboutDrive (IoBuffer);
+  // pass all tests before validating drive.
+  DriveDesc.IsValid = true;
+
+  free(IoBuffer);
+  return false;
+}
+
+
+void _cc3_mmc_idle (void)
+{
+  REG (PCB_PINSEL0) =
+    ((~_CC3_SPI_MASK) & REG (PCB_PINSEL0)) | _CC3_SPI_PINSEL_DISABLE;
+}

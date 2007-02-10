@@ -73,6 +73,7 @@
 // SPI
 #define _CC3_SPI_MASK           0x0000FF00
 #define _CC3_SPI_PINSEL         0x00005500
+#define _CC3_SPI_PINSEL_DISABLE 0x00000000
 #define _CC3_SPI_SPIF           0x00000080
 
 // MMC
