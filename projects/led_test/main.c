@@ -17,7 +17,13 @@ int main (void) {
   setvbuf(stdout, NULL, _IONBF, 0 );
   setvbuf(stdin, NULL, _IONBF, 0 );
 
+  cc3_filesystem_init ();
   cc3_camera_init ();
+
+  FILE *f = fopen("c:/z.txt", "r"); // dummy to init the MMC
+  if (f != NULL) {
+    fclose(f);
+  }
 
   while (true) {
     int i;
