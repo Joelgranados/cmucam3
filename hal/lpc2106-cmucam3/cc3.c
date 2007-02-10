@@ -612,40 +612,40 @@ cc3_system_setup (void)
 }
 
 
-static void _cc3_set_cam_ddr_i2c_idle (void)
+static void _cc3_set_cam_ddr_sccb_idle (void)
 {
-  REG (GPIO_IODIR) = _CC3_I2C_PORT_DDR_IDLE;
-  _cc3_delay_i2c ();
+  REG (GPIO_IODIR) = _CC3_SCCB_PORT_DDR_IDLE;
+  _cc3_delay_sccb ();
 }
 
-static void _cc3_set_cam_ddr_i2c_write (void)
+static void _cc3_set_cam_ddr_sccb_write (void)
 {
-  REG (GPIO_IODIR) = _CC3_I2C_PORT_DDR_WRITE;
-  _cc3_delay_i2c ();
+  REG (GPIO_IODIR) = _CC3_SCCB_PORT_DDR_WRITE;
+  _cc3_delay_sccb ();
 }
 
 
 static void _cc3_set_cam_ddr (volatile unsigned long val)
 {
-  //DDR(I2C_PORT,val);
+  //DDR(SCCB_PORT,val);
   REG (GPIO_IODIR) = val;
-  _cc3_delay_i2c ();
+  _cc3_delay_sccb ();
 }
 
 
 
-static unsigned int _cc3_i2c_send (unsigned int num, unsigned int *buffer)
+static unsigned int _cc3_sccb_send (unsigned int num, unsigned int *buffer)
 {
   unsigned int ack, i, k;
   unsigned int data;
 
   // Send Start Bit
-  //I2C_SDA=0;  // needed because values can be reset by read-modify cycle
+  //SCCB_SDA=0;  // needed because values can be reset by read-modify cycle
   REG (GPIO_IOCLR) = 0x00800000;
-  _cc3_set_cam_ddr (_CC3_I2C_PORT_DDR_READ_SCL);        // SDA=0 SCL=1
-  //I2C_SCL=0;  // needed because values can be reset by read-modify cycle
+  _cc3_set_cam_ddr (_CC3_SCCB_PORT_DDR_READ_SCL);        // SDA=0 SCL=1
+  //SCCB_SCL=0;  // needed because values can be reset by read-modify cycle
   REG (GPIO_IOCLR) = 0x00400000;
-  _cc3_set_cam_ddr_i2c_write ();        // SDA=0 SCL=0
+  _cc3_set_cam_ddr_sccb_write ();        // SDA=0 SCL=0
 
   // Send the Byte
   for (k = 0; k != num; k++) {
@@ -653,48 +653,48 @@ static unsigned int _cc3_i2c_send (unsigned int num, unsigned int *buffer)
     for (i = 0; !(i & 8); i++)  // Write data
     {
       if (data & 0x80) {
-        _cc3_set_cam_ddr (_CC3_I2C_PORT_DDR_READ_SDA);  // SDA=1 SCL=0
-        _cc3_set_cam_ddr_i2c_idle ();   // SDA=1 SCL=1
+        _cc3_set_cam_ddr (_CC3_SCCB_PORT_DDR_READ_SDA);  // SDA=1 SCL=0
+        _cc3_set_cam_ddr_sccb_idle ();   // SDA=1 SCL=1
       }
       else {
-        _cc3_set_cam_ddr_i2c_write ();  // SDA=0 SCL=0
-        _cc3_set_cam_ddr (_CC3_I2C_PORT_DDR_READ_SCL);  // SDA=0 SCL=1
+        _cc3_set_cam_ddr_sccb_write ();  // SDA=0 SCL=0
+        _cc3_set_cam_ddr (_CC3_SCCB_PORT_DDR_READ_SCL);  // SDA=0 SCL=1
 
       }
       while (!(REG (GPIO_IOPIN) & 0x00400000));
-      //while(!I2C_SCL);
+      //while(!SCCB_SCL);
 
 
       if (data & 0x08) {
-        _cc3_set_cam_ddr (_CC3_I2C_PORT_DDR_READ_SDA);  // SDA=1 SCL=0
+        _cc3_set_cam_ddr (_CC3_SCCB_PORT_DDR_READ_SDA);  // SDA=1 SCL=0
 
       }
       else {
-        _cc3_set_cam_ddr_i2c_write ();  // SDA=0 SCL=0
+        _cc3_set_cam_ddr_sccb_write ();  // SDA=0 SCL=0
       }
 
       data <<= 1;
     }                           // END OF 8 BIT FOR LOOP
 
     // Check ACK  <*************************************
-    _cc3_set_cam_ddr (_CC3_I2C_PORT_DDR_READ_SDA);      // SDA=1 SCL=0
+    _cc3_set_cam_ddr (_CC3_SCCB_PORT_DDR_READ_SDA);      // SDA=1 SCL=0
 
-    _cc3_set_cam_ddr_i2c_idle ();       // SDA=1 SCL=1
+    _cc3_set_cam_ddr_sccb_idle ();       // SDA=1 SCL=1
     ack = 0;
 
-    //if(I2C_SDA)                     // sample SDA
+    //if(SCCB_SDA)                     // sample SDA
     if (REG (GPIO_IOPIN) & 0x00800000) {
       ack |= 1;
       break;
     }
 
-    _cc3_set_cam_ddr_i2c_write ();      // SDA=0 SCL=0
+    _cc3_set_cam_ddr_sccb_write ();      // SDA=0 SCL=0
 
   }
 
   // Send Stop Bit
-  _cc3_set_cam_ddr (_CC3_I2C_PORT_DDR_READ_SCL);        // SDA=0 SCL=1
-  _cc3_set_cam_ddr_i2c_idle (); // SDA=1 SCL=1
+  _cc3_set_cam_ddr (_CC3_SCCB_PORT_DDR_READ_SCL);        // SDA=0 SCL=1
+  _cc3_set_cam_ddr_sccb_idle (); // SDA=1 SCL=1
 
   return ack;
 
@@ -718,7 +718,7 @@ int cc3_set_raw_register (uint8_t address, uint8_t value)
   data[1] = address;
   data[2] = value;
   to = 0;
-  while (_cc3_i2c_send (3, data)) {
+  while (_cc3_sccb_send (3, data)) {
     to++;
     if (to > 3)
       return 0;

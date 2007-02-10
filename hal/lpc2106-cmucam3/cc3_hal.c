@@ -80,7 +80,7 @@ void _cc3_delay_us_4 (int cnt)
         for (x = 0; x < 10; x++);
 }
 
-void _cc3_delay_i2c ()
+void _cc3_delay_sccb ()
 {
     volatile int x;
     //for (x = 0; x < 1000; x++);

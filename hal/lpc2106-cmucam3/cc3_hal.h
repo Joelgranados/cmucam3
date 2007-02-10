@@ -59,7 +59,7 @@ void _cc3_set_register_state (void);
 void _cc3_camera_reset (void);
 void _cc3_fifo_reset (void);
 void _cc3_delay_us_4 (int cnt);
-void _cc3_delay_i2c (void);
+void _cc3_delay_sccb (void);
 
 void _cc3_pixbuf_write_rewind (void);
 
