@@ -42,9 +42,11 @@ int main(void) {
   
    // Check if files exist, if they do then skip over them 
     do { 
-      //    	snprintf(filename, 16, "c:/img%.5d.jpg", i);
-    	// For virtual camera use this path...
+#ifdef VIRTUAL_CAM
         snprintf(filename, 16, "img%.5d.jpg", i);
+#else
+	snprintf(filename, 16, "c:/img%.5d.jpg", i);
+#endif
         f = fopen(filename, "r");
     	if(f!=NULL ) { 
 		printf( "%s already exists...\n",filename ); 
