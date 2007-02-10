@@ -1,4 +1,4 @@
-SUBDIRS=cc3_ilp jpeg-6b lua51 zlib libpng-12
+SUBDIRS=cc3-ilp jpeg-6b lua51 zlib libpng-12
 
 # Build rules
 all:

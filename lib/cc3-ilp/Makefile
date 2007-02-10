@@ -1,4 +1,4 @@
-LIB = cc3_ilp
+LIB = cc3-ilp
 LIBS += jpeg-6b
 
 CSOURCES = cc3_ilp.c cc3_color_track.c cc3_color_info.c cc3_jpg.c cc3_math.c cc3_conv.c cc3_connected_component.c cc3_img_writer.c

@@ -8,7 +8,7 @@ CSOURCES=main.c LPC2k_ee.c
 INCLUDES=LPC2k_ee.h
 
 # header files
-LIBS=cc3_ilp
+LIBS=cc3-ilp
 
 # the name of this project
 PROJECT=eeprom-test

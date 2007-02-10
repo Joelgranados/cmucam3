@@ -7,7 +7,7 @@ CSOURCES=main.c
 INCLUDES=
 
 # header files
-LIBS=cc3_ilp
+LIBS=cc3-ilp
 
 # the name of this project
 PROJECT=security-cam

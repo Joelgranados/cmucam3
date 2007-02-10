@@ -8,7 +8,7 @@ CSOURCES=main.c polly.c
 INCLUDES=polly.h
 
 # header files
-LIBS=cc3_ilp
+LIBS=cc3-ilp
 
 # the name of this project
 PROJECT=polly
