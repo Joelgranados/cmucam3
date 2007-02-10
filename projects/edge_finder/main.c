@@ -133,12 +133,12 @@ int main (void)
 		}
 	}
 
-	printf( "cnt = %d\n",cnt );
+	printf( "pcnt = %d ",cnt );
      	cc3_linear_reg(x_axis, h, cnt,&reg_line);
 
-     	printf( "b=%f\n",reg_line.b );     
-     	printf( "m=%f\n",reg_line.m );     
-     	printf( "r^2=%f\n",reg_line.r_sqr );
+     	printf( "b=%f ",reg_line.b );     
+     	printf( "m=%f ",reg_line.m );     
+     	printf( "r^2=%f ",reg_line.r_sqr );
    	int32_t error;
 	uint32_t total_error;
 	double avg_error;
@@ -150,10 +150,10 @@ int main (void)
 		if(error<0) error*=-1;	
 		total_error+=error;
 		}
-	avg_error=(double)total_error/(double)cnt;
-	printf( "Abs Error = %d Avg Error = %f\n",total_error,avg_error );
      	distance=reg_line.m*(cc3_g_current_frame.width/2)+reg_line.b;
-     	printf( "distance = %f\n",distance ); 
+     	printf( "distance = %f ",distance ); 
+	avg_error=(double)total_error/(double)cnt;
+	printf( " Abs Error = %d Avg Error = %f\n\r",total_error,avg_error );
   
         conf=255;	
         if(cnt<30) conf=100;
