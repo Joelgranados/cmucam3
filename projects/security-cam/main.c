@@ -31,7 +31,7 @@ static uint16_t num_saved_frames = 0;
 static uint16_t num_captured_frames = 0;
 
 /* array to store rows while transfering b/w fifo and ii */
-static uint8_t image_row[176*3];
+static uint8_t image_row[CC3_LO_RES_WIDTH*3];
 
 cc3_image_t buffer_img_row;
 

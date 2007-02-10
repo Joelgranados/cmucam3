@@ -67,7 +67,7 @@ void cc3_pixbuf_load ()
   unsigned int i;
   //REG(GPIO_IOCLR)=CAM_IE;
   //while(frame_done!=1);
-  cc3_pixbuf_rewind ();
+ // cc3_pixbuf_rewind();
   _cc3_pixbuf_write_rewind ();
 
   //  start_time = cc3_timer();
@@ -83,11 +83,14 @@ void cc3_pixbuf_load ()
   while (!(REG (GPIO_IOPIN) & _CC3_CAM_VSYNC)); //while(CAM_VSYNC);
 
   enable_ext_interrupt ();
+
+  // Delay to wait for the image buffer to fill up before you start reading it
   for (i = 0; i < 3; i++) {
     while (!(REG (GPIO_IOPIN) & _CC3_CAM_HREF));
     while (REG (GPIO_IOPIN) & _CC3_CAM_HREF);
   }
 
+  cc3_pixbuf_rewind();
   cc3_g_current_frame.y_loc = 0;
 
   //while (REG (GPIO_IOPIN) & _CC3_CAM_VSYNC);
@@ -188,7 +191,9 @@ void cc3_pixbuf_rewind ()
   REG (GPIO_IOSET) = _CC3_BUF_RCK;
   REG (GPIO_IOCLR) = _CC3_BUF_RCK;
   REG (GPIO_IOSET) = _CC3_BUF_RRST;
-
+  // skip first line because camera isn't fast enough to catch first line without shifting the pixels
+  _cc3_pixbuf_skip_pixels (cc3_g_current_frame.raw_width / 2);
+  //_cc3_pixbuf_skip_pixels (cc3_g_current_frame.raw_width / 2);
   _cc3_second_green_valid = false;
   cc3_g_current_frame.y_loc = 0;
 }

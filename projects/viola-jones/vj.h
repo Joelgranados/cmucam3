@@ -28,12 +28,12 @@ But we'll never go upto that scale, so declaring (x,y) as uint8_t is sufficient
 /*---------- cmucam3 specific-------------*/
 
 const uint16_t CC3_INTEGRAL_IMG_HEIGHT = 61; // height of integral image
-const uint16_t CC3_INTEGRAL_IMG_WIDTH = 176; // width of integral image
+const uint16_t CC3_INTEGRAL_IMG_WIDTH = CC3_LO_RES_WIDTH; // width of integral image
 
 // the actual image size is 176x144 (low res)
 // but for this the integral image doesn't fit into the memory, so 
 // dropping off the some rows from top and bottom
-const uint8_t CC3_IMAGE_HEIGHT = 144;        // height of the actual image
+const uint8_t CC3_IMAGE_HEIGHT = CC3_LO_RES_HEIGHT;        // height of the actual image
 
 const uint8_t top_offset = 12; // discard some top rows from the actual image so that integral image can fit into memory
 const uint8_t bottom_offset = 12; // similarly, discard some bottom rows in the actual image

@@ -25,6 +25,7 @@
 #include "cc3_pin_defines.h"
 #include "serial.h"
 #include "servo.h"
+#include "cc3_hal.h"
 
 void disable_ext_interrupt (void)
 {
@@ -67,6 +68,9 @@ void interrupt (void)
         // Triggered on VREF telling when a frame is complete.
         // Simply disable the FIFO once the frame has been captured. 
         REG (GPIO_IOCLR) = _CC3_BUF_WEE;        //BUF_WEE=0
+	// You need to do this because if the read and write pointers on the FIFO
+	// are near each other the FIFO gets angry
+	_cc3_pixbuf_write_rewind ();
         disable_ext_interrupt ();
     }
 

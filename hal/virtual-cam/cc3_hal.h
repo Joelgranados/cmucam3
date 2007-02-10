@@ -24,6 +24,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+
+#define CC3_HI_RES_HEIGHT		288
+#define CC3_HI_RES_WIDTH		352	
+
+#define CC3_LO_RES_HEIGHT 		144	
+#define CC3_LO_RES_WIDTH		176
+
 /*****************************************
 *                                        *
 * CAMERA REGISTER CONTROL FUNCTIONS      *
@@ -34,6 +41,7 @@
 #define VIRTUAL_FIFO_SIZE    (640*480*3)
 extern uint8_t virtual_fifo[VIRTUAL_FIFO_SIZE];
 extern uint32_t virtual_fifo_index;
+
 
 typedef enum {
     _CC3_OV6620 = 0xC0,

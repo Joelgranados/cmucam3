@@ -24,6 +24,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define CC3_HI_RES_HEIGHT		287
+#define CC3_HI_RES_WIDTH		352	
+
+#define CC3_LO_RES_HEIGHT 		143	
+#define CC3_LO_RES_WIDTH		176
+
+
+
+
 /*****************************************
 *                                        *
 * CAMERA REGISTER CONTROL FUNCTIONS      *

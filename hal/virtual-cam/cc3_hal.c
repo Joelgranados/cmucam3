@@ -104,13 +104,13 @@ void _cc3_set_register_state ()
         //cc3_set_raw_register (0x14, 0x20);
         // Set the resolution and update the cc3_g_current_frame size flags
         if (_cc3_g_current_camera_state.resolution == CC3_LOW_RES) {
-            cc3_g_current_frame.raw_width = 88 * 2;
-            cc3_g_current_frame.raw_height = 144;
+            cc3_g_current_frame.raw_width = CC3_LO_RES_WIDTH;
+            cc3_g_current_frame.raw_height = CC3_LO_RES_HEIGHT;
          //   cc3_set_raw_register (0x14, 0x20);
         }
         else {
-            cc3_g_current_frame.raw_width = 176 * 2;
-            cc3_g_current_frame.raw_height = 288;
+            cc3_g_current_frame.raw_width = CC3_HI_RES_WIDTH;
+            cc3_g_current_frame.raw_height = CC3_HI_RES_HEIGHT;
            // cc3_set_raw_register (0x14, 0x00);
         }
 

@@ -48,7 +48,7 @@ uint32_t vert_past_sum_sq_pix[4]; /* length should be equal to CC3_NUM_SCALES */
 uint32_t horz_past_sum_sq_pix[4]; 
 
 /* array to store rows while transfering b/w fifo and ii */
-static uint8_t image_row[176*3];
+static uint8_t image_row[CC3_LO_RES_WIDTH*3];
 
 #ifdef SAVE_IMAGES
 FILE* fp;
