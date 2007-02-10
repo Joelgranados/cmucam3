@@ -15,7 +15,5 @@ void spoonBot_laser_off(void);
 void spoonBot_laser_on(void);
 void spoonBot_wait(uint32_t delay);
 
-//uint32_t SBOT_LEFT_MID, SBOT_RIGHT_MID,SBOT_SPOON_MID;
-//int8_t SBOT_LEFT_DIR, SBOT_RIGHT_DIR,SBOT_SPOON_DIR;
 
 #endif
