@@ -30,7 +30,7 @@ int main(void) {
   cc3_wait_ms(1000);
 
   // init
-  cc3_set_led(1);
+  cc3_clr_led(0);
   i = 0;
   while(!cc3_read_button());
   while(true) {
@@ -64,8 +64,10 @@ int main(void) {
       }
 
       while (true) {
+	cc3_set_led(0);
 	cc3_set_led(2);
 	cc3_wait_ms(500);
+	cc3_clr_led(0);
 	cc3_clr_led(2);
 	cc3_wait_ms(500);
       }
