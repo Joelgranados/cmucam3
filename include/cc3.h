@@ -43,6 +43,7 @@ typedef enum {
   CC3_Y = 0,
   CC3_CR = 1,
   CC3_CB = 2,
+  CC3_SINGLE = 0,
   CC3_ALL
 } cc3_channel_t;
 

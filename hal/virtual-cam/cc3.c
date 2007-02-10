@@ -30,6 +30,7 @@
 #include "serial.h"
 #include "devices.h"
 
+char *_cc3_virtual_cam_path_prefix;
 
 // Globals used by CMUCam functions
 cc3_pixel_t cc3_g_current_pixel;        // global that gets updated with pixbuf calls
@@ -68,19 +69,24 @@ void cc3_pixbuf_load ()
   char c;
   static int img_cnt=0;
   
+  if( _cc3_virtual_cam_path_prefix==NULL )
+	  	{
+		printf( "*Virtual-Camera Error: No Virtual Cam Path defined!, make sure you call cc3_camera_init()!\n" );
+		exit(0);
+		}
   printf( "cc3_pixbuf_loaded()\n" );
   if(_cc3_g_current_camera_state.colorspace==CC3_YCRCB)
 	{
-	printf( "Virtual Cam Achtung! Das YCrCb Colorspace ist Verboten...\n" );
+	printf( "*Virtual-Camera Error: Das YCrCb Colorspace ist Verboten...\n" );
 	exit(0);
 	}
   
-  sprintf(filename, "../virtual_cam_imgs/IMG%.5d.PPM", img_cnt);
+  sprintf(filename, "%s/IMG%.5d.PPM",_cc3_virtual_cam_path_prefix, img_cnt);
   img_cnt++;
   fp=fopen(filename,"r" );
   if(fp==NULL )
 	{
-	printf( "Virtual Cam Error: No more test images...\n" );
+	printf( "*Virtual-Camera Error: No more test images...\n" );
 	printf( "Last tried img: %s\n",filename );
 	exit(0);
 	}
@@ -91,13 +97,13 @@ void cc3_pixbuf_load ()
   val=fscanf( fp, "%d %d\n%d\n",&x, &y, &depth  ); 
   if(val==EOF) 
 	{ 
-	printf( "Virtual Cam Error: Malformed img file\n");   
+	printf( "*Virtual-Camera Error: Malformed img file\n");   
 	exit(0); 
 	} 
 
    if(x!=352 && y!=288)
 	{
-	printf( "Virtual Cam Error: Bad Image Resolution\n" );
+	printf( "*Virtual-Cam Error: Bad Image Resolution, it must be at the max image size!\n" );
 	exit(0);
 	}
 
@@ -150,7 +156,7 @@ void cc3_pixbuf_load ()
    virtual_fifo[i++]=b;
    if(i>=VIRTUAL_FIFO_SIZE)
 	{
-	  printf( "Virtual Cam Error: FIFO ran out during frame load.\n" );
+	  printf( "*Virtual-Camera Error: FIFO ran out of data during frame load.\n" );
 	  exit(0);
 	}
    } while(val!=EOF);
@@ -585,6 +591,7 @@ int cc3_pixbuf_set_coi (cc3_channel_t chan)
  */
 int cc3_camera_init ()
 {
+
   _cc3_camera_reset ();
   _cc3_fifo_reset ();
 
@@ -599,6 +606,13 @@ int cc3_camera_init ()
 
   cc3_frame_default ();
   printf( "cc3_camera_init()\n" );
+  _cc3_virtual_cam_path_prefix = getenv("CC3_VCAM_PATH"); 
+  if( _cc3_virtual_cam_path_prefix == NULL )
+	  {
+		printf( "*Virtual-Cam Error:  No CC3_VCAM_PATH defined.\n\nSet CC3_VCAM_PATH in your terminal to specify the directory that contains your virtual-camera test images.\n" );
+	  exit(0);
+	  }
+  
   return 1;
 }
 

@@ -25,6 +25,7 @@
 typedef struct {
     uint16_t width, height;
     uint8_t channels;
+    uint8_t depth;  // This can be used for binary images etc in the future
     void* pix;
 } cc3_image_t;
 
