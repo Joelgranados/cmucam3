@@ -8,6 +8,9 @@
 #include <cc3_ilp.h>
 #include "LPC2k_ee.h"
 
+// Leave this commented for the first execution of the code to write a record
+// Remove later to read the record from eeprom
+#define ERASE_AND_WRITE
 void eeprom_test(void);
 
 
@@ -34,7 +37,7 @@ int main (void)
     cc3_system_setup ();
 
     // configure uarts
-    cc3_uart_init (0, CC3_UART_RATE_115200,CC3_UART_MODE_8N1,CC3_UART_BINMODE_BINARY);
+    cc3_uart_init (0, CC3_UART_RATE_115200,CC3_UART_MODE_8N1,CC3_UART_BINMODE_TEXT);
     // Make it so that stdout and stdin are not buffered
     val=setvbuf(stdout, NULL, _IONBF, 0 );
     //val=setvbuf(stdin, NULL, _IONBF, 0 );
@@ -72,7 +75,7 @@ struct ee_data *ee_pnt;
 
 unsigned int command_ee, response_ee[2];
 
-/*
+#ifdef ERASE_AND_WRITE
 //erase EEPROM
 //initial EEPROM erase
 	ee_erase(command_ee,response_ee);
@@ -118,7 +121,7 @@ unsigned int command_ee, response_ee[2];
 	status = response_ee[0];
 	records = response_ee[1];
 	printf( "count: status = %d records = %d\n",status,records );
-*/
+#endif
 //read the 5th record in EEPROM
 //response_ee[1] contains the Flash address where the 5th EEPROM record is actually storred
 	command_ee=5;
