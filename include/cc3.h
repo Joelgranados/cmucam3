@@ -1,5 +1,5 @@
 /*
- * Copyright 2006  Anthony Rowe and Adam Goode
+ * Copyright 2006-2007  Anthony Rowe and Adam Goode
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,10 @@
  *
  */
 
+/** \file
+ * The core of the cc3 system.
+ */
+
 
 #ifndef CC3_H
 #define CC3_H
@@ -23,41 +27,62 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-/*******************************************************************************
-*  Initial CMUcam3 (cc3) data types and functions.
-*
-*******************************************************************************/
-
+/**
+ * Mark a boolean expression as "likely".
+ * This is sometimes useful for assisting the compiler in predicting branches.
+ */
 #define likely(x)   __builtin_expect(x,1)
+
+/**
+ * Mark a boolean expression as "unlikely".
+ * This is sometimes useful for assisting the compiler in predicting branches.
+ */
 #define unlikely(x) __builtin_expect(x,0)
 
+/**
+ * Allowed resolutions for the camera device.
+ */
 typedef enum {
-  CC3_LOW_RES = 0,
-  CC3_HIGH_RES = 1
+  CC3_LOW_RES = 0,  /**< QCIF */
+  CC3_HIGH_RES = 1  /**< CIF */
 } cc3_camera_resolution_t;
 
+/**
+ * Allowable channel values for channel of interest selection and
+ * other functions.
+ */
 typedef enum {
-  CC3_SINGLE = 0,
-  CC3_RED = 0,
-  CC3_GREEN = 1,
-  CC3_BLUE = 2,
-  CC3_Y = 0,
-  CC3_CR = 1,
-  CC3_CB = 2,
-  CC3_ALL
+  CC3_SINGLE = 0,  /**< Only channel in single-channel images */
+  CC3_RED = 0,     /**< Red channel in RGB images */
+  CC3_GREEN = 1,   /**< Green channel in RGB images */
+  CC3_BLUE = 2,    /**< Blue channel in RGB images */
+  CC3_Y = 0,       /**< Y channel in YCrCb images */
+  CC3_CR = 1,      /**< Cr channel in YCrCb images */
+  CC3_CB = 2,      /**< Cb channel in YCrCb images */
+  CC3_ALL          /**< All channels in an image */
 } cc3_channel_t;
 
+/**
+ * Colorspace selector.
+ */
 typedef enum {
-  CC3_YCRCB = 0,
-  CC3_RGB = 1
+  CC3_YCRCB = 0,   /**< YCrCb colorspace */
+  CC3_RGB = 1      /**< RGB colorspace */
 } cc3_colorspace_t;
 
+/**
+ * Subsampling modes.
+ */
 typedef enum {
-  CC3_NEAREST,
-  CC3_MEAN,
-  CC3_RANDOM
+  CC3_NEAREST,     /**< Nearest neighbor subsampling */
+  CC3_MEAN,        /**< Mean of neighbors subsampling */
+  CC3_RANDOM       /**< Random neighbor subsampling */
 } cc3_subsample_mode_t;
 
+/**
+ * UART speeds. 115200 is the most common.
+ * \sa cc3_uart_init().
+ */
 typedef enum {
   CC3_UART_RATE_300 = 300,
   CC3_UART_RATE_600 = 600,
@@ -73,36 +98,55 @@ typedef enum {
   CC3_UART_RATE_230400 = 230400
 } cc3_uart_rate_t;
 
+
+/**
+ * UART modes.
+ * 8N1 is the most common.
+ * \sa cc3_uart_init().
+ */
 typedef enum {
-  CC3_UART_MODE_8N1,
-  CC3_UART_MODE_7N1,
-  CC3_UART_MODE_8N2,
-  CC3_UART_MODE_7N2,
-  CC3_UART_MODE_8E1,
-  CC3_UART_MODE_7E1,
-  CC3_UART_MODE_8E2,
-  CC3_UART_MODE_7E2,
-  CC3_UART_MODE_8O1,
-  CC3_UART_MODE_7O1,
-  CC3_UART_MODE_8O2,
-  CC3_UART_MODE_7O2
+  CC3_UART_MODE_8N1,   /**< 8 data bits, no parity, 1 stop bit */
+  CC3_UART_MODE_7N1,   /**< 7 data bits, no parity, 1 stop bit */
+  CC3_UART_MODE_8N2,   /**< 8 data bits, no parity, 2 stop bits */
+  CC3_UART_MODE_7N2,   /**< 7 data bits, no parity, 2 stop bits */
+  CC3_UART_MODE_8E1,   /**< 8 data bits, even parity, 1 stop bit */
+  CC3_UART_MODE_7E1,   /**< 7 data bits, even parity, 1 stop bit */
+  CC3_UART_MODE_8E2,   /**< 8 data bits, even parity, 2 stop bits */
+  CC3_UART_MODE_7E2,   /**< 7 data bits, even parity, 2 stop bits */
+  CC3_UART_MODE_8O1,   /**< 8 data bits, odd parity, 1 stop bit */
+  CC3_UART_MODE_7O1,   /**< 7 data bits, odd parity, 1 stop bit */
+  CC3_UART_MODE_8O2,   /**< 8 data bits, odd parity, 2 stop bits */
+  CC3_UART_MODE_7O2    /**< 7 data bits, odd parity, 2 stop bits */
 } cc3_uart_mode_t;
 
+/**
+ * UART binary/text mode selection values. \sa cc3_uart_init() for
+ * how to use this.
+ */
 typedef enum {
   CC3_UART_BINMODE_BINARY,
   CC3_UART_BINMODE_TEXT,
 } cc3_uart_binmode_t;
 
-
+/**
+ * Framebuffer definition.
+ * \sa cc3_g_current_frame for the main use of this definition.
+ */
 typedef struct {
-  uint16_t raw_width, raw_height;       // raw image width and height
-  uint16_t x0, y0, x1, y1;      // bounding box in frame
-  uint16_t y_loc;               // current position in frame
-  uint8_t x_step, y_step;       // subsampling step
-  cc3_channel_t coi;
-  cc3_subsample_mode_t subsample_mode;
-  uint16_t width, height;
-  uint8_t channels;
+  uint16_t raw_width;          /**< Native width */
+  uint16_t raw_height;         /**< Native height */
+  uint16_t x0;                 /**< Left horizontal clipping boundary */
+  uint16_t y0;                 /**< Top vertical clipping boundary */
+  uint16_t x1;                 /**< Right horizontal clipping boundary */
+  uint16_t y1;                 /**< Bottom horizontal clipping boundary */
+  uint16_t y_loc;              /**< Currently selected row */
+  uint8_t x_step;              /**< Horizontal subsampling value */
+  uint8_t y_step;              /**< Vertical subsampling value */
+  cc3_channel_t coi;           /**< Channel of interest */
+  cc3_subsample_mode_t subsample_mode;  /**< Subsampling mode */
+  uint16_t width;              /**< Width of clipping region */
+  uint16_t height;             /**< Height of clipping region */
+  uint8_t channels;            /**< Number of channels */
 } cc3_frame_t;
 
 
@@ -145,7 +189,7 @@ int cc3_pixbuf_set_subsample (cc3_subsample_mode_t, uint8_t x_step,
 void cc3_system_setup (void);
 
 /**
- * Sets the channel of interest 1 or all
+ * Sets the channel of interest 1 or all. Blah.
  */
 int cc3_pixbuf_set_coi (cc3_channel_t chan);
 
@@ -175,6 +219,10 @@ int cc3_set_contrast (uint8_t level);
 int cc3_set_raw_register (uint8_t address, uint8_t value);
 
 uint8_t cc3_get_uart_count (void);
+
+/**
+ * Awesome.
+ */
 bool cc3_uart_init (uint8_t uart,
                     cc3_uart_rate_t rate,
                     cc3_uart_mode_t mode, cc3_uart_binmode_t binmode);
