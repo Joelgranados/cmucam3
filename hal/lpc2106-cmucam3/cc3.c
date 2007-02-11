@@ -65,6 +65,11 @@ void cc3_pixbuf_load ()
   //  uint32_t start_time;
 
   unsigned int i;
+
+  if (cc3_g_current_frame.reset_on_next_load) {
+    cc3_frame_default();
+  }
+
   //REG(GPIO_IOCLR)=CAM_IE;
   //while(frame_done!=1);
  // cc3_pixbuf_rewind();

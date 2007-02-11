@@ -68,6 +68,10 @@ void cc3_pixbuf_load ()
   int i,val,r,g,b,r2,b2,g2,t,depth,x,y,col_cnt,k;
   char c;
   static int img_cnt=0;
+
+  if (cc3_g_current_frame.reset_on_next_load) {
+    cc3_frame_default();
+  }
   
   if( _cc3_virtual_cam_path_prefix==NULL )
 	  	{
