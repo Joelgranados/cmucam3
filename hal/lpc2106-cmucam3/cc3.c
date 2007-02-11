@@ -191,7 +191,7 @@ void cc3_pixbuf_rewind ()
   REG (GPIO_IOSET) = _CC3_BUF_RCK;
   REG (GPIO_IOCLR) = _CC3_BUF_RCK;
   REG (GPIO_IOSET) = _CC3_BUF_RRST;
-  // skip first line because camera isn't fast enough to catch first line without shifting the pixels
+  // skip first line because it is blue
   _cc3_pixbuf_skip_pixels (cc3_g_current_frame.raw_width / 2);
   //_cc3_pixbuf_skip_pixels (cc3_g_current_frame.raw_width / 2);
   _cc3_second_green_valid = false;
