@@ -60,6 +60,8 @@ static bool _cc3_second_green_valid;
 
 static void _cc3_update_frame_bounds (cc3_frame_t *);
 
+static void _cc3_resize_pixbuf (void);
+
 void cc3_pixbuf_load ()
 {
   //  uint32_t start_time;
@@ -67,6 +69,7 @@ void cc3_pixbuf_load ()
   unsigned int i;
 
   if (cc3_g_current_frame.reset_on_next_load) {
+    _cc3_resize_pixbuf();
     cc3_frame_default();
   }
 
@@ -180,6 +183,12 @@ void _cc3_pixbuf_read_pixel (uint8_t * pixel,
     *(pixel + off1) = _cc3_pixbuf_read_subpixel ();
     *(pixel + off2) = _cc3_pixbuf_read_subpixel ();
   }
+}
+
+void _cc3_resize_pixbuf ()
+{
+  cc3_g_current_frame.raw_width = _cc3_g_current_camera_state.raw_width;
+  cc3_g_current_frame.raw_height = _cc3_g_current_camera_state.raw_height;
 }
 
 /**
@@ -543,6 +552,7 @@ int cc3_camera_init ()
   _cc3_g_current_camera_state.colorspace = CC3_RGB;
   _cc3_set_register_state ();
 
+  _cc3_resize_pixbuf();
   cc3_frame_default ();
 
   return 1;

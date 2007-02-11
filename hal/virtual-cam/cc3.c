@@ -59,6 +59,7 @@ static uint8_t _cc3_second_green;
 static bool _cc3_second_green_valid;
 
 static void _cc3_update_frame_bounds (cc3_frame_t *);
+static void _cc3_resize_pixbuf (void);
 
 void cc3_pixbuf_load ()
 {
@@ -70,6 +71,7 @@ void cc3_pixbuf_load ()
   static int img_cnt=0;
 
   if (cc3_g_current_frame.reset_on_next_load) {
+    _cc3_resize_pixbuf();
     cc3_frame_default();
   }
   
@@ -304,6 +306,12 @@ void cc3_set_led (uint8_t select)
   }
 }
 
+void _cc3_resize_pixbuf ()
+{
+  cc3_g_current_frame.raw_width = _cc3_g_current_camera_state.raw_width;
+  cc3_g_current_frame.raw_height = _cc3_g_current_camera_state.raw_height;
+
+}
 
 uint8_t *cc3_malloc_rows (uint32_t rows)
 {
@@ -608,6 +616,7 @@ int cc3_camera_init ()
   _cc3_g_current_camera_state.colorspace = CC3_RGB;
   _cc3_set_register_state ();
 
+  _cc3_resize_pixbuf ();
   cc3_frame_default ();
   printf( "cc3_camera_init()\n" );
   _cc3_virtual_cam_path_prefix = getenv("CC3_VCAM_PATH"); 
