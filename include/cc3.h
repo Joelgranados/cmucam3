@@ -15,7 +15,7 @@
  *
  */
 
-/** \file
+/** @file
  * The core of the cc3 system.
  */
 
@@ -81,7 +81,7 @@ typedef enum {
 
 /**
  * UART speeds. 115200 is the most common.
- * \sa cc3_uart_init().
+ * @sa cc3_uart_init().
  */
 typedef enum {
   CC3_UART_RATE_300 = 300,
@@ -102,7 +102,7 @@ typedef enum {
 /**
  * UART modes.
  * 8N1 is the most common.
- * \sa cc3_uart_init().
+ * @sa cc3_uart_init().
  */
 typedef enum {
   CC3_UART_MODE_8N1,   /**< 8 data bits, no parity, 1 stop bit */
@@ -120,7 +120,7 @@ typedef enum {
 } cc3_uart_mode_t;
 
 /**
- * UART binary/text mode selection values. \sa cc3_uart_init() for
+ * UART binary/text mode selection values. @sa cc3_uart_init() for
  * how to use this.
  */
 typedef enum {
@@ -130,7 +130,7 @@ typedef enum {
 
 /**
  * Framebuffer definition.
- * \sa cc3_g_current_frame for the main use of this definition.
+ * @sa #cc3_g_current_frame for the main use of this definition.
  */
 typedef struct {
   uint16_t raw_width;          /**< Native width */
@@ -147,23 +147,45 @@ typedef struct {
   uint16_t width;              /**< Width of clipping region */
   uint16_t height;             /**< Height of clipping region */
   uint8_t channels;            /**< Number of channels */
+  bool reset_on_next_load;     /**< True if the camera parameters have
+				  changed */
 } cc3_frame_t;
 
-
-
+/**
+ * Simple 3-channel pixel definition.
+ */
 typedef struct {
-  uint8_t channel[3];           // index with cc3_channel_t 
+  uint8_t channel[3];          /**< Components of a single pixel */
 } cc3_pixel_t;
 
+/**
+ * Current parameters for the internal pixbuf, should be
+ * considered read only.
+ * @sa cc3_frame_default()
+ */
+extern cc3_frame_t cc3_g_current_frame;
 
-// Globals used by CMUcam functions
-extern cc3_frame_t cc3_g_current_frame; // global that keeps clip, stride
-
+/**
+ * Allocate a number of rows of the correct size based on the values in
+ * #cc3_g_current_frame.
+ *
+ * @param[in] rows The number of rows to allocate space for.
+ * @return A pointer to allocated memory or NULL.
+ */
 uint8_t *cc3_malloc_rows (uint32_t rows);
 
+/**
+ * Take a picture with the camera and load it into the internal pixbuf.
+ * If #cc3_g_current_frame has cc3_frame_t.reset_on_next_load set,
+ * then cc3_g_current_frame is also reset with new values.
+ */
 void cc3_pixbuf_load (void);
 
+/**
+ * Reset the cc3_g_current_frame to default values.
+ */
 void cc3_frame_default (void);
+
 /**
  * Using the cc3_frame_t reads rows taking into account virtual window and subsampling. 
  */
