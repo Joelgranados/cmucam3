@@ -626,6 +626,7 @@ void cc3_frame_default ()
   cc3_g_current_frame.y1 = cc3_g_current_frame.raw_height;
   cc3_g_current_frame.y_loc = 0;
   cc3_g_current_frame.subsample_mode = CC3_NEAREST;
+  cc3_g_current_frame.reset_on_next_load = false;
 
   cc3_pixbuf_set_coi(CC3_ALL);
 
@@ -710,13 +711,12 @@ int cc3_set_raw_register (uint8_t address, uint8_t value)
 /**
  * Sets the resolution, also updates cc3_g_current_frame width and height
  * Takes enum CC3_LOW_RES and CC3_HIGH_RES.
- * WARNING: Clears ROI, COI, sampling mode etc!
  */
 int cc3_set_resolution (cc3_camera_resolution_t cam_res)
 {
   _cc3_g_current_camera_state.resolution = cam_res;
   _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
-  cc3_frame_default ();
+  cc3_g_current_frame.reset_on_next_load = true;
 
   return 1;
 }
