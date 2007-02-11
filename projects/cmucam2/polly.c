@@ -48,6 +48,7 @@ int polly (polly_config_t config)
   cc3_set_auto_white_balance (true);
   cc3_set_auto_exposure (true);
 
+  cc3_pixbuf_load ();
 
   cc3_pixbuf_set_subsample (CC3_NEAREST, 2, 2);
   cc3_pixbuf_set_coi (CC3_GREEN);
@@ -56,10 +57,10 @@ int polly (polly_config_t config)
   // setup an image structure 
   //img.channels=CC3_GREEN;
   img.channels = 1;
-  img.width = cc3_g_current_frame.width;
-  img.height = cc3_g_current_frame.height;      // image will hold just 1 row for scanline processing
+  img.width = cc3_g_pixbuf_frame.width;
+  img.height = cc3_g_pixbuf_frame.height;      // image will hold just 1 row for scanline processing
   //img.pix = cc3_malloc_rows(1);
-  img.pix = cc3_malloc_rows (cc3_g_current_frame.height);
+  img.pix = cc3_malloc_rows (cc3_g_pixbuf_frame.height);
   if (img.pix == NULL) {
     printf ("Not enough memory...\n");
     exit (0);
@@ -90,8 +91,6 @@ int polly (polly_config_t config)
       cc3_set_pixel (&polly_img, x, y, &p);
 
 
-  cc3_pixbuf_load ();
-
 #ifdef MMC_DEBUG
   cc3_pixbuf_set_coi (CC3_ALL);
   write_raw_fifo_ppm ();
@@ -99,7 +98,7 @@ int polly (polly_config_t config)
   cc3_pixbuf_rewind ();
 #endif
 
-  cc3_pixbuf_read_rows (img.pix, cc3_g_current_frame.height);
+  cc3_pixbuf_read_rows (img.pix, cc3_g_pixbuf_frame.height);
   if (config.blur == 1) {
     blur.size = 3;
     blur.mat[0][0] = 1;
@@ -526,8 +525,8 @@ void write_raw_fifo_ppm ()
     while (1);
   }
 
-  size_x = cc3_g_current_frame.width;
-  size_y = cc3_g_current_frame.height;
+  size_x = cc3_g_pixbuf_frame.width;
+  size_y = cc3_g_pixbuf_frame.height;
 
   fprintf (f, "P3\n%d %d\n255\n", size_x, size_y);
 

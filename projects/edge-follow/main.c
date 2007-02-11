@@ -53,10 +53,13 @@ int main (void)
   cc3_clr_led (1);
   cc3_clr_led (2);
 
+  // load into pixbuf to initialize cc3_g_pixbuf_frame
+  cc3_pixbuf_load();
+
   // sample wait command in ms 
   cc3_wait_ms (1000);
-  x_axis = malloc (cc3_g_current_frame.width);
-  h = malloc (cc3_g_current_frame.width);
+  x_axis = malloc (cc3_g_pixbuf_frame.width);
+  h = malloc (cc3_g_pixbuf_frame.width);
 
   p_config.color_thresh = 10;
   p_config.min_blob_size = 25;
@@ -64,28 +67,28 @@ int main (void)
   p_config.horizontal_edges = 0;
   p_config.vertical_edges = 1;
   p_config.blur = 1;
-  p_config.histogram = malloc (cc3_g_current_frame.width);
+  p_config.histogram = malloc (cc3_g_pixbuf_frame.width);
 
   img.channels = 1;
-  img.width = cc3_g_current_frame.width;
-  img.height = cc3_g_current_frame.height;      // image will hold just 1 row for scanline processing
+  img.width = cc3_g_pixbuf_frame.width;
+  img.height = cc3_g_pixbuf_frame.height;      // image will hold just 1 row for scanline processing
   //img.pix = cc3_malloc_rows(1);
-  img.pix = malloc (cc3_g_current_frame.height * cc3_g_current_frame.width);
+  img.pix = malloc (cc3_g_pixbuf_frame.height * cc3_g_pixbuf_frame.width);
   if (img.pix == NULL) {
     printf ("Not enough memory...\n");
     exit (0);
   }
 
   tmp_img.channels = 3;
-  tmp_img.width = cc3_g_current_frame.width;
+  tmp_img.width = cc3_g_pixbuf_frame.width;
   tmp_img.height = 1;
   tmp_img.pix = cc3_malloc_rows (1);
 
   mask_img.channels = 1;
-  mask_img.width = cc3_g_current_frame.width;
-  mask_img.height = cc3_g_current_frame.height;
+  mask_img.width = cc3_g_pixbuf_frame.width;
+  mask_img.height = cc3_g_pixbuf_frame.height;
   mask_img.pix =
-    malloc (cc3_g_current_frame.width * cc3_g_current_frame.height);
+    malloc (cc3_g_pixbuf_frame.width * cc3_g_pixbuf_frame.height);
 
   p_black.channel[0] = 0;
   p_white.channel[0] = 255;
@@ -100,7 +103,7 @@ int main (void)
     cc3_pixbuf_rewind ();
 #endif
 
-    for (i = 0; i < cc3_g_current_frame.height; i++) {
+    for (i = 0; i < cc3_g_pixbuf_frame.height; i++) {
       cc3_pixbuf_read_rows (tmp_img.pix, tmp_img.height);
       for (x = 0; x < tmp_img.width; x++) {
         // process image using green channel
@@ -122,7 +125,7 @@ int main (void)
     // Prune away points on the histogram that are outliers so they don't
     // get added into the regression line.
     cnt = 0;
-    for (i = 0; i < cc3_g_current_frame.width; i++) {
+    for (i = 0; i < cc3_g_pixbuf_frame.width; i++) {
       if (p_config.histogram[i] > 0 && p_config.histogram[i] < 71) {
         h[cnt] = p_config.histogram[i];
         x_axis[cnt] = i;
@@ -147,7 +150,7 @@ int main (void)
         error *= -1;
       total_error += error;
     }
-    distance = reg_line.m * (cc3_g_current_frame.width / 2) + reg_line.b;
+    distance = reg_line.m * (cc3_g_pixbuf_frame.width / 2) + reg_line.b;
     printf ("distance = %f ", distance);
     avg_error = (double) total_error / (double) cnt;
     printf (" Abs Error = %d Avg Error = %f\n\r", total_error, avg_error);
@@ -174,9 +177,9 @@ void draw_line_img (double b, double m, double distance, uint8_t conf)
   int32_t y;
 
   img.channels = 1;
-  img.width = cc3_g_current_frame.width;
-  img.height = cc3_g_current_frame.height;
-  img.pix = cc3_malloc_rows (cc3_g_current_frame.height);
+  img.width = cc3_g_pixbuf_frame.width;
+  img.height = cc3_g_pixbuf_frame.height;
+  img.pix = cc3_malloc_rows (cc3_g_pixbuf_frame.height);
   if (img.pix == NULL) {
     printf ("Not enough memory...\n");
     exit (0);

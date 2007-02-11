@@ -34,7 +34,10 @@ static cc3_jpeg_t *init_jpeg (void);
 static void capture_current_jpeg(cc3_jpeg_t *cj, FILE *f);
 
 void cc3_jpeg_send_simple(void) {
-  // init jpeg
+  // capture a frame to the FIFO
+  cc3_pixbuf_load();
+
+  // init jpeg (allocates memory based on FIFO contents)
   cc3_jpeg_t *cj = init_jpeg();
 
   capture_current_jpeg(cj, stdout);
@@ -57,8 +60,8 @@ static cc3_jpeg_t *init_jpeg(void) {
   jpeg_create_compress(&cj->cinfo);
 
   // parameters for jpeg image
-  cj->cinfo.image_width = cc3_g_current_frame.width;
-  cj->cinfo.image_height = cc3_g_current_frame.height;
+  cj->cinfo.image_width = cc3_g_pixbuf_frame.width;
+  cj->cinfo.image_height = cc3_g_pixbuf_frame.height;
 
   //printf( "image width=%d image height=%d\n", cinfo.image_width, cinfo.image_height );
   cj->cinfo.input_components = 3;
@@ -84,9 +87,6 @@ static void capture_current_jpeg(cc3_jpeg_t *cj, FILE *f) {
 
   // output is file
   jpeg_stdio_dest(&cj->cinfo, f);
-
-  // capture a frame to the FIFO
-  cc3_pixbuf_load();
 
   // read and compress
   jpeg_start_compress(&cj->cinfo, TRUE);

@@ -103,13 +103,14 @@ void capture_ppm(FILE *f)
   uint32_t time, time2;
   int write_time;
 
+  cc3_pixbuf_load ();
+
   uint8_t *row = cc3_malloc_rows(1);
 
-  size_x = cc3_g_current_frame.width;
-  size_y = cc3_g_current_frame.height;
+  size_x = cc3_g_pixbuf_frame.width;
+  size_y = cc3_g_pixbuf_frame.height;
 
   fprintf(f,"P6\n%d %d\n255\n",size_x,size_y );
-  cc3_pixbuf_load ();
 
   time = cc3_timer();
   for (y = 0; y < size_y; y++) {

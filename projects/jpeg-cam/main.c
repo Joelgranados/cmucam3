@@ -29,6 +29,9 @@ int main(void) {
   // cc3_pixbuf_set_subsample (CC3_NEAREST, 2, 2);
   cc3_wait_ms(1000);
 
+  // init pixbuf with width and height
+  cc3_pixbuf_load();
+
   // init jpeg
   init_jpeg();
 
@@ -87,8 +90,8 @@ void init_jpeg(void) {
   jpeg_create_compress(&cinfo);
 
   // parameters for jpeg image
-  cinfo.image_width = cc3_g_current_frame.width;
-  cinfo.image_height = cc3_g_current_frame.height;
+  cinfo.image_width = cc3_g_pixbuf_frame.width;
+  cinfo.image_height = cc3_g_pixbuf_frame.height;
   printf( "image width=%d image height=%d\n", cinfo.image_width, cinfo.image_height );
   cinfo.input_components = 3;
  // cinfo.in_color_space = JCS_YCbCr;

@@ -129,8 +129,8 @@ void capture_png(FILE *f)
 
   uint8_t *row = cc3_malloc_rows(1);
 
-  size_x = cc3_g_current_frame.width;
-  size_y = cc3_g_current_frame.height;
+  size_x = cc3_g_pixbuf_frame.width;
+  size_y = cc3_g_pixbuf_frame.height;
 
   // these are the max values that work within
   // the memory constraints of LPC2106

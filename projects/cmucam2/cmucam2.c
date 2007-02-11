@@ -90,6 +90,8 @@ cmucam2_start:
   cc3_camera_init ();
   cc3_set_resolution(CC3_LOW_RES);
 
+  cc3_pixbuf_load();
+
   printf ("%s\r", VERSION_BANNER);
 
   cc3_servo_init ();
@@ -149,9 +151,12 @@ cmucam2_start:
         else
           print_ACK ();
         if (arg_list[0] == 1)
-  	 cc3_set_resolution(CC3_HIGH_RES);
+	  cc3_set_resolution(CC3_HIGH_RES);
         else
-  	 cc3_set_resolution(CC3_LOW_RES);
+	  cc3_set_resolution(CC3_LOW_RES);
+
+	// re-init fifo
+	cc3_pixbuf_load();
         break;
 
 
@@ -189,7 +194,7 @@ cmucam2_start:
 
 
       case SEND_FRAME:
-	old_coi = cc3_g_current_frame.coi;
+	old_coi = cc3_g_pixbuf_frame.coi;
         if (n == 1) {
 	  if (arg_list[0] > 4) {
             error = true;
@@ -274,7 +279,7 @@ cmucam2_start:
 		uint8_t *x_axis;
   		polly_config_t p_config;
 		cc3_linear_reg_data_t reg_line;
- 		x_axis = malloc(cc3_g_current_frame.width);
+ 		x_axis = malloc(cc3_g_pixbuf_frame.width);
          
   		p_config.color_thresh=arg_list[0]; //20;
   		p_config.min_blob_size=arg_list[1]; //20;
@@ -282,11 +287,11 @@ cmucam2_start:
   		p_config.horizontal_edges=arg_list[3]; //0;
   		p_config.vertical_edges=arg_list[4]; //1;
   		p_config.blur=arg_list[5]; //1;
-  		p_config.histogram=malloc(cc3_g_current_frame.width); 
-		for(uint32_t i=0; i<cc3_g_current_frame.width; i++ ) x_axis[i]=i;
+  		p_config.histogram=malloc(cc3_g_pixbuf_frame.width); 
+		for(uint32_t i=0; i<cc3_g_pixbuf_frame.width; i++ ) x_axis[i]=i;
         	do {
 			polly(p_config);
-     			cc3_linear_reg(x_axis, p_config.histogram, cc3_g_current_frame.width,&reg_line);
+     			cc3_linear_reg(x_axis, p_config.histogram, cc3_g_pixbuf_frame.width,&reg_line);
 
 			// return linear regression offset value   
      			printf( "P %f ",reg_line.b );  
@@ -295,7 +300,7 @@ cmucam2_start:
 		       	// return r squared value	
      			printf( "%f ",reg_line.r_sqr );     
 			// return distance to line at middle of image
-     			double distance=reg_line.m*(cc3_g_current_frame.width/2)+reg_line.b;
+     			double distance=reg_line.m*(cc3_g_pixbuf_frame.width/2)+reg_line.b;
      			printf( " %f\r",distance ); 
     
    			if (!cc3_uart_has_data (0))
@@ -351,7 +356,7 @@ void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
 {
   cc3_image_t img;
   img.channels = 3;
-  img.width = cc3_g_current_frame.width;
+  img.width = cc3_g_pixbuf_frame.width;
   img.height = 1;               // image will hold just 1 row for scanline processing
   img.pix = malloc (3 * img.width);
   do {
@@ -378,7 +383,7 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
   uint16_t i;
 
   img.channels = 3;
-  img.width = cc3_g_current_frame.width;
+  img.width = cc3_g_pixbuf_frame.width;
   img.height = 1;               // image will hold just 1 row for scanline processing
   img.pix = cc3_malloc_rows(1);
   do {
@@ -394,10 +399,10 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
         if (img.width % 8 != 0)
           lm_width++;
         putchar (0xAA);
-        if (cc3_g_current_frame.height > 255)
+        if (cc3_g_pixbuf_frame.height > 255)
           lm_height = 255;
         else
-          lm_height = cc3_g_current_frame.height;
+          lm_height = cc3_g_pixbuf_frame.height;
 
         //putchar(lm_width);
         putchar (img.width);

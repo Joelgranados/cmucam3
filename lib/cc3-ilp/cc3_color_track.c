@@ -59,13 +59,13 @@ uint8_t cc3_track_color (cc3_track_pkt_t * pkt)
 
   pixel = row = cc3_malloc_rows(1);
   
-  for (y = 0; y < cc3_g_current_frame.height; y++) {
+  for (y = 0; y < cc3_g_pixbuf_frame.height; y++) {
     cc3_pixbuf_read_rows(row, 1);
 
-    for (x = 0; x < cc3_g_current_frame.width; x++) {
+    for (x = 0; x < cc3_g_pixbuf_frame.width; x++) {
       bool pixel_good = 0;
 
-      if (cc3_g_current_frame.coi == CC3_ALL) {
+      if (cc3_g_pixbuf_frame.coi == CC3_ALL) {
         if (pixel[0] >= pkt->lower_bound.channel[0]
             && pixel[0] <= pkt->upper_bound.channel[0]
             && pixel[1] >= pkt->lower_bound.channel[1]
@@ -78,9 +78,9 @@ uint8_t cc3_track_color (cc3_track_pkt_t * pkt)
       }
       else {
         if (*pixel >=
-            pkt->lower_bound.channel[cc3_g_current_frame.coi]
-            && pixel [cc3_g_current_frame.coi] <=
-            pkt->upper_bound.channel[cc3_g_current_frame.coi])
+            pkt->lower_bound.channel[cc3_g_pixbuf_frame.coi]
+            && pixel [cc3_g_pixbuf_frame.coi] <=
+            pkt->upper_bound.channel[cc3_g_pixbuf_frame.coi])
           pixel_good = 1;
           
           pixel++;
@@ -165,7 +165,7 @@ uint8_t cc3_track_color_scanline (cc3_image_t * img, cc3_track_pkt_t * pkt)
       cc3_pixel_t cp;
       //cc3_pixbuf_read();
       cc3_get_pixel (img, x, 0, &cp);
-      if (cc3_g_current_frame.coi == CC3_ALL) {
+      if (cc3_g_pixbuf_frame.coi == CC3_ALL) {
         if (cp.channel[0] >= pkt->lower_bound.channel[0] &&
             cp.channel[0] <= pkt->upper_bound.channel[0] &&
             cp.channel[1] >= pkt->lower_bound.channel[1] &&
@@ -175,10 +175,10 @@ uint8_t cc3_track_color_scanline (cc3_image_t * img, cc3_track_pkt_t * pkt)
           pixel_good = 1;
       }
       else {
-        if (cp.channel[cc3_g_current_frame.coi] >=
-            pkt->lower_bound.channel[cc3_g_current_frame.coi]
-            && cp.channel[cc3_g_current_frame.coi] <=
-            pkt->upper_bound.channel[cc3_g_current_frame.coi])
+        if (cp.channel[cc3_g_pixbuf_frame.coi] >=
+            pkt->lower_bound.channel[cc3_g_pixbuf_frame.coi]
+            && cp.channel[cc3_g_pixbuf_frame.coi] <=
+            pkt->upper_bound.channel[cc3_g_pixbuf_frame.coi])
           pixel_good = 1;
       }
 

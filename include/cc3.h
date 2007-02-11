@@ -130,7 +130,7 @@ typedef enum {
 
 /**
  * Framebuffer definition.
- * @sa #cc3_g_current_frame for the main use of this definition.
+ * @sa #cc3_g_pixbuf_frame for the main use of this definition.
  */
 typedef struct {
   uint16_t raw_width;          /**< Native width */
@@ -161,13 +161,13 @@ typedef struct {
 /**
  * Current parameters for the internal pixbuf, should be
  * considered read only.
- * @sa cc3_frame_default()
+ * @sa cc3_pixbuf_frame_reset()
  */
-extern cc3_frame_t cc3_g_current_frame;
+extern cc3_frame_t cc3_g_pixbuf_frame;
 
 /**
  * Allocate a number of rows of the correct size based on the values in
- * #cc3_g_current_frame.
+ * #cc3_g_pixbuf_frame.
  *
  * @param[in] rows The number of rows to allocate space for.
  * @return A pointer to allocated memory or NULL.
@@ -176,15 +176,15 @@ uint8_t *cc3_malloc_rows (uint32_t rows);
 
 /**
  * Take a picture with the camera and load it into the internal pixbuf.
- * If #cc3_g_current_frame has cc3_frame_t.reset_on_next_load set,
- * then cc3_g_current_frame is also reset with new values.
+ * If #cc3_g_pixbuf_frame has cc3_frame_t.reset_on_next_load set,
+ * then cc3_g_pixbuf_frame is also reset with new values.
  */
 void cc3_pixbuf_load (void);
 
 /**
- * Reset the cc3_g_current_frame to default values.
+ * Reset the cc3_g_pixbuf_frame to default values.
  */
-void cc3_frame_default (void);
+void cc3_pixbuf_frame_reset (void);
 
 /**
  * Using the cc3_frame_t reads rows taking into account virtual window and subsampling. 
@@ -229,7 +229,7 @@ int cc3_camera_init (void);
  */
 void cc3_camera_kill (void);
 /**
- * Sets the resolution, also updates cc3_g_current_frame width and height
+ * Sets the resolution, also updates cc3_g_pixbuf_frame width and height
  */
 int cc3_set_resolution (cc3_camera_resolution_t);
 int cc3_set_colorspace (cc3_colorspace_t);

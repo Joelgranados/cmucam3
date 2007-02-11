@@ -78,8 +78,9 @@ int main (void)
 
 
     // setup an image structure
+    cc3_pixbuf_load();
     img.channels=3;
-    img.width=cc3_g_current_frame.width;
+    img.width=cc3_g_pixbuf_frame.width;
     img.height=1;  // image will hold just 1 row for scanline processing
     img.pix = cc3_malloc_rows(1);
   

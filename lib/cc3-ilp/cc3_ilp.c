@@ -24,16 +24,16 @@
 
 void cc3_send_image_direct (void)
 {
+  cc3_pixbuf_load ();
+
   uint32_t x, y;
   uint32_t size_x, size_y;
   uint8_t *row = cc3_malloc_rows(1);
-  uint8_t num_channels = cc3_g_current_frame.coi == CC3_ALL ? 3 : 1;
+  uint8_t num_channels = cc3_g_pixbuf_frame.coi == CC3_ALL ? 3 : 1;
 
 
-  size_x = cc3_g_current_frame.width;
-  size_y = cc3_g_current_frame.height;
-
-  cc3_pixbuf_load ();
+  size_x = cc3_g_pixbuf_frame.width;
+  size_y = cc3_g_pixbuf_frame.height;
 
   putchar (1);
   putchar (size_x);

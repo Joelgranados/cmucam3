@@ -51,8 +51,12 @@ int main (void)
 
   // sample wait command in ms 
   cc3_wait_ms (1000);
-  x_axis = malloc(cc3_g_current_frame.width);
-  h = malloc(cc3_g_current_frame.width);
+
+  // initialize pixbuf
+  cc3_pixbuf_load();
+
+  x_axis = malloc(cc3_g_pixbuf_frame.width);
+  h = malloc(cc3_g_pixbuf_frame.width);
          
   p_config.color_thresh=10;
   p_config.min_blob_size=30;
@@ -60,7 +64,7 @@ int main (void)
   p_config.horizontal_edges=0;
   p_config.vertical_edges=1;
   p_config.blur=1;
-  p_config.histogram=malloc(cc3_g_current_frame.width); 
+  p_config.histogram=malloc(cc3_g_pixbuf_frame.width); 
 
   while (1) {
      	double distance;
@@ -72,7 +76,7 @@ int main (void)
 	// Prune away points on the histogram that are outliers so they don't
 	// get added into the regression line.
 	cnt=0;
-    	for(i=0; i<cc3_g_current_frame.width; i++ )
+    	for(i=0; i<cc3_g_pixbuf_frame.width; i++ )
 	{
 		if(p_config.histogram[i]>0 && p_config.histogram[i]<71)
 		{
@@ -89,7 +93,7 @@ int main (void)
      	printf( "m=%f\n",reg_line.m );     
      	printf( "r^2=%f\n",reg_line.r_sqr );     
 
-     	distance=reg_line.m*(cc3_g_current_frame.width/2)+reg_line.b;
+     	distance=reg_line.m*(cc3_g_pixbuf_frame.width/2)+reg_line.b;
      	printf( "distance = %f\n",distance ); 
   
         conf=255;	
@@ -111,9 +115,9 @@ uint32_t x;
 int32_t y;
 
   img.channels = 1;
-  img.width = cc3_g_current_frame.width;
-  img.height = cc3_g_current_frame.height;    
-  img.pix = cc3_malloc_rows (cc3_g_current_frame.height);
+  img.width = cc3_g_pixbuf_frame.width;
+  img.height = cc3_g_pixbuf_frame.height;    
+  img.pix = cc3_malloc_rows (cc3_g_pixbuf_frame.height);
   if (img.pix == NULL) {
     printf ("Not enough memory...\n");
     exit (0);

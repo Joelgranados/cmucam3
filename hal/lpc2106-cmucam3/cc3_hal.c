@@ -108,7 +108,7 @@ void _cc3_set_register_state ()
     case _CC3_OV6620:
         // Set the right data bus mode
         cc3_set_raw_register (0x14, 0x20);
-        // Set the resolution and update the cc3_g_current_frame size flags
+        // Set the resolution and update the size flags
         if (_cc3_g_current_camera_state.resolution == CC3_LOW_RES) {
             _cc3_g_current_camera_state.raw_width = CC3_LO_RES_WIDTH; // 88 * 2;
             _cc3_g_current_camera_state.raw_height = CC3_LO_RES_HEIGHT; // 144;

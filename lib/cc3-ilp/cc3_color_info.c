@@ -54,7 +54,7 @@ for(x=0; x<img->width; x++ )
 	cc3_pixel_t cp;
 	cc3_get_pixel( img, x, 0, &cp );	
 	pkt->scratch_pix++;
-	if(cc3_g_current_frame.coi==CC3_ALL ) {	
+	if(cc3_g_pixbuf_frame.coi==CC3_ALL ) {	
 		uint8_t i;
 		for(i=0; i<3; i++ )
 		{
@@ -66,7 +66,7 @@ for(x=0; x<img->width; x++ )
 	} else
 	{
 	    uint8_t i;
-	        i=cc3_g_current_frame.coi;
+	        i=cc3_g_pixbuf_frame.coi;
 		pkt->scratch_mean[i]+=cp.channel[i];
 		if(cp.channel[i]<pkt->min.channel[i]) pkt->min.channel[i]=cp.channel[i];	
 		if(cp.channel[i]>pkt->max.channel[i]) pkt->max.channel[i]=cp.channel[i];

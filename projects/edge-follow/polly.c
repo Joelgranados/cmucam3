@@ -77,7 +77,7 @@ int polly( polly_config_t config, cc3_image_t *img, cc3_image_t *mask )
     cc3_pixbuf_rewind();
 #endif
 
-    cc3_pixbuf_read_rows (img.pix, cc3_g_current_frame.height);
+    cc3_pixbuf_read_rows (img.pix, cc3_g_pixbuf_frame.height);
 */
 
  	if(config.blur==1)
@@ -521,8 +521,8 @@ void write_raw_fifo_ppm()
 	while(1);
     }
 
-  size_x = cc3_g_current_frame.width;
-  size_y = cc3_g_current_frame.height;
+  size_x = cc3_g_pixbuf_frame.width;
+  size_y = cc3_g_pixbuf_frame.height;
 
   fprintf(f,"P3\n%d %d\n255\n",size_x,size_y );
   

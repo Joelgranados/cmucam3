@@ -34,7 +34,7 @@
 
 // Globals used by CMUCam functions
 cc3_pixel_t cc3_g_current_pixel;        // global that gets updated with pixbuf calls
-cc3_frame_t cc3_g_current_frame;        // global that keeps clip, stride
+cc3_frame_t cc3_g_pixbuf_frame;        // global that keeps clip, stride
 
 
 static inline void _cc3_seek_left (void);
@@ -60,7 +60,7 @@ static bool _cc3_second_green_valid;
 
 static void _cc3_update_frame_bounds (cc3_frame_t *);
 
-static void _cc3_resize_pixbuf (void);
+static void _cc3_pixbuf_resize (void);
 
 void cc3_pixbuf_load ()
 {
@@ -68,9 +68,8 @@ void cc3_pixbuf_load ()
 
   unsigned int i;
 
-  if (cc3_g_current_frame.reset_on_next_load) {
-    _cc3_resize_pixbuf();
-    cc3_frame_default();
+  if (cc3_g_pixbuf_frame.reset_on_next_load) {
+    _cc3_pixbuf_resize();
   }
 
   //REG(GPIO_IOCLR)=CAM_IE;
@@ -99,7 +98,7 @@ void cc3_pixbuf_load ()
   }
 
   cc3_pixbuf_rewind();
-  cc3_g_current_frame.y_loc = 0;
+  cc3_g_pixbuf_frame.y_loc = 0;
 
   //while (REG (GPIO_IOPIN) & _CC3_CAM_VSYNC);
   //REG (GPIO_IOCLR) = _CC3_BUF_WEE;
@@ -128,18 +127,18 @@ void _cc3_pixbuf_skip_pixels (uint32_t size)
 
 void _cc3_seek_top ()
 {
-  if (cc3_g_current_frame.y_loc < cc3_g_current_frame.y0) {
-    _cc3_pixbuf_skip_pixels (cc3_g_current_frame.raw_width / 2
-			     * cc3_g_current_frame.y0);
+  if (cc3_g_pixbuf_frame.y_loc < cc3_g_pixbuf_frame.y0) {
+    _cc3_pixbuf_skip_pixels (cc3_g_pixbuf_frame.raw_width / 2
+			     * cc3_g_pixbuf_frame.y0);
 
-    cc3_g_current_frame.y_loc = cc3_g_current_frame.y0;
+    cc3_g_pixbuf_frame.y_loc = cc3_g_pixbuf_frame.y0;
   }
 }
 
 
 void _cc3_seek_left ()
 {
-  _cc3_pixbuf_skip_pixels (cc3_g_current_frame.x0 / 2);
+  _cc3_pixbuf_skip_pixels (cc3_g_pixbuf_frame.x0 / 2);
 }
 
 uint8_t _cc3_pixbuf_read_subpixel (void)
@@ -159,7 +158,7 @@ void _cc3_pixbuf_read_pixel (uint8_t * pixel,
                              uint8_t * saved,
                              uint8_t off0, uint8_t off1, uint8_t off2)
 {
-  if (cc3_g_current_frame.x_step == 1) {
+  if (cc3_g_pixbuf_frame.x_step == 1) {
     if (_cc3_second_green_valid) {
       // use the second green
       _cc3_second_green_valid = false;
@@ -185,10 +184,11 @@ void _cc3_pixbuf_read_pixel (uint8_t * pixel,
   }
 }
 
-void _cc3_resize_pixbuf ()
+void _cc3_pixbuf_resize ()
 {
-  cc3_g_current_frame.raw_width = _cc3_g_current_camera_state.raw_width;
-  cc3_g_current_frame.raw_height = _cc3_g_current_camera_state.raw_height;
+  cc3_g_pixbuf_frame.raw_width = _cc3_g_current_camera_state.raw_width;
+  cc3_g_pixbuf_frame.raw_height = _cc3_g_current_camera_state.raw_height;
+  cc3_pixbuf_frame_reset();
 }
 
 /**
@@ -206,10 +206,10 @@ void cc3_pixbuf_rewind ()
   REG (GPIO_IOCLR) = _CC3_BUF_RCK;
   REG (GPIO_IOSET) = _CC3_BUF_RRST;
   // skip first line because it is blue
-  _cc3_pixbuf_skip_pixels (cc3_g_current_frame.raw_width / 2);
-  //_cc3_pixbuf_skip_pixels (cc3_g_current_frame.raw_width / 2);
+  _cc3_pixbuf_skip_pixels (cc3_g_pixbuf_frame.raw_width / 2);
+  //_cc3_pixbuf_skip_pixels (cc3_g_pixbuf_frame.raw_width / 2);
   _cc3_second_green_valid = false;
-  cc3_g_current_frame.y_loc = 0;
+  cc3_g_pixbuf_frame.y_loc = 0;
 }
 
 
@@ -249,8 +249,8 @@ void cc3_set_led (uint8_t select)
 
 uint8_t *cc3_malloc_rows (uint32_t rows)
 {
-  int channels = cc3_g_current_frame.channels;
-  int width = cc3_g_current_frame.width;
+  int channels = cc3_g_pixbuf_frame.channels;
+  int width = cc3_g_pixbuf_frame.width;
 
   return (uint8_t *) malloc (width * channels * rows);
 }
@@ -272,10 +272,10 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
 
   uint8_t off0, off1, off2;
 
-  int width = cc3_g_current_frame.width;
+  int width = cc3_g_pixbuf_frame.width;
 
-  unsigned int row_limit = (cc3_g_current_frame.y1 - cc3_g_current_frame.y_loc)
-    / cc3_g_current_frame.y_step;
+  unsigned int row_limit = (cc3_g_pixbuf_frame.y1 - cc3_g_pixbuf_frame.y_loc)
+    / cc3_g_pixbuf_frame.y_step;
 
   if (row_limit < rows) {
     rows = row_limit;
@@ -301,12 +301,12 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
   _cc3_seek_top ();
 
   for (r = 0; r < rows; r++) {
-    int x = cc3_g_current_frame.x0;
+    int x = cc3_g_pixbuf_frame.x0;
 
     // First read into line
     _cc3_seek_left ();
 
-    switch (cc3_g_current_frame.coi) {
+    switch (cc3_g_pixbuf_frame.coi) {
     case CC3_ALL:
       _cc3_second_green_valid = false;
       for (j = 0; j < width; j++) {
@@ -315,8 +315,8 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
         _cc3_pixbuf_read_pixel (p, p - 3, off0, off1, off2);
 
 	// advance by x_step
-	x += cc3_g_current_frame.x_step;
-	_cc3_pixbuf_skip_pixels ((cc3_g_current_frame.x_step - 1) / 2);
+	x += cc3_g_pixbuf_frame.x_step;
+	_cc3_pixbuf_skip_pixels ((cc3_g_pixbuf_frame.x_step - 1) / 2);
       }
 
       break;
@@ -325,7 +325,7 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
       for (j = 0; j < width; j++) {
 	uint8_t *p = ((uint8_t *) mem) + (r * width + j);
 
-	if ((j & 0x1) == 0 || cc3_g_current_frame.x_step > 1) {
+	if ((j & 0x1) == 0 || cc3_g_pixbuf_frame.x_step > 1) {
 	  // read
 	  _cc3_pixbuf_skip_subpixel ();
 	  *p = _cc3_pixbuf_read_subpixel ();
@@ -335,8 +335,8 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
 	  *p = *(p - 1);
 	}
 
-	x += cc3_g_current_frame.x_step;
-	_cc3_pixbuf_skip_pixels ((cc3_g_current_frame.x_step - 1) / 2);
+	x += cc3_g_pixbuf_frame.x_step;
+	_cc3_pixbuf_skip_pixels ((cc3_g_pixbuf_frame.x_step - 1) / 2);
       }
       break;
 
@@ -344,7 +344,7 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
       for (j = 0; j < width; j++) {
 	uint8_t *p = ((uint8_t *) mem) + (r * width + j);
 
-	if ((j & 0x1) == 0 || cc3_g_current_frame.x_step > 1) {
+	if ((j & 0x1) == 0 || cc3_g_pixbuf_frame.x_step > 1) {
 	  // read
 	  *p = _cc3_pixbuf_read_subpixel ();
 	  _cc3_pixbuf_skip_subpixel ();
@@ -354,8 +354,8 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
 	  *p = _cc3_second_green;
 	}
 
-	x += cc3_g_current_frame.x_step;
-	_cc3_pixbuf_skip_pixels ((cc3_g_current_frame.x_step - 1) / 2);
+	x += cc3_g_pixbuf_frame.x_step;
+	_cc3_pixbuf_skip_pixels ((cc3_g_pixbuf_frame.x_step - 1) / 2);
       }
       break;
 
@@ -363,7 +363,7 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
       for (j = 0; j < width; j++) {
 	uint8_t *p = ((uint8_t *) mem) + (r * width + j);
 
-	if ((j & 0x1) == 0 || cc3_g_current_frame.x_step > 1) {
+	if ((j & 0x1) == 0 || cc3_g_pixbuf_frame.x_step > 1) {
 	  // read
 	  _cc3_pixbuf_skip_subpixel ();
 	  _cc3_pixbuf_skip_subpixel ();
@@ -373,17 +373,17 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
 	  *p = *(p - 1);
 	}
 
-	x += cc3_g_current_frame.x_step;
-	_cc3_pixbuf_skip_pixels ((cc3_g_current_frame.x_step - 1) / 2);
+	x += cc3_g_pixbuf_frame.x_step;
+	_cc3_pixbuf_skip_pixels ((cc3_g_pixbuf_frame.x_step - 1) / 2);
       }
       break;
     }
-    _cc3_pixbuf_skip_pixels ((cc3_g_current_frame.raw_width - x) / 2);
+    _cc3_pixbuf_skip_pixels ((cc3_g_pixbuf_frame.raw_width - x) / 2);
 
 
     // advance by y_step
-    _cc3_pixbuf_skip_pixels ((cc3_g_current_frame.y_step - 1) * cc3_g_current_frame.raw_width / 2);
-    cc3_g_current_frame.y_loc += cc3_g_current_frame.y_step;
+    _cc3_pixbuf_skip_pixels ((cc3_g_pixbuf_frame.y_step - 1) * cc3_g_pixbuf_frame.raw_width / 2);
+    cc3_g_pixbuf_frame.y_loc += cc3_g_pixbuf_frame.y_step;
   }
   return rows;
 }
@@ -418,8 +418,8 @@ uint32_t cc3_timer ()
  */
 int cc3_pixbuf_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
 {
-  int w = cc3_g_current_frame.raw_width;
-  int h = cc3_g_current_frame.raw_height;
+  int w = cc3_g_pixbuf_frame.raw_width;
+  int h = cc3_g_pixbuf_frame.raw_height;
 
   // constrain
   if (x0 < 0) {
@@ -457,12 +457,12 @@ int cc3_pixbuf_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
   }
 
   // set if ok
-  cc3_g_current_frame.x0 = x0;
-  cc3_g_current_frame.y0 = y0;
-  cc3_g_current_frame.x1 = x1;
-  cc3_g_current_frame.y1 = y1;
+  cc3_g_pixbuf_frame.x0 = x0;
+  cc3_g_pixbuf_frame.y0 = y0;
+  cc3_g_pixbuf_frame.x1 = x1;
+  cc3_g_pixbuf_frame.y1 = y1;
 
-  _cc3_update_frame_bounds (&cc3_g_current_frame);
+  _cc3_update_frame_bounds (&cc3_g_pixbuf_frame);
 
   return 1;
 }
@@ -492,15 +492,15 @@ int cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
     result = 0;
   }
 
-  cc3_g_current_frame.x_step = x_step;
-  cc3_g_current_frame.y_step = y_step;
-  //cc3_g_current_frame.x0 = 0;
-  //cc3_g_current_frame.y0 = 0;
-  //cc3_g_current_frame.x1 = cc3_g_current_frame.raw_width;
-  //cc3_g_current_frame.y1 = cc3_g_current_frame.raw_height;
-  cc3_g_current_frame.subsample_mode = mode;
+  cc3_g_pixbuf_frame.x_step = x_step;
+  cc3_g_pixbuf_frame.y_step = y_step;
+  //cc3_g_pixbuf_frame.x0 = 0;
+  //cc3_g_pixbuf_frame.y0 = 0;
+  //cc3_g_pixbuf_frame.x1 = cc3_g_pixbuf_frame.raw_width;
+  //cc3_g_pixbuf_frame.y1 = cc3_g_pixbuf_frame.raw_height;
+  cc3_g_pixbuf_frame.subsample_mode = mode;
 
-  _cc3_update_frame_bounds (&cc3_g_current_frame);
+  _cc3_update_frame_bounds (&cc3_g_pixbuf_frame);
 
   return result;
 }
@@ -515,9 +515,9 @@ int cc3_pixbuf_set_coi (cc3_channel_t chan)
 {
   if (chan > 4)
     return 0;                   // Sanity check on bounds
-  cc3_g_current_frame.coi = chan;
+  cc3_g_pixbuf_frame.coi = chan;
 
-  cc3_g_current_frame.channels = (chan == CC3_ALL ? 3 : 1);
+  cc3_g_pixbuf_frame.channels = (chan == CC3_ALL ? 3 : 1);
 
   return 1;
 }
@@ -552,27 +552,26 @@ int cc3_camera_init ()
   _cc3_g_current_camera_state.colorspace = CC3_RGB;
   _cc3_set_register_state ();
 
-  _cc3_resize_pixbuf();
-  cc3_frame_default ();
+  _cc3_pixbuf_resize();
 
   return 1;
 }
 
-void cc3_frame_default ()
+void cc3_pixbuf_frame_reset ()
 {
-  cc3_g_current_frame.x_step = 1;
-  cc3_g_current_frame.y_step = 1;
-  cc3_g_current_frame.x0 = 0;
-  cc3_g_current_frame.y0 = 0;
-  cc3_g_current_frame.x1 = cc3_g_current_frame.raw_width;
-  cc3_g_current_frame.y1 = cc3_g_current_frame.raw_height;
-  cc3_g_current_frame.y_loc = 0;
-  cc3_g_current_frame.subsample_mode = CC3_NEAREST;
-  cc3_g_current_frame.reset_on_next_load = false;
+  cc3_g_pixbuf_frame.x_step = 1;
+  cc3_g_pixbuf_frame.y_step = 1;
+  cc3_g_pixbuf_frame.x0 = 0;
+  cc3_g_pixbuf_frame.y0 = 0;
+  cc3_g_pixbuf_frame.x1 = cc3_g_pixbuf_frame.raw_width;
+  cc3_g_pixbuf_frame.y1 = cc3_g_pixbuf_frame.raw_height;
+  cc3_g_pixbuf_frame.y_loc = 0;
+  cc3_g_pixbuf_frame.subsample_mode = CC3_NEAREST;
+  cc3_g_pixbuf_frame.reset_on_next_load = false;
 
   cc3_pixbuf_set_coi(CC3_ALL);
 
-  _cc3_update_frame_bounds (&cc3_g_current_frame);
+  _cc3_update_frame_bounds (&cc3_g_pixbuf_frame);
 }
 
 /**
@@ -750,7 +749,7 @@ int cc3_set_raw_register (uint8_t address, uint8_t value)
 
 
 /**
- * Sets the resolution, cc3_g_current_frame width and height not updated
+ * Sets the resolution, cc3_g_pixbuf_frame width and height not updated
  * until next pixbuf load.
  * Takes enum CC3_LOW_RES and CC3_HIGH_RES.
  */
@@ -758,7 +757,7 @@ int cc3_set_resolution (cc3_camera_resolution_t cam_res)
 {
   _cc3_g_current_camera_state.resolution = cam_res;
   _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
-  cc3_g_current_frame.reset_on_next_load = true;
+  cc3_g_pixbuf_frame.reset_on_next_load = true;
 
   return 1;
 }
