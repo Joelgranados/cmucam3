@@ -11,5 +11,8 @@ clean:
 	  $(MAKE) -C $$subdir clean; \
 	done
 
+doc:
+	doxygen
+	$(MAKE) -C docs/latex
 
-.PHONY: all clean
+.PHONY: all clean doc
