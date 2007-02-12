@@ -87,7 +87,10 @@ cmucam2_start:
                  CC3_UART_MODE_8N1, CC3_UART_BINMODE_BINARY);
   val = setvbuf (stdout, NULL, _IONBF, 0);
 
-  cc3_camera_init ();
+  if (!cc3_camera_init ()) {
+    cc3_set_led(0);
+    exit(1);
+  }
   cc3_set_resolution(CC3_RES_LOW);
 
   cc3_pixbuf_load();
