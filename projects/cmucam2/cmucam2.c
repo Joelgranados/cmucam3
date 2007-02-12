@@ -88,14 +88,14 @@ cmucam2_start:
   val = setvbuf (stdout, NULL, _IONBF, 0);
 
   cc3_camera_init ();
-  cc3_set_resolution(CC3_LOW_RES);
+  cc3_set_resolution(CC3_RES_LOW);
 
   cc3_pixbuf_load();
 
   printf ("%s\r", VERSION_BANNER);
 
   cc3_servo_init ();
-  cc3_pixbuf_set_subsample (CC3_NEAREST, 2, 1);
+  cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 1);
 
   while (true) {
     cc3_channel_t old_coi;
@@ -151,9 +151,9 @@ cmucam2_start:
         else
           print_ACK ();
         if (arg_list[0] == 1)
-	  cc3_set_resolution(CC3_HIGH_RES);
+	  cc3_set_resolution(CC3_RES_HIGH);
         else
-	  cc3_set_resolution(CC3_LOW_RES);
+	  cc3_set_resolution(CC3_RES_LOW);
 
 	// re-init fifo
 	cc3_pixbuf_load();
@@ -185,8 +185,8 @@ cmucam2_start:
         else
           print_ACK ();
         //init_jpeg();
-  	// cc3_set_resolution(CC3_HIGH_RES);
-  	//cc3_pixbuf_set_subsample (CC3_NEAREST, 1, 1);
+  	// cc3_set_resolution(CC3_RES_HIGH);
+  	//cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, 1, 1);
 
         cc3_jpeg_send_simple();
 	printf( "JPG_END\r" );
@@ -246,7 +246,7 @@ cmucam2_start:
         }
         else
           print_ACK ();
-        cc3_pixbuf_set_subsample (CC3_NEAREST, arg_list[0] * 2, arg_list[1]);
+        cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, arg_list[0] * 2, arg_list[1]);
         break;
 
 

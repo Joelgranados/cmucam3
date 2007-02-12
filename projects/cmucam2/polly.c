@@ -43,19 +43,19 @@ int polly (polly_config_t config)
   if (config.min_blob_size > 30)
     return 0;
 
-  cc3_set_colorspace (CC3_RGB);
-  cc3_set_resolution (CC3_LOW_RES);
+  cc3_set_colorspace (CC3_COLORSPACE_RGB);
+  cc3_set_resolution (CC3_RES_LOW);
   cc3_set_auto_white_balance (true);
   cc3_set_auto_exposure (true);
 
   cc3_pixbuf_load ();
 
-  cc3_pixbuf_set_subsample (CC3_NEAREST, 2, 2);
-  cc3_pixbuf_set_coi (CC3_GREEN);
+  cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 2);
+  cc3_pixbuf_set_coi (CC3_CHANNEL_GREEN);
 
 
   // setup an image structure 
-  //img.channels=CC3_GREEN;
+  //img.channels=CC3_CHANNEL_GREEN;
   img.channels = 1;
   img.width = cc3_g_pixbuf_frame.width;
   img.height = cc3_g_pixbuf_frame.height;      // image will hold just 1 row for scanline processing
@@ -92,9 +92,9 @@ int polly (polly_config_t config)
 
 
 #ifdef MMC_DEBUG
-  cc3_pixbuf_set_coi (CC3_ALL);
+  cc3_pixbuf_set_coi (CC3_CHANNEL_ALL);
   write_raw_fifo_ppm ();
-  cc3_pixbuf_set_coi (CC3_GREEN);
+  cc3_pixbuf_set_coi (CC3_CHANNEL_GREEN);
   cc3_pixbuf_rewind ();
 #endif
 

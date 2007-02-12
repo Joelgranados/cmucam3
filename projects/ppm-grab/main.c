@@ -24,9 +24,7 @@ int main(void) {
   // use MMC
   cc3_filesystem_init();
 
- // cc3_set_colorspace(CC3_YCRCB);
-  cc3_set_resolution(CC3_HIGH_RES);
-  // cc3_pixbuf_set_subsample (CC3_NEAREST, 2, 2);
+  cc3_set_resolution(CC3_RES_HIGH);
   cc3_wait_ms(1000);
 
   // init

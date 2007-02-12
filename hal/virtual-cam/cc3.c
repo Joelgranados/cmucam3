@@ -80,7 +80,7 @@ void cc3_pixbuf_load ()
 		exit(0);
 		}
   printf( "cc3_pixbuf_loaded()\n" );
-  if(_cc3_g_current_camera_state.colorspace==CC3_YCRCB)
+  if(_cc3_g_current_camera_state.colorspace==CC3_COLORSPACE_YCRCB)
 	{
 	printf( "*Virtual-Camera Error: Das YCrCb Colorspace ist Verboten...\n" );
 	exit(0);
@@ -116,7 +116,7 @@ void cc3_pixbuf_load ()
    i=0;
    do{
    // skip every other row in low-res mode
-     if(_cc3_g_current_camera_state.resolution==CC3_LOW_RES  && col_cnt>=176 ) 
+     if(_cc3_g_current_camera_state.resolution==CC3_RES_LOW  && col_cnt>=176 ) 
 	{
 	for(k=0; k<352; k++ )
 		{
@@ -144,7 +144,7 @@ void cc3_pixbuf_load ()
    g2 = fgetc(fp);
    val = b2 = fgetc(fp);
   // skip every other pixel in low-res mode
-   if(_cc3_g_current_camera_state.resolution ==CC3_LOW_RES  ) {
+   if(_cc3_g_current_camera_state.resolution ==CC3_RES_LOW  ) {
     r = fgetc(fp);
     g = fgetc(fp);
     b = fgetc(fp);
@@ -346,12 +346,12 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
     rows = row_limit;
   }
 
-  if (_cc3_g_current_camera_state.colorspace == CC3_RGB) {
+  if (_cc3_g_current_camera_state.colorspace == CC3_COLORSPACE_RGB) {
     off0 = 0;
     off1 = 1;
     off2 = 2;
   }
-  else if (_cc3_g_current_camera_state.colorspace == CC3_YCRCB) {
+  else if (_cc3_g_current_camera_state.colorspace == CC3_COLORSPACE_YCRCB) {
     off0 = 1;
     off1 = 0;
     off2 = 2;
@@ -372,7 +372,7 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
     _cc3_seek_left ();
 
     switch (cc3_g_pixbuf_frame.coi) {
-    case CC3_ALL:
+    case CC3_CHANNEL_ALL:
       _cc3_second_green_valid = false;
       for (j = 0; j < width; j++) {
         uint8_t *p = ((uint8_t *) mem) +
@@ -386,7 +386,7 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
 
       break;
 
-    case CC3_RED:
+    case CC3_CHANNEL_RED:
       for (j = 0; j < width; j++) {
 	uint8_t *p = ((uint8_t *) mem) + (r * width + j);
 
@@ -405,7 +405,7 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
       }
       break;
 
-    case CC3_GREEN:
+    case CC3_CHANNEL_GREEN:
       for (j = 0; j < width; j++) {
 	uint8_t *p = ((uint8_t *) mem) + (r * width + j);
 
@@ -424,7 +424,7 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
       }
       break;
 
-    case CC3_BLUE:
+    case CC3_CHANNEL_BLUE:
       for (j = 0; j < width; j++) {
 	uint8_t *p = ((uint8_t *) mem) + (r * width + j);
 
@@ -585,7 +585,7 @@ bool cc3_pixbuf_set_coi (cc3_channel_t chan)
     return 0;                   // Sanity check on bounds
   cc3_g_pixbuf_frame.coi = chan;
 
-  cc3_g_pixbuf_frame.channels = (chan == CC3_ALL ? 3 : 1);
+  cc3_g_pixbuf_frame.channels = (chan == CC3_CHANNEL_ALL ? 3 : 1);
 
   return 1;
 }
@@ -612,7 +612,7 @@ bool cc3_camera_init ()
   _cc3_g_current_camera_state.contrast = -1;
   _cc3_g_current_camera_state.auto_exposure = true;
   _cc3_g_current_camera_state.auto_white_balance = false;
-  _cc3_g_current_camera_state.colorspace = CC3_RGB;
+  _cc3_g_current_camera_state.colorspace = CC3_COLORSPACE_RGB;
   _cc3_set_register_state ();
 
   _cc3_resize_pixbuf ();
@@ -636,10 +636,10 @@ void cc3_pixbuf_frame_reset ()
   cc3_g_pixbuf_frame.x1 = cc3_g_pixbuf_frame.raw_width;
   cc3_g_pixbuf_frame.y1 = cc3_g_pixbuf_frame.raw_height;
   cc3_g_pixbuf_frame.y_loc = 0;
-  cc3_g_pixbuf_frame.subsample_mode = CC3_NEAREST;
+  cc3_g_pixbuf_frame.subsample_mode = CC3_SUBSAMPLE_NEAREST;
   cc3_g_pixbuf_frame.reset_on_next_load = false;
 
-  cc3_pixbuf_set_coi(CC3_ALL);
+  cc3_pixbuf_set_coi(CC3_CHANNEL_ALL);
 
   _cc3_update_frame_bounds (&cc3_g_pixbuf_frame);
 }

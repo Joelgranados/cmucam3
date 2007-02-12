@@ -43,8 +43,8 @@
  * Allowed resolutions for the camera device.
  */
 typedef enum {
-  CC3_LOW_RES = 0,  /**< QCIF */
-  CC3_HIGH_RES = 1  /**< CIF */
+  CC3_RES_LOW = 0,  /**< Low resolution */
+  CC3_RES_HIGH = 1  /**< High resolution */
 } cc3_camera_resolution_t;
 
 /**
@@ -52,31 +52,31 @@ typedef enum {
  * other functions.
  */
 typedef enum {
-  CC3_SINGLE = 0,  /**< Only channel in single-channel images */
-  CC3_RED = 0,     /**< Red channel in RGB images */
-  CC3_GREEN = 1,   /**< Green channel in RGB images */
-  CC3_BLUE = 2,    /**< Blue channel in RGB images */
-  CC3_Y = 0,       /**< Y channel in YCrCb images */
-  CC3_CR = 1,      /**< Cr channel in YCrCb images */
-  CC3_CB = 2,      /**< Cb channel in YCrCb images */
-  CC3_ALL          /**< All channels in an image */
+  CC3_CHANNEL_SINGLE = 0,  /**< Only channel in single-channel images */
+  CC3_CHANNEL_RED = 0,     /**< Red channel in RGB images */
+  CC3_CHANNEL_GREEN = 1,   /**< Green channel in RGB images */
+  CC3_CHANNEL_BLUE = 2,    /**< Blue channel in RGB images */
+  CC3_CHANNEL_Y = 0,       /**< Y channel in YCrCb images */
+  CC3_CHANNEL_CR = 1,      /**< Cr channel in YCrCb images */
+  CC3_CHANNEL_CB = 2,      /**< Cb channel in YCrCb images */
+  CC3_CHANNEL_ALL          /**< All channels in an image */
 } cc3_channel_t;
 
 /**
  * Colorspace selector.
  */
 typedef enum {
-  CC3_YCRCB = 0,   /**< YCrCb colorspace */
-  CC3_RGB = 1      /**< RGB colorspace */
+  CC3_COLORSPACE_YCRCB = 0,   /**< YCrCb colorspace */
+  CC3_COLORSPACE_RGB = 1      /**< RGB colorspace */
 } cc3_colorspace_t;
 
 /**
  * Subsampling modes.
  */
 typedef enum {
-  CC3_NEAREST,     /**< Nearest neighbor subsampling */
-  CC3_MEAN,        /**< Mean of neighbors subsampling */
-  CC3_RANDOM       /**< Random neighbor subsampling */
+  CC3_SUBSAMPLE_NEAREST,     /**< Nearest neighbor subsampling */
+  CC3_SUBSAMPLE_MEAN,        /**< Mean of neighbors subsampling */
+  CC3_SUBSAMPLE_RANDOM       /**< Random neighbor subsampling */
 } cc3_subsample_mode_t;
 
 /**

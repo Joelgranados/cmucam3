@@ -11,7 +11,7 @@ char filename[32];
 uint8_t ppm,val;
 FILE *f;
 static uint32_t ppm_cnt=0;
-if(img->channels==CC3_ALL ) ppm=1;
+if(img->channels==CC3_CHANNEL_ALL ) ppm=1;
 else ppm=0;
 do {
 #ifdef VIRTUAL_CAM
@@ -44,7 +44,7 @@ cc3_pixel_t p;
 
 size_x = img->width;
 size_y = img->height;
-if(img->channels!=CC3_ALL) 
+if(img->channels!=CC3_CHANNEL_ALL) 
 {
 	printf( "ppm_write only works with 3 channel images\n" );
 	return 0;

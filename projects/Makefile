@@ -1,4 +1,5 @@
-SUBDIRS=cmucam2 hello-world jpeg-cam benchmark
+SUBDIRS=cmucam2 hello-world jpeg-cam benchmark edge-follow polly \
+	led-test png-grab spoonBot ppm-grab eeprom-test
 
 # Build rules
 all:

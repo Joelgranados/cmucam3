@@ -42,13 +42,13 @@ int main (void)
 
   cc3_camera_init ();
 
-  cc3_set_colorspace (CC3_RGB);
-  cc3_set_resolution (CC3_LOW_RES);
+  cc3_set_colorspace (CC3_COLORSPACE_RGB);
+  cc3_set_resolution (CC3_RES_LOW);
   cc3_set_auto_white_balance (false);
   cc3_set_auto_exposure (true);
-  cc3_pixbuf_set_subsample (CC3_NEAREST, 2, 2);
-  //cc3_pixbuf_set_coi (CC3_GREEN);
-  cc3_pixbuf_set_coi (CC3_ALL);
+  cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 2);
+  //cc3_pixbuf_set_coi (CC3_CHANNEL_GREEN);
+  cc3_pixbuf_set_coi (CC3_CHANNEL_ALL);
 
   cc3_clr_led (1);
   cc3_clr_led (2);
@@ -108,11 +108,11 @@ int main (void)
       for (x = 0; x < tmp_img.width; x++) {
         // process image using green channel
         cc3_get_pixel (&tmp_img, x, 0, &p);
-        p_filter.channel[0] = p.channel[CC3_GREEN];
+        p_filter.channel[0] = p.channel[CC3_CHANNEL_GREEN];
         cc3_set_pixel (&img, x, i, &p_filter);
 
         // glare removal using red color channel
-        if (p.channel[CC3_RED] > 200 && p.channel[CC3_GREEN] > 150)
+        if (p.channel[CC3_CHANNEL_RED] > 200 && p.channel[CC3_CHANNEL_GREEN] > 150)
           cc3_set_pixel (&mask_img, x, i, &p_black);
         else
           cc3_set_pixel (&mask_img, x, i, &p_white);

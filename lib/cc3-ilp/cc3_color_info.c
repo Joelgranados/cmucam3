@@ -54,7 +54,7 @@ for(x=0; x<img->width; x++ )
 	cc3_pixel_t cp;
 	cc3_get_pixel( img, x, 0, &cp );	
 	pkt->scratch_pix++;
-	if(cc3_g_pixbuf_frame.coi==CC3_ALL ) {	
+	if(cc3_g_pixbuf_frame.coi==CC3_CHANNEL_ALL ) {	
 		uint8_t i;
 		for(i=0; i<3; i++ )
 		{

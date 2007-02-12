@@ -36,14 +36,14 @@ int main (void)
 
   cc3_camera_init ();
 
-  cc3_set_colorspace (CC3_RGB);
-  cc3_set_resolution (CC3_LOW_RES);
+  cc3_set_colorspace (CC3_COLORSPACE_RGB);
+  cc3_set_resolution (CC3_RES_LOW);
   cc3_set_auto_white_balance (true);
   cc3_set_auto_exposure (true);
 
 
-  cc3_pixbuf_set_subsample (CC3_NEAREST, 2, 2);
-  cc3_pixbuf_set_coi (CC3_GREEN);
+  cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 2);
+  cc3_pixbuf_set_coi (CC3_CHANNEL_GREEN);
 
   cc3_clr_led (0);
   cc3_clr_led (1);

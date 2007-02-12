@@ -30,8 +30,8 @@ int main (void)
     
     cc3_camera_init ();
    
-    cc3_set_colorspace(CC3_RGB);
-    cc3_set_resolution(CC3_LOW_RES);
+    cc3_set_colorspace(CC3_COLORSPACE_RGB);
+    cc3_set_resolution(CC3_RES_LOW);
     cc3_set_auto_white_balance(true);
     cc3_set_auto_exposure(true);
    
@@ -116,9 +116,9 @@ int main (void)
 		{
 		// get a pixel from the img row memory
 		cc3_get_pixel( &img, x, 0, &my_pix );
-		if(my_pix.channel[CC3_RED]>max_red)
+		if(my_pix.channel[CC3_CHANNEL_RED]>max_red)
 			{
-			max_red=my_pix.channel[CC3_RED];
+			max_red=my_pix.channel[CC3_CHANNEL_RED];
 			my_x=x;
 			my_y=y;
 			}
