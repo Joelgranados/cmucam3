@@ -121,7 +121,7 @@ typedef enum {
 
 /**
  * UART binary/text mode selection values. @sa cc3_uart_init() for
- * how to use this.
+ * where to use this.
  */
 typedef enum {
   CC3_UART_BINMODE_BINARY,
@@ -129,7 +129,7 @@ typedef enum {
 } cc3_uart_binmode_t;
 
 /**
- * Framebuffer definition.
+ * Frame definition.
  * @sa #cc3_g_pixbuf_frame for the main use of this definition.
  */
 typedef struct {
@@ -166,89 +166,212 @@ typedef struct {
 extern cc3_frame_t cc3_g_pixbuf_frame;
 
 /**
- * Allocate a number of rows of the correct size based on the values in
- * #cc3_g_pixbuf_frame.
- *
- * @param[in] rows The number of rows to allocate space for.
- * @return A pointer to allocated memory or NULL.
- */
-uint8_t *cc3_malloc_rows (uint32_t rows);
-
-/**
- * Take a picture with the camera and load it into the internal pixbuf.
- * If #cc3_g_pixbuf_frame has cc3_frame_t.reset_on_next_load set,
- * then cc3_g_pixbuf_frame is also reset with new values.
- */
-void cc3_pixbuf_load (void);
-
-/**
- * Reset the cc3_g_pixbuf_frame to default values.
- */
-void cc3_pixbuf_frame_reset (void);
-
-/**
- * Using the cc3_frame_t reads rows taking into account virtual window and subsampling. 
- */
-int cc3_pixbuf_read_rows (void *mem, uint32_t rows);
-
-/**
- * Rewinds the fifo 
- */
-void cc3_pixbuf_rewind (void);
-/**
- * Sets the region of interest in cc3_frame_t for virtual windowing. 
- */
-int cc3_pixbuf_set_roi (int16_t x_0, int16_t y_0, int16_t x_1, int16_t y_1);
-/**
- * Sets the subsampling step and mode in cc3_frame_t. 
- */
-int cc3_pixbuf_set_subsample (cc3_subsample_mode_t, uint8_t x_step,
-                              uint8_t y_step);
-
-/**
- * Initialize the board. MUST be called for things to happen!
+ * Initialize the system. Very little is likely to happen without this call.
  */
 void cc3_system_setup (void);
 
 /**
- * Sets the channel of interest 1 or all. Blah.
+ * Initialize camera hardware.
+ *
+ * @return \a true if successful.
  */
-int cc3_pixbuf_set_coi (cc3_channel_t chan);
+bool cc3_camera_init (void);
 
-void cc3_set_led (uint8_t select);
-void cc3_clr_led (uint8_t select);
 /**
- * 1) Enable Camera & FIFO Power
- * 2) Reset Camera
- * 3) call cc3_set functions for default state 
+ * Take a picture with the camera and load it into the internal pixbuf.
+ * If #cc3_g_pixbuf_frame has cc3_frame_t.reset_on_next_load set,
+ * then #cc3_g_pixbuf_frame is also reset with new values.
  */
-int cc3_camera_init (void);
+void cc3_pixbuf_load (void);
+
 /**
- * Turn camera power off 
- * Turn fifo power off (may "cause picture to evaporate")
+ * Use malloc() to allocate a number of rows of the correct size based
+ * on the values in #cc3_g_pixbuf_frame. You must manually use free()
+ * to deallocate this memory when you are done. This function is useful
+ * in conjunction with cc3_pixbuf_read_rows().
+ *
+ * @param[in] rows The number of rows to allocate space for.
+ * @return A pointer to allocated memory or \a NULL if error.
+ */
+uint8_t *cc3_malloc_rows (uint32_t rows);
+
+/**
+ * Reset #cc3_g_pixbuf_frame to default values.
+ */
+void cc3_pixbuf_frame_reset (void);
+
+/**
+ * Do a row-by-row copy from the pixbuf into a block of memory.
+ * This function takes into account all the parameters listed in
+ * #cc3_g_pixbuf_frame.
+ *
+ * @param[out] mem The memory to write the rows to.
+ * @param[in] rows The number of rows to copy.
+ * @return Number of rows copied.
+ */
+int cc3_pixbuf_read_rows (void *mem, uint32_t rows);
+
+/**
+ * Rewind the pixbuf to the beginning without changing the
+ * image data stored in it. This function allows you to seek to
+ * the beginning of the pixbuf without calling cc3_pixbuf_load().
+ */
+void cc3_pixbuf_rewind (void);
+
+/**
+ * Set the region of interest in #cc3_g_pixbuf_frame for virtual windowing.
+ *
+ * @param[in] x_0 Left horizontal clipping boundary.
+ * @param[in] y_0 Top vertical clipping boundary.
+ * @param[in] x_1 Right horizontal clipping boundary.
+ * @param[in] y_1 Bottom vertical clipping boundary.
+ * @return \a true if successful.
+ */
+bool cc3_pixbuf_set_roi (int16_t x_0, int16_t y_0, int16_t x_1, int16_t y_1);
+
+/**
+ * Set the subsample steps and mode in #cc3_g_pixbuf_frame.
+ *
+ * @param[in] mode Subsample mode.
+ * @param[in] x_step Horizontal step. Must be either 1 or an even value.
+ * @param[in] y_step Vertical step.
+ * @return \a true if completely successful. Some settings may be partially
+ *         applied even if \a false.
+ */
+bool cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode,
+			       uint8_t x_step,
+			       uint8_t y_step);
+
+/**
+ * Set the channel of interest for reading from the pixbuf. Use
+ * cc3_channel_t.CC3_ALL for all channels.
+ *
+ * @param[in] chan The channel of interest.
+ * @return \a true on success.
+ */
+bool cc3_pixbuf_set_coi (cc3_channel_t chan);
+
+/**
+ * Activate an LED.
+ *
+ * @param[in] led The LED to illuminate.
+ */
+void cc3_set_led (uint8_t led);
+
+/**
+ * Deactivate an LED.
+ *
+ * @param[in] led The LED to extinguish.
+ */
+void cc3_clr_led (uint8_t led);
+
+/**
+ * Turn off power to the camera and pixbuf.
+ * \note This may cause the image to evaporate.
  */
 void cc3_camera_kill (void);
-/**
- * Sets the resolution, also updates cc3_g_pixbuf_frame width and height
- */
-int cc3_set_resolution (cc3_camera_resolution_t);
-int cc3_set_colorspace (cc3_colorspace_t);
-int cc3_set_framerate_divider (uint8_t rate_divider);
-int cc3_set_auto_exposure (bool);
-int cc3_set_auto_white_balance (bool);
-int cc3_set_brightness (uint8_t level);
-int cc3_set_contrast (uint8_t level);
-int cc3_set_raw_register (uint8_t address, uint8_t value);
 
+/**
+ * Set the resolution of the camera hardware. This does not have any
+ * effect on the pixbuf or #cc3_g_pixbuf_frame until cc3_pixbuf_load()
+ * is called again.
+ *
+ * @param[in] res Resolution to set.
+ */
+void cc3_set_resolution (cc3_camera_resolution_t res);
+
+/**
+ * Set the colorspace of the camera.
+ *
+ * @param[in] colorspace The colorspace.
+ */
+void cc3_set_colorspace (cc3_colorspace_t colorspace);
+
+/**
+ * Set the framerate divider.
+ *
+ * @param[in] rate_divider Desired framerate divider.
+ */
+void cc3_set_framerate_divider (uint8_t rate_divider);
+
+/**
+ * Set auto exposure.
+ *
+ * @param[in] ae Auto exposure value.
+ */
+void cc3_set_auto_exposure (bool ae);
+
+/**
+ * Set auto white balance.
+ *
+ * @param[in] wb Auto white balance value.
+ */
+void cc3_set_auto_white_balance (bool wb);
+
+/**
+ * Set the brightness.
+ *
+ * @param[in] level The level.
+ */
+void cc3_set_brightness (uint8_t level);
+
+/**
+ * Set contrast.
+ *
+ * @param[in] level The level.
+ */
+void cc3_set_contrast (uint8_t level);
+
+/**
+ * Using the camera control bus, set a camera register to a value.
+ * This will take an address and a value from the OmniVision manual
+ * and set it on the camera.  This should be used for advanced low level
+ * manipulation of the camera modes.  Currently, this will not set the
+ * corresponding cc3 internal data structure that keeps record of the camera
+ * mode.
+ * \warning Use with CAUTION.
+ *
+ * @param[in] address The address.
+ * @param[in] value The value.
+ * @return \a true if successful.
+ */
+bool cc3_set_raw_register (uint8_t address, uint8_t value);
+
+/**
+ * Get the number of UARTs on this device.
+ *
+ * @return Number of UARTs.
+ */
 uint8_t cc3_get_uart_count (void);
 
 /**
- * Awesome.
+ * Initialize a serial UART. Call this for each UART to initialize.
+ *
+ * @param[in] uart The UART to initialize.
+ * @param[in] rate The rate.
+ * @param[in] mode The mode.
+ * @param[in] binmode The binary/text mode.
+ * @return \a true if successful.
  */
 bool cc3_uart_init (uint8_t uart,
                     cc3_uart_rate_t rate,
                     cc3_uart_mode_t mode, cc3_uart_binmode_t binmode);
+
+/**
+ * Get a file handle for a UART.
+ *
+ * @param[in] uart The UART to open.
+ * @param[in] mode Mode as in fopen.
+ * @return The file handle or \a NULL if error.
+ */
 FILE *cc3_fopen_uart (uint8_t uart, const char *mode);
+
+/**
+ * Do a non-blocking check to see if data is waiting on the UART.
+ *
+ * @param[in] uart The UART to check.
+ * @return \a true if data can be read without blocking.
+ */
 bool cc3_uart_has_data (uint8_t uart);
 
 
