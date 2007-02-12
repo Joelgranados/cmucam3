@@ -94,9 +94,6 @@ int main (void)
     uint16_t my_x, my_y;
     uint8_t max_red;
     cc3_pixel_t my_pix;
-    max_red = 0;
-    my_x = 0;
-    my_y = 0;
 
     if (val & 0x1)
       cc3_set_led (0);
@@ -118,9 +115,17 @@ int main (void)
 
     // This tells the camera to grab a new frame into the fifo and reset
     // any internal location information.
+    cc3_pixbuf_set_coi(CC3_CHANNEL_ALL);
     cc3_pixbuf_load ();
 
+
+    // red search!
+
+    // *** slow method for red search
     start_time = cc3_get_current_ms();
+    max_red = 0;
+    my_x = 0;
+    my_y = 0;
     y = 0;
     while (cc3_pixbuf_read_rows (img.pix, 1)) {
       // read a row into the image picture memory from the camera
@@ -141,6 +146,59 @@ int main (void)
     printf (" cc3_get_pixel version took %d ms to complete\n",
 	    end_time - start_time);
 
+    // *** faster method for red search
+    cc3_pixbuf_rewind();  // use exactly the same pixbuf contents
+    start_time = cc3_get_current_ms();
+    max_red = 0;
+    my_x = 0;
+    my_y = 0;
+    y = 0;
+    while (cc3_pixbuf_read_rows (img.pix, 1)) {
+      // read a row into the image picture memory from the camera
+      for (uint16_t x = 0; x < img.width * 3; x+=3) {
+	uint8_t red = ((uint8_t *) img.pix)[x + CC3_CHANNEL_RED];
+        if (red > max_red) {
+          max_red = red;
+          my_x = x;
+          my_y = y;
+        }
+      }
+      y++;
+    }
+    my_x /= 3; // correct channel offset
+    end_time = cc3_get_current_ms();
+
+    printf ("Found max red value %d at %d, %d\n", max_red, my_x, my_y);
+    printf (" faster version took %d ms to complete\n",
+	    end_time - start_time);
+
+    // *** even faster method for red search
+    cc3_pixbuf_rewind();  // use exactly the same pixbuf contents
+    cc3_pixbuf_set_coi(CC3_CHANNEL_RED);
+    start_time = cc3_get_current_ms();
+    max_red = 0;
+    my_x = 0;
+    my_y = 0;
+    y = 0;
+    while (cc3_pixbuf_read_rows (img.pix, 1)) {
+      // read a row into the image picture memory from the camera
+      for (uint16_t x = 0; x < img.width; x++) {
+	uint8_t red = ((uint8_t *) img.pix)[x];
+        if (red > max_red) {
+          max_red = red;
+          my_x = x;
+          my_y = y;
+        }
+      }
+      y++;
+    }
+    end_time = cc3_get_current_ms();
+
+    printf ("Found max red value %d at %d, %d\n", max_red, my_x, my_y);
+    printf (" even faster version took %d ms to complete\n",
+	    end_time - start_time);
+
+    printf("\n");
     // sample non-blocking serial routine
     if (!cc3_uart_has_data (0))
       break;
