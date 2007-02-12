@@ -11,7 +11,7 @@
 /* simple hello world, showing features and compiling*/
 int main (void)
 {
-  uint32_t start_time, val;
+  uint32_t start_time, end_time, val;
   char c;
   FILE *fp;
   cc3_image_t img;
@@ -120,9 +120,9 @@ int main (void)
     // any internal location information.
     cc3_pixbuf_load ();
 
+    start_time = cc3_get_current_ms();
     y = 0;
     while (cc3_pixbuf_read_rows (img.pix, 1)) {
-      // FIXME: add cc3_pixbug img read rows
       // read a row into the image picture memory from the camera
       for (uint16_t x = 0; x < img.width; x++) {
         // get a pixel from the img row memory
@@ -133,11 +133,14 @@ int main (void)
           my_y = y;
         }
       }
-
       y++;
     }
+    end_time = cc3_get_current_ms();
 
     printf ("Found max red value %d at %d, %d\n", max_red, my_x, my_y);
+    printf (" cc3_get_pixel version took %d ms to complete\n",
+	    end_time - start_time);
+
     // sample non-blocking serial routine
     if (!cc3_uart_has_data (0))
       break;
