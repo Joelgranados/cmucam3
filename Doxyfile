@@ -66,17 +66,17 @@ GENERATE_BUGLIST       = YES
 GENERATE_DEPRECATEDLIST= YES
 ENABLED_SECTIONS       = 
 MAX_INITIALIZER_LINES  = 30
-SHOW_USED_FILES        = YES
+SHOW_USED_FILES        = NO
 SHOW_DIRECTORIES       = NO
 FILE_VERSION_FILTER    = 
 #---------------------------------------------------------------------------
 # configuration options related to warning and progress messages
 #---------------------------------------------------------------------------
-QUIET                  = NO
+QUIET                  = YES
 WARNINGS               = YES
 WARN_IF_UNDOCUMENTED   = YES
 WARN_IF_DOC_ERROR      = YES
-WARN_NO_PARAMDOC       = NO
+WARN_NO_PARAMDOC       = YES
 WARN_FORMAT            = "$file:$line: $text"
 WARN_LOGFILE           = 
 #---------------------------------------------------------------------------
@@ -259,7 +259,7 @@ INCLUDED_BY_GRAPH      = NO
 CALL_GRAPH             = NO
 CALLER_GRAPH           = NO
 GRAPHICAL_HIERARCHY    = NO
-DIRECTORY_GRAPH        = YES
+DIRECTORY_GRAPH        = NO
 DOT_IMAGE_FORMAT       = png
 DOT_PATH               = 
 DOTFILE_DIRS           = 
