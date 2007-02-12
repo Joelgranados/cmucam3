@@ -42,14 +42,14 @@ static uint32_t servo_mask;
  *  The servo will physically move on the next servo cycle.
  *  The servo operates at 50hz.
  */
-uint8_t cc3_servo_set (uint8_t servo, uint32_t pos)
+bool cc3_servo_set (uint8_t servo, uint32_t pos)
 {
     if (servo > MAX_SERVOS)
-        return -1;
+        return false;
     if (pos > SERVO_RESOLUTION)
-        return -1;
+        return false;
     servo_val[servo] = pos;
-    return 1;
+    return true;
 }
 
 /**
@@ -69,7 +69,7 @@ void cc3_servo_init ()
     // Setup timer1 to handle servos
 }
 
-void cc3_servo_mask(uint32_t mask)
+void cc3_servo_mask(uint8_t mask)
 {
 servo_mask=mask;
 }

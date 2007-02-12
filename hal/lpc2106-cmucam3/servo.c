@@ -37,20 +37,20 @@ static uint32_t servo_mask;
  * cc3_servo_set()
  * This function sets a servo to be at given position.
  *
- * Returns 1 upon success.
- * Returns -1 if the servo or position is out of bounds.
+ * Returns true upon success.
+ * Returns false if the servo or position is out of bounds.
  *
  *  The servo will physically move on the next servo cycle.
  *  The servo operates at 50hz.
  */
-uint8_t cc3_servo_set (uint8_t servo, uint32_t pos)
+bool cc3_servo_set (uint8_t servo, uint32_t pos)
 {
     if (servo > MAX_SERVOS)
-        return -1;
+        return false;
     if (pos > SERVO_RESOLUTION)
-        return -1;
+        return false;
     servo_val[servo] = pos;
-    return 1;
+    return true;
 }
 
 /**
@@ -80,7 +80,7 @@ void cc3_servo_init ()
     enable_servo_interrupt ();
 }
 
-void cc3_servo_mask(uint32_t mask)
+void cc3_servo_mask(uint8_t mask)
 {
 servo_mask=mask;
 }

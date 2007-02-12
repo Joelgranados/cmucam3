@@ -24,11 +24,6 @@
 #include <stdbool.h>
 
 
-void cc3_gpio_set_to_servo(uint8_t mask)
-{
-//printf( "set servo!\n" );
-}
-
 void cc3_gpio_set_to_input(uint8_t mask)
 {
 

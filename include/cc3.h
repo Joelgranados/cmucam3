@@ -374,35 +374,64 @@ FILE *cc3_fopen_uart (uint8_t uart, const char *mode);
  */
 bool cc3_uart_has_data (uint8_t uart);
 
-
+/**
+ * Get the value of the monotonic timer.
+ *
+ * @return Number of milliseconds since system start.
+ */
 uint32_t cc3_timer (void);
+
+/**
+ * Wait for a certain amount.
+ *
+ * @param[in] delay Number of milliseconds to sleep.
+ */
 void cc3_wait_ms (uint32_t delay);
 
+/**
+ * Get the value of the button right now.
+ *
+ * @return \a true if button is depressed.
+ */
 bool cc3_read_button (void);
 
 
-
-// Sets up the servo timers and begins servicing the servos
+/**
+ * Initialize the servo subsystem.
+ */
 void cc3_servo_init (void);
 
-// Set the servo mask
-void cc3_servo_mask (uint32_t mask);
+/**
+ * Set the servo mask.
+ *
+ * @param[in] mask The bitmask of servos to drive.
+ */
+void cc3_servo_mask (uint8_t mask);
 
-// User function to set a servo
-uint8_t cc3_servo_set (uint8_t servo, uint32_t pos);
+/**
+ * Set a servo to a position.
+ *
+ * @param[in] servo The servo to set.
+ * @param[in] pos The position to set the servo.
+ * @return \a true if successful.
+ */
+bool cc3_servo_set (uint8_t servo, uint32_t pos);
 
-// User function to disable servos to conserve power
+/**
+ * Disable the servo subsystem to conserve power.
+ */
 void cc3_servo_disable (void);
 
-void cc3_gpio_set_to_servo(uint8_t mask);
 void cc3_gpio_set_to_input(uint8_t mask);
 void cc3_gpio_set_to_output(uint8_t mask);
 uint8_t cc3_gpio_set_pin(uint8_t pin);
 uint8_t cc3_gpio_get_pin(uint8_t pin);
 
 
-// call this if you want to use a filesystem
-// without it, fopen won't really work
+/**
+ * Initialize the filesystem drivers. Without this call, the FAT filesystem
+ * will not be enabled.
+ */
 void cc3_filesystem_init (void);
 
 
