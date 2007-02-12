@@ -113,7 +113,7 @@ void capture_png(FILE *f)
 						NULL,
 						NULL);
   if (!png_ptr) {
-    fprintf(stderr, "fuck! png_struct\n");
+    fprintf(stderr, "png_struct\n");
     exit(1);
   }
 
@@ -121,7 +121,7 @@ void capture_png(FILE *f)
   if (!info_ptr) {
     png_destroy_write_struct(&png_ptr,
 			     (png_infopp)NULL);
-    fprintf(stderr, "fuck! png_info\n");
+    fprintf(stderr, "png_info\n");
     exit(1);
   }
 
