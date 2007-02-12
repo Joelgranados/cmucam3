@@ -124,8 +124,8 @@ typedef enum {
  * where to use this.
  */
 typedef enum {
-  CC3_UART_BINMODE_BINARY,
-  CC3_UART_BINMODE_TEXT,
+  CC3_UART_BINMODE_BINARY,   /**< Do not alter serial data in any way */
+  CC3_UART_BINMODE_TEXT,     /**< Read CR as LF, write LF as CR */
 } cc3_uart_binmode_t;
 
 /**
