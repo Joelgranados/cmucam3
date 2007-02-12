@@ -484,7 +484,7 @@ uint32_t cc3_timer ()
  * This function changes the way data is read from the FIFO.
  * Returns 1 upon success and 0 on an out of bounds failure.
  */
-int cc3_pixbuf_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
+bool cc3_pixbuf_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
 {
   int w = cc3_g_pixbuf_frame.raw_width;
   int h = cc3_g_pixbuf_frame.raw_height;
@@ -521,7 +521,7 @@ int cc3_pixbuf_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
 
   // check bounds
   if (x0 >= x1 || y0 >= y1) {
-    return 0;
+    return false;
   }
 
   // set if ok
@@ -532,7 +532,7 @@ int cc3_pixbuf_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
 
   _cc3_update_frame_bounds (&cc3_g_pixbuf_frame);
 
-  return 1;
+  return true;
 }
 
 /**
@@ -540,10 +540,10 @@ int cc3_pixbuf_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
  * Sets the subsampling step and mode in cc3_frame_t.
  * This function changes the way data is read from the FIFO.
  */
-int cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
+bool cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
                               uint8_t y_step)
 {
-  int result = 1;
+  bool result = 1;
 
   if (x_step == 0) {
     x_step = 1;
@@ -579,7 +579,7 @@ int cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
  * This function changes the way data is read from the FIFO.
  * Returns 1 upon success and 0 on failure.
  */
-int cc3_pixbuf_set_coi (cc3_channel_t chan)
+bool cc3_pixbuf_set_coi (cc3_channel_t chan)
 {
   if (chan > 4)
     return 0;                   // Sanity check on bounds
@@ -600,7 +600,7 @@ int cc3_pixbuf_set_coi (cc3_channel_t chan)
  * 	1 successfully got acks back
  * 	0 failure (probably due to hardware?)
  */
-int cc3_camera_init ()
+bool cc3_camera_init ()
 {
 
   _cc3_camera_reset ();
@@ -701,7 +701,7 @@ static unsigned int _cc3_i2c_send (unsigned int num, unsigned int *buffer)
  *
  * For basic manipulation of camera parameters see other cc3_set_xxxx functions.
  */
-int cc3_set_raw_register (uint8_t address, uint8_t value)
+bool cc3_set_raw_register (uint8_t address, uint8_t value)
 {
   unsigned int data[3];
   int to;
@@ -712,10 +712,10 @@ int cc3_set_raw_register (uint8_t address, uint8_t value)
   while (_cc3_i2c_send (3, data)) {
     to++;
     if (to > 3)
-      return 0;
+      return false;
   }
   _cc3_delay_us_4 (1);
-  return 1;
+  return true;
 }
 
 
@@ -723,13 +723,11 @@ int cc3_set_raw_register (uint8_t address, uint8_t value)
  * Sets the resolution, also updates cc3_g_pixbuf_frame width and height
  * Takes enum CC3_LOW_RES and CC3_HIGH_RES.
  */
-int cc3_set_resolution (cc3_camera_resolution_t cam_res)
+void cc3_set_resolution (cc3_camera_resolution_t cam_res)
 {
   _cc3_g_current_camera_state.resolution = cam_res;
   _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
   cc3_g_pixbuf_frame.reset_on_next_load = true;
-
-  return 1;
 }
 
 void _cc3_update_frame_bounds (cc3_frame_t *f)
@@ -745,47 +743,41 @@ void _cc3_update_frame_bounds (cc3_frame_t *f)
  * in YCrCb mode, use CC3_CR, CC3_Y, CC3_CB, CC3_Y2 when indexing
  * the pixel array.
  */
-int cc3_set_colorspace (cc3_colorspace_t colorspace)
+void cc3_set_colorspace (cc3_colorspace_t colorspace)
 {
   _cc3_g_current_camera_state.colorspace = colorspace;
   _cc3_set_register_state ();
-  return 1;
 }
 
 
-int cc3_set_framerate_divider (uint8_t rate_divider)
+void cc3_set_framerate_divider (uint8_t rate_divider)
 {
   _cc3_g_current_camera_state.clock_divider = rate_divider;
   _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
-  return 1;
 }
 
-int cc3_set_auto_exposure (bool exp)
+void cc3_set_auto_exposure (bool exp)
 {
   _cc3_g_current_camera_state.auto_exposure = exp;
   _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
-  return 1;
 }
 
-int cc3_set_auto_white_balance (bool awb)
+void cc3_set_auto_white_balance (bool awb)
 {
   _cc3_g_current_camera_state.auto_white_balance = awb;
   _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
-  return 1;
 }
 
-int cc3_set_brightness (uint8_t level)
+void cc3_set_brightness (uint8_t level)
 {
   _cc3_g_current_camera_state.brightness = level;
   _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
-  return 1;
 }
 
-int cc3_set_contrast (uint8_t level)
+void cc3_set_contrast (uint8_t level)
 {
   _cc3_g_current_camera_state.contrast = level;
   _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
-  return 1;
 }
 
 
