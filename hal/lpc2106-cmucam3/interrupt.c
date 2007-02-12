@@ -47,7 +47,7 @@ void enable_ext_interrupt (void)
 
 void enable_servo_interrupt (void)
 {
-
+   //uart0_write("Enable Servo Int\r\n" );
     REG (VICIntEnable) = 0x20;
 
 }
@@ -77,6 +77,7 @@ void interrupt (void)
 //if(REG(VICRawIntr)&0x20)
     if (REG (TIMER1_IR) == 0x1) // Timer 1 MR0 interrupt fired
     {
+   //uart0_write("Servo Int\r\n" );
         //printf( "Got timer 1 interrupt!\r\n" );
         _cc3_servo_int ();
         REG (TIMER1_IR) = 0x01; // clear pending flag 

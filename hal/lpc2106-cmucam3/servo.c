@@ -20,6 +20,7 @@
 #include "LPC2100.h"
 #include "lpc_config.h"
 #include "interrupt.h"
+#include "serial.h"
 #include <stdio.h>
 
 // Set a particular servo pin low
@@ -162,9 +163,12 @@ void _cc3_servo_int ()
     uint8_t safety;
     safety=1;
     ct = REG (TIMER1_TC);
-//printf( "timer1 = %d\n",REG(TIMER1_TC) );
-    if (ct == (SERVO_RESOLUTION * SERVO_PERIOD)) {
+    //printf( "timer1 = %d\n",REG(TIMER1_TC) );
+    // This used to be == instead of >= but one day the servos stopped working so we changed it
+    // Now it works.
+    if (ct >= (SERVO_RESOLUTION * SERVO_PERIOD)) {
         // First time interrupt called, rising edge for all
+	//uart0_write( "FIRST call\r\n" );	
         REG (TIMER1_TC) = 0;
         REG (TIMER1_MR0) = SERVO_RESOLUTION;    // schedule next wakeup for 1ms
         _cc3_servo_hi_all ();

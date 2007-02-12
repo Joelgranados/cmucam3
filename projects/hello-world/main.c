@@ -35,7 +35,6 @@ int main (void)
     cc3_set_auto_white_balance(true);
     cc3_set_auto_exposure(true);
    
-    cc3_gpio_set_to_servo( 5);
     printf("Hello World...\n");
     
     cc3_clr_led (0);
