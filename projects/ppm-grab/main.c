@@ -110,7 +110,7 @@ void capture_ppm(FILE *f)
 
   fprintf(f,"P6\n%d %d\n255\n",size_x,size_y );
 
-  time = cc3_timer();
+  time = cc3_get_current_ms();
   for (y = 0; y < size_y; y++) {
     cc3_pixbuf_read_rows(row, 1);
 
@@ -123,7 +123,7 @@ void capture_ppm(FILE *f)
     fprintf(stderr, ".");
     fflush(stderr);
   }
-  time2 = cc3_timer();
+  time2 = cc3_get_current_ms();
   write_time = time2 - time;
 
   free(row);

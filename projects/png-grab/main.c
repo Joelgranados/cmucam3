@@ -149,7 +149,7 @@ void capture_png(FILE *f)
   png_write_info(png_ptr, info_ptr);
 
 
-  time = cc3_timer();
+  time = cc3_get_current_ms();
   for (y = 0; y < size_y; y++) {
     cc3_pixbuf_read_rows(row, 1);
 
@@ -161,7 +161,7 @@ void capture_png(FILE *f)
   png_write_end(png_ptr, info_ptr);
   png_destroy_write_struct(&png_ptr, &info_ptr);
 
-  time2 = cc3_timer();
+  time2 = cc3_get_current_ms();
   write_time = time2 - time;
 
   free(row);

@@ -15,8 +15,13 @@
  *
  */
 
-/** @file
+/**
+ * @file
  * The core of the cc3 system.
+ *
+ * @mainpage
+ * \section Introduction
+ * Hello.
  */
 
 
@@ -129,8 +134,8 @@ typedef enum {
 } cc3_uart_binmode_t;
 
 /**
- * Frame definition.
- * @sa #cc3_g_pixbuf_frame for the main use of this definition.
+ * Frame structure.
+ * @sa #cc3_g_pixbuf_frame for the main use of this structure.
  */
 typedef struct {
   uint16_t raw_width;          /**< Native width */
@@ -152,7 +157,7 @@ typedef struct {
 } cc3_frame_t;
 
 /**
- * Simple 3-channel pixel definition.
+ * Simple 3-channel pixel structure.
  */
 typedef struct {
   uint8_t channel[3];          /**< Components of a single pixel */
@@ -377,9 +382,9 @@ bool cc3_uart_has_data (uint8_t uart);
 /**
  * Get the value of the monotonic timer.
  *
- * @return Number of milliseconds since system start.
+ * @return Number of milliseconds since an arbitrary time in the past.
  */
-uint32_t cc3_timer (void);
+uint32_t cc3_get_current_ms (void);
 
 /**
  * Wait for a certain amount.

@@ -68,11 +68,11 @@ int main (void)
 
     // sample showing how to read button
     printf("push button on camera back to continue\n");
-    start_time=cc3_timer();
+    start_time=cc3_get_current_ms();
     while(!cc3_read_button());
     cc3_set_led(1);
     // sample showing how to use timer
-    printf( "It took you %dms to press the button\n",cc3_timer()-start_time );
+    printf( "It took you %dms to press the button\n",cc3_get_current_ms()-start_time );
    
 
 

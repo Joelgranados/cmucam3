@@ -77,13 +77,11 @@ void cc3_pixbuf_load ()
  // cc3_pixbuf_rewind();
   _cc3_pixbuf_write_rewind ();
 
-  //  start_time = cc3_timer();
   while (!(REG (GPIO_IOPIN) & _CC3_CAM_VSYNC)); //while(CAM_VSYNC);
   while (REG (GPIO_IOPIN) & _CC3_CAM_VSYNC);    //while(!CAM_VSYNC);
 
 
   REG (GPIO_IOSET) = _CC3_BUF_WEE;
-  //  printf("vsync wait: %3d ms\r", cc3_timer() - start_time);
 
 
   // wait for vsync to finish
@@ -395,17 +393,12 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
 void cc3_wait_ms (uint32_t delay)
 {
   uint32_t start;
-  start = cc3_timer ();
-  while (cc3_timer () < (start + delay));
+  start = cc3_get_current_ms ();
+  while (cc3_get_current_ms () < (start + delay));
 }
 
 
-/**
- * cc3_timer():
- *
- * This function returns the time since startup in ms as a uint32
- */
-uint32_t cc3_timer ()
+uint32_t cc3_get_current_ms ()
 {
   return (REG (TIMER0_TC));     // REG in milliseconds
 }
