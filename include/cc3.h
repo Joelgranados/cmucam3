@@ -18,10 +18,6 @@
 /**
  * @file
  * The core of the cc3 system.
- *
- * @mainpage
- * \section Introduction
- * Hello.
  */
 
 
