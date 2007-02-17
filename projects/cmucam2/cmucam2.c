@@ -24,7 +24,7 @@
 //#define SERIAL_BAUD_RATE  CC3_UART_RATE_300
 
 
-static const int MAX_ARGS = 12;
+static const int MAX_ARGS = 10;
 static const int MAX_LINE = 128;
 
 static const char *VERSION_BANNER = "CMUcam2 v1.00 c6";
@@ -47,8 +47,10 @@ typedef enum {
   DOWN_SAMPLE,
   GET_POLLY,
   TRACK_WINDOW,
+  GET_TRACK,
   GET_WINDOW,
   LED_0,
+  TRACK_INVERT,
   CMUCAM2_CMD_END               // Must be last entry so array sizes are correct
 } cmucam2_command_t;
 
@@ -83,6 +85,7 @@ cmucam2_start:
   auto_led= true; 
   poll_mode = false;
   line_mode = false;
+  t_pkt.track_invert = false;
   t_pkt.lower_bound.channel[0] = 16;
   t_pkt.upper_bound.channel[0] = 240;
   t_pkt.lower_bound.channel[1] = 16;
@@ -187,6 +190,19 @@ cmucam2_start:
 	// re-init fifo
 	cc3_pixbuf_load();
         break;
+ 
+     case TRACK_INVERT:
+        if (n != 1 && arg_list[0]>1 ) {
+          error = true;
+          break;
+        }
+        else
+          print_ACK ();
+        if (arg_list[0] == 0) 
+		t_pkt.track_invert=0;
+	else
+		t_pkt.track_invert=1;
+        break;
 
 
       case LINE_MODE:
@@ -267,6 +283,16 @@ cmucam2_start:
                             arg_list[3]);
         break;
 
+     case GET_TRACK:
+        if (n != 0) {
+          error = true;
+          break;
+        }
+        else
+          print_ACK ();
+          printf( "%d %d %d %d %d %d\r",t_pkt.lower_bound.channel[0],t_pkt.lower_bound.channel[1], t_pkt.lower_bound.channel[2],
+			  	        t_pkt.upper_bound.channel[0], t_pkt.upper_bound.channel[1], t_pkt.upper_bound.channel[2] );
+	break;
 
       case GET_WINDOW:
         if (n != 0) {
@@ -304,7 +330,7 @@ cmucam2_start:
           t_pkt.lower_bound.channel[2] = arg_list[4];
           t_pkt.upper_bound.channel[2] = arg_list[5];
         }
-        cmucam2_track_color (&t_pkt, poll_mode, line_mode,auto_led,0);
+        cmucam2_track_color (&t_pkt, poll_mode, line_mode,auto_led, 0);
         break;
 
      case TRACK_WINDOW:
@@ -495,7 +521,7 @@ void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
 
 void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
 			  bool poll_mode,
-                          bool line_mode, bool auto_led, bool quite)
+                          bool line_mode, bool auto_led,bool quite)
 {
   cc3_image_t img;
   uint16_t i;
@@ -634,7 +660,9 @@ void set_cmucam2_commands (void)
   cmucam2_cmds[GET_POLLY] = "GP";
   cmucam2_cmds[TRACK_WINDOW] = "TW";
   cmucam2_cmds[GET_WINDOW] = "GW";
+  cmucam2_cmds[GET_TRACK] = "GT";
   cmucam2_cmds[LED_0] = "L0";
+  cmucam2_cmds[TRACK_INVERT] = "TI";
 }
 
 //int32_t cmucam2_get_command(cmucam2_command_t *cmd, int32_t *arg_list)
