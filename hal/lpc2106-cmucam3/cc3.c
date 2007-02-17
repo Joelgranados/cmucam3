@@ -642,9 +642,10 @@ static void _cc3_set_cam_ddr (volatile unsigned long val)
 
 
 
-static unsigned int _cc3_sccb_send (unsigned int num, unsigned int *buffer)
+static bool _cc3_sccb_send (unsigned int num, unsigned int *buffer)
 {
-  unsigned int ack, i, k;
+  bool ack;
+  unsigned int i, k;
   unsigned int data;
 
   // Send Start Bit
@@ -688,11 +689,11 @@ static unsigned int _cc3_sccb_send (unsigned int num, unsigned int *buffer)
     _cc3_set_cam_ddr (_CC3_SCCB_PORT_DDR_READ_SDA);      // SDA=1 SCL=0
 
     _cc3_set_cam_ddr_sccb_idle ();       // SDA=1 SCL=1
-    ack = 0;
+    ack = false;
 
     //if(SCCB_SDA)                     // sample SDA
     if (REG (GPIO_IOPIN) & 0x00800000) {
-      ack |= 1;
+      ack = true;
       break;
     }
 
