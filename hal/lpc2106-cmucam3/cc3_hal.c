@@ -1,5 +1,5 @@
 /*
- * Copyright 2006  Anthony Rowe and Adam Goode
+ * Copyright 2006-2007  Anthony Rowe and Adam Goode
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,54 +102,56 @@ void _cc3_pixbuf_write_rewind ()
  * This function goes through the register state structures and sets the corresponding camera registers.
  * It also updates any internal camera structures such as resolution that may change.
  */
-void _cc3_set_register_state ()
+bool _cc3_set_register_state ()
 {
+  bool result = true;
+
   switch (_cc3_g_current_camera_state.camera_type) {
   case _CC3_OV6620:
     // Set the right data bus mode
-    cc3_set_raw_register (0x14, 0x20);
+    result &= cc3_set_raw_register (0x14, 0x20);
     // Set the resolution and update the size flags
     if (_cc3_g_current_camera_state.resolution == CC3_RES_LOW) {
       _cc3_g_current_camera_state.raw_width = CC3_LO_RES_WIDTH; // 88 * 2;
       _cc3_g_current_camera_state.raw_height = CC3_LO_RES_HEIGHT;       // 144;
-      cc3_set_raw_register (0x14, 0x20);
+      result &= cc3_set_raw_register (0x14, 0x20);
     }
     else {
       _cc3_g_current_camera_state.raw_width = CC3_HI_RES_WIDTH; // 176 * 2;
       _cc3_g_current_camera_state.raw_height = CC3_HI_RES_HEIGHT;       //288;
-      cc3_set_raw_register (0x14, 0x00);
+      result &= cc3_set_raw_register (0x14, 0x00);
     }
 
     if (_cc3_g_current_camera_state.auto_exposure) {
-      cc3_set_raw_register (0x13, 0x21);
+      result &= cc3_set_raw_register (0x13, 0x21);
     }
     else {
       // No auto gain, so lets set brightness and contrast if need be
-      cc3_set_raw_register (0x13, 0x20);
+      result &= cc3_set_raw_register (0x13, 0x20);
       if (_cc3_g_current_camera_state.brightness != -1)
-        cc3_set_raw_register (0x06,
-                              (_cc3_g_current_camera_state.
-                               brightness & 0xFF));
+        result &= cc3_set_raw_register (0x06,
+					(_cc3_g_current_camera_state.
+					 brightness & 0xFF));
 
       if (_cc3_g_current_camera_state.contrast != -1)
-        cc3_set_raw_register (0x05,
-                              (_cc3_g_current_camera_state.contrast & 0xFF));
+        result &= cc3_set_raw_register (0x05,
+					(_cc3_g_current_camera_state.contrast & 0xFF));
     }
     // Set Colorspace and Auto White Balance
-    cc3_set_raw_register (0x12,
-                          0x20 | (_cc3_g_current_camera_state.
-                                  auto_white_balance << 2)
-                          | (_cc3_g_current_camera_state.colorspace << 3));
+    result &= cc3_set_raw_register (0x12,
+				    0x20 | (_cc3_g_current_camera_state.
+					    auto_white_balance << 2)
+				    | (_cc3_g_current_camera_state.colorspace << 3));
     // Set Frame Clock rate divider
-    cc3_set_raw_register (0x11, _cc3_g_current_camera_state.clock_divider);
-
+    result &= cc3_set_raw_register (0x11, _cc3_g_current_camera_state.clock_divider);
 
     break;
 
   case _CC3_OV7620:
     // XXX I need code.  The CMUcam2 is kind of wrong, so lets fix it...
+    result = false;
     break;
   }
 
-
+  return result;
 }

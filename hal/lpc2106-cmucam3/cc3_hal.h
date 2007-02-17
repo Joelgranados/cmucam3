@@ -66,7 +66,7 @@ typedef struct {
  */
 extern _cc3_camera_state_t _cc3_g_current_camera_state;
 
-void _cc3_set_register_state (void);
+bool _cc3_set_register_state (void);
 void _cc3_camera_reset (void);
 void _cc3_fifo_reset (void);
 void _cc3_delay_us_4 (int cnt);

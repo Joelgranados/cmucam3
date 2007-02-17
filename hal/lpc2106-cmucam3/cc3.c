@@ -522,6 +522,8 @@ bool cc3_pixbuf_set_coi (cc3_channel_t chan)
  */
 bool cc3_camera_init ()
 {
+  bool result;
+
   REG (PCB_PINSEL0) = (REG (PCB_PINSEL0) & 0xFFFF0000) | UART0_PCB_PINSEL_CFG | UART1_PCB_PINSEL_CFG;  //| 0x50;
   //REG (PCB_PINSEL0) = (REG (PCB_PINSEL0) & 0xFFFF0000) | UART0_PCB_PINSEL_CFG | UART1_PCB_PINSEL_CFG; //| 0x50;
   REG (GPIO_IODIR) = _CC3_DEFAULT_PORT_DIR;
@@ -538,11 +540,12 @@ bool cc3_camera_init ()
   _cc3_g_current_camera_state.auto_exposure = true;
   _cc3_g_current_camera_state.auto_white_balance = false;
   _cc3_g_current_camera_state.colorspace = CC3_COLORSPACE_RGB;
-  _cc3_set_register_state ();
+
+  result = _cc3_set_register_state ();
 
   _cc3_pixbuf_resize();
 
-  return true;
+  return result;
 }
 
 void cc3_pixbuf_frame_reset ()
