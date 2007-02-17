@@ -79,27 +79,15 @@ int main (void)
 {
   int32_t command;
   int32_t val, n;
-  uint32_t arg_list[MAX_ARGS];
-  bool error, poll_mode, line_mode,auto_led;
+  uint32_t arg_list[MAX_ARGS],start_time;
+  bool error, poll_mode, line_mode,auto_led,demo_mode,auto_servo_mode;
   cc3_track_pkt_t t_pkt;
   cc3_color_info_pkt_t s_pkt;
   cc3_histogram_pkt_t h_pkt;
 
   set_cmucam2_commands ();
 
-cmucam2_start:
-  auto_led= true; 
-  poll_mode = false;
-  line_mode = false;
-  h_pkt.bins=28;
-  t_pkt.track_invert = false;
-  t_pkt.noise_filter = 0;
-  t_pkt.lower_bound.channel[0] = 16;
-  t_pkt.upper_bound.channel[0] = 240;
-  t_pkt.lower_bound.channel[1] = 16;
-  t_pkt.upper_bound.channel[1] = 240;
-  t_pkt.lower_bound.channel[2] = 16;
-  t_pkt.upper_bound.channel[2] = 240;
+
   cc3_system_setup ();
 
   cc3_filesystem_init();
@@ -113,6 +101,41 @@ cmucam2_start:
     cc3_set_led(0);
     exit(1);
   }
+
+  demo_mode=false;
+  auto_servo_mode=false;
+  start_time = cc3_get_current_ms ();
+  do 
+  {
+    if(cc3_read_button()==1)
+    {
+	// Demo Mode flag
+	demo_mode=true;
+	auto_servo_mode=true;
+ 	// Debounce Switch
+	cc3_clr_led(0);
+  	cc3_wait_ms(500);
+	break;
+    }
+
+  }while(cc3_get_current_ms()<(start_time+2000));
+  
+  
+cmucam2_start:
+  auto_led= true; 
+  poll_mode = false;
+  line_mode = false;
+  h_pkt.bins=28;
+  t_pkt.track_invert = false;
+  t_pkt.noise_filter = 0;
+  t_pkt.lower_bound.channel[0] = 16;
+  t_pkt.upper_bound.channel[0] = 240;
+  t_pkt.lower_bound.channel[1] = 16;
+  t_pkt.upper_bound.channel[1] = 240;
+  t_pkt.lower_bound.channel[2] = 16;
+  t_pkt.upper_bound.channel[2] = 240;
+  
+ 
   cc3_set_resolution(CC3_RES_LOW);
 
   cc3_pixbuf_load();
@@ -122,12 +145,30 @@ cmucam2_start:
   cc3_servo_init ();
   cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 1);
 
+  if(demo_mode) {
+	// Wait for second button press as target lock
+	while(1)
+	{
+  		cc3_set_led(0);
+  		cc3_wait_ms(100);
+  		cc3_clr_led(0);
+  		cc3_wait_ms(100);
+  		if(cc3_read_button()==1) break;
+	}
+
+  }
   while (true) {
     cc3_channel_t old_coi;
 
     printf (":");
     error = false;
-    n = cmucam2_get_command (&command, arg_list);
+    if(demo_mode==true)
+    {
+	    n=0;
+	    command=TRACK_WINDOW;
+    }
+    else
+	    n = cmucam2_get_command (&command, arg_list);
     if (n != -1) {
       switch (command) {
 
@@ -385,6 +426,7 @@ cmucam2_start:
           tmp= s_pkt.mean.channel[2]+threshold; if(tmp<16) tmp=16; if(tmp>240) tmp=240; t_pkt.upper_bound.channel[2] = tmp;
         cmucam2_track_color (&t_pkt, poll_mode, line_mode,auto_led,0);
 	}
+	demo_mode=false;
 	break;
 
 	
@@ -518,6 +560,8 @@ void cmucam2_send_image_direct (bool auto_led)
   cc3_clr_led(0);
   free(row);
 }
+
+
 
 void cmucam2_get_histogram(cc3_histogram_pkt_t *h_pkt, bool poll_mode, bool quite)
 {
