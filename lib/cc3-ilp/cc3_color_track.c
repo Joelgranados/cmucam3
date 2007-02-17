@@ -66,15 +66,15 @@ uint8_t cc3_track_color (cc3_track_pkt_t * pkt)
       bool pixel_good = 0;
 
       if (cc3_g_pixbuf_frame.coi == CC3_CHANNEL_ALL) {
-        if (pixel[0] >= pkt->lower_bound.channel[0]
+	  if (pixel[0] >= pkt->lower_bound.channel[0]
             && pixel[0] <= pkt->upper_bound.channel[0]
             && pixel[1] >= pkt->lower_bound.channel[1]
             && pixel[1] <= pkt->upper_bound.channel[1]
             && pixel[2] >= pkt->lower_bound.channel[2]
             && pixel[2] <= pkt->upper_bound.channel[2])
           pixel_good = 1;
-          
-          pixel += 3;
+      
+      	  pixel += 3;
       }
       else {
         if (*pixel >=
@@ -86,6 +86,7 @@ uint8_t cc3_track_color (cc3_track_pkt_t * pkt)
           pixel++;
       }
 
+      if(pkt->track_invert==1) pixel_good=!pixel_good;
       if (pixel_good) {
         pkt->num_pixels++;
         if (pkt->x0 > x)
@@ -155,11 +156,14 @@ uint8_t cc3_track_color_scanline_start (cc3_track_pkt_t * pkt)
 uint8_t cc3_track_color_scanline (cc3_image_t * img, cc3_track_pkt_t * pkt)
 {
   uint32_t x, y;
+  uint8_t seq_count;
 
   for (x = 0; x < MAX_BINARY_WIDTH; x++)
     pkt->binary_scanline[x] = 0;
 
   for (y = pkt->scratch_y; y < (pkt->scratch_y + img->height); y++)
+  {
+    seq_count=0;
     for (x = 0; x < img->width; x++) {
       bool pixel_good = 0;
       cc3_pixel_t cp;
@@ -182,12 +186,19 @@ uint8_t cc3_track_color_scanline (cc3_image_t * img, cc3_track_pkt_t * pkt)
           pixel_good = 1;
       }
 
+      if(pkt->track_invert==1) pixel_good=!pixel_good;
       /*      pkt->binary_scanline[0]=0x01020304; 
          pkt->binary_scanline[1]=0x05060708; 
          pkt->binary_scanline[2]=0x090A0B0C; 
          pkt->binary_scanline[3]=0x0D0E0F10; 
          pkt->binary_scanline[4]=0x11121314; 
-       */ if (pixel_good) {
+       */
+       if(pixel_good)
+       {
+	     if(  seq_count<255) seq_count++;
+       } else seq_count=0;
+      
+       if (pixel_good && seq_count>pkt->noise_filter) {
         uint8_t block, offset;
         block = x / 8;
         offset = x % 8;
@@ -206,7 +217,7 @@ uint8_t cc3_track_color_scanline (cc3_image_t * img, cc3_track_pkt_t * pkt)
         pkt->centroid_y += y;
       }
     }
-
+  }
   pkt->scratch_y = y;
 
   return 1;

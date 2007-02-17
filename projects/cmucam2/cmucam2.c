@@ -50,6 +50,7 @@ typedef enum {
   GET_TRACK,
   GET_WINDOW,
   LED_0,
+  NOISE_FILTER,
   TRACK_INVERT,
   CMUCAM2_CMD_END               // Must be last entry so array sizes are correct
 } cmucam2_command_t;
@@ -86,6 +87,7 @@ cmucam2_start:
   poll_mode = false;
   line_mode = false;
   t_pkt.track_invert = false;
+  t_pkt.noise_filter = 0;
   t_pkt.lower_bound.channel[0] = 16;
   t_pkt.upper_bound.channel[0] = 240;
   t_pkt.lower_bound.channel[1] = 16;
@@ -203,7 +205,16 @@ cmucam2_start:
 	else
 		t_pkt.track_invert=1;
         break;
-
+ 
+     case NOISE_FILTER:
+        if (n != 1 ) {
+          error = true;
+          break;
+        }
+        else
+          print_ACK ();
+	  t_pkt.noise_filter=arg_list[0];
+        break;
 
       case LINE_MODE:
         if (n != 2) {
@@ -660,6 +671,7 @@ void set_cmucam2_commands (void)
   cmucam2_cmds[GET_POLLY] = "GP";
   cmucam2_cmds[TRACK_WINDOW] = "TW";
   cmucam2_cmds[GET_WINDOW] = "GW";
+  cmucam2_cmds[NOISE_FILTER] = "NF";
   cmucam2_cmds[GET_TRACK] = "GT";
   cmucam2_cmds[LED_0] = "L0";
   cmucam2_cmds[TRACK_INVERT] = "TI";
