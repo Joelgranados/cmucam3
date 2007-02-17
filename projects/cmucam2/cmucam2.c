@@ -2,6 +2,7 @@
 #include <cc3_ilp.h>
 #include <cc3_color_track.h>
 #include <cc3_color_info.h>
+#include <cc3_histogram.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -46,6 +47,7 @@ typedef enum {
   VIRTUAL_WINDOW,
   DOWN_SAMPLE,
   GET_POLLY,
+  GET_HISTOGRAM,
   TRACK_WINDOW,
   GET_TRACK,
   GET_WINDOW,
@@ -57,6 +59,7 @@ typedef enum {
 
 char *cmucam2_cmds[CMUCAM2_CMD_END];
 
+static void cmucam2_get_histogram(cc3_histogram_pkt_t *h_pkt, bool poll_mode, bool quite);
 static void cmucam2_get_mean (cc3_color_info_pkt_t * t_pkt,
 			      bool poll_mode,
 			      bool line_mode, bool quite);
@@ -69,6 +72,7 @@ static void set_cmucam2_commands (void);
 static void print_ACK (void);
 static void print_NCK (void);
 static void cmucam2_write_t_packet (cc3_track_pkt_t * pkt);
+static void cmucam2_write_h_packet (cc3_histogram_pkt_t *pkt);
 void cmucam2_send_image_direct (bool auto_led);
 
 int main (void)
@@ -79,6 +83,7 @@ int main (void)
   bool error, poll_mode, line_mode,auto_led;
   cc3_track_pkt_t t_pkt;
   cc3_color_info_pkt_t s_pkt;
+  cc3_histogram_pkt_t h_pkt;
 
   set_cmucam2_commands ();
 
@@ -86,6 +91,7 @@ cmucam2_start:
   auto_led= true; 
   poll_mode = false;
   line_mode = false;
+  h_pkt.bins=28;
   t_pkt.track_invert = false;
   t_pkt.noise_filter = 0;
   t_pkt.lower_bound.channel[0] = 16;
@@ -148,7 +154,7 @@ cmucam2_start:
         break;
 
      case LED_0:
- 	if (n != 1 && arg_list[0]>2 ) {
+ 	if (n != 1 || arg_list[0]>2 ) {
           error = true;
           break;
         }
@@ -194,7 +200,7 @@ cmucam2_start:
         break;
  
      case TRACK_INVERT:
-        if (n != 1 && arg_list[0]>1 ) {
+        if (n != 1 || arg_list[0]>1 ) {
           error = true;
           break;
         }
@@ -435,6 +441,18 @@ cmucam2_start:
         cmucam2_get_mean (&s_pkt, poll_mode, line_mode,0);
         break;
 
+	
+      case GET_HISTOGRAM:
+        if (n != 1 || arg_list[0]>2) {
+          error = true;
+          break;
+        }
+        else
+          print_ACK ();
+	  h_pkt.channel=arg_list[0];
+          cmucam2_get_histogram(&h_pkt, poll_mode, 0);
+        break;
+
 
       case SET_SERVO:
         if (n != 2) {
@@ -500,6 +518,38 @@ void cmucam2_send_image_direct (bool auto_led)
   cc3_clr_led(0);
   free(row);
 }
+
+void cmucam2_get_histogram(cc3_histogram_pkt_t *h_pkt, bool poll_mode, bool quite)
+{
+  cc3_image_t img;
+  img.channels = 3;
+  img.width = cc3_g_pixbuf_frame.width;
+  img.height = 1;               // image will hold just 1 row for scanline processing
+  img.pix = malloc (3 * img.width);
+  h_pkt->hist=malloc(h_pkt->bins*sizeof(uint32_t));
+  do {
+    cc3_pixbuf_load ();
+    if (cc3_histogram_scanline_start (h_pkt) != 0) {
+      while (cc3_pixbuf_read_rows (img.pix, 1)) {
+        cc3_histogram_scanline (&img, h_pkt);
+      }
+      cc3_histogram_scanline_finish (h_pkt);
+      while (!cc3_uart_has_data (0)) { if(fgetc(stdin)=='\r' ) free(img.pix); free(h_pkt->hist); return; }
+      if(!quite) cmucam2_write_h_packet (h_pkt);
+    }
+    if (!cc3_uart_has_data (0))
+    {
+      if(fgetc(stdin)=='\r' )
+      	break;
+    }
+  } while (!poll_mode);
+
+  free (img.pix);
+  free (h_pkt->hist);
+
+
+}
+
 
 void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
 		       bool poll_mode,
@@ -632,6 +682,22 @@ void cmucam2_write_t_packet (cc3_track_pkt_t * pkt)
 
 }
 
+void cmucam2_write_h_packet (cc3_histogram_pkt_t *pkt)
+{
+uint32_t i;
+uint32_t total_pix;
+
+  total_pix=cc3_g_pixbuf_frame.width*cc3_g_pixbuf_frame.height;
+  printf ("H" );
+  for(i=0; i<pkt->bins; i++ )
+  {
+	pkt->hist[i]=(pkt->hist[i]*256)/total_pix;
+	if(pkt->hist[i]>255) pkt->hist[i]=255;
+	printf( " %d",pkt->hist[i] );
+  }
+ printf( "\r" ); 
+}
+
 void cmucam2_write_s_packet (cc3_color_info_pkt_t * pkt)
 {
   printf ("S %d %d %d %d %d %d\r", pkt->mean.channel[0], pkt->mean.channel[1],
@@ -673,6 +739,7 @@ void set_cmucam2_commands (void)
   cmucam2_cmds[GET_WINDOW] = "GW";
   cmucam2_cmds[NOISE_FILTER] = "NF";
   cmucam2_cmds[GET_TRACK] = "GT";
+  cmucam2_cmds[GET_HISTOGRAM] = "GH";
   cmucam2_cmds[LED_0] = "L0";
   cmucam2_cmds[TRACK_INVERT] = "TI";
 }
@@ -690,7 +757,7 @@ int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list)
   length = 0;
   *cmd = 0;
   c = 0;
-  while (c != '\r' && c != '\n') {
+  while (c != '\r' ) {
     c = fgetc (stdin);
     if (length < (MAX_LINE - 1)) {
       line_buf[length] = c;
