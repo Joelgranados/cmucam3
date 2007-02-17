@@ -179,6 +179,13 @@ void cc3_system_setup (void);
 bool cc3_camera_init (void);
 
 /**
+ * Initialize the filesystem drivers. Without this call, the FAT filesystem
+ * will not be enabled, saving significant code space.
+ */
+void cc3_filesystem_init (void);
+
+
+/**
  * Take a picture with the camera and load it into the internal pixbuf.
  * If #cc3_g_pixbuf_frame has cc3_frame_t.reset_on_next_load set,
  * then #cc3_g_pixbuf_frame is also reset with new values.
@@ -188,18 +195,18 @@ void cc3_pixbuf_load (void);
 /**
  * Use malloc() to allocate a number of rows of the correct size based
  * on the values in #cc3_g_pixbuf_frame. You must manually use free()
- * to deallocate this memory when you are done. This function is useful
- * in conjunction with cc3_pixbuf_read_rows().
+ * to deallocate this memory when you are done.
+ *
+ * \warning If you have changed resolution using cc3_set_resolution(),
+ * but have not yet called cc3_pixbuf_load(), this function will return
+ * the amount of memory corresponding to the old row size.
+ *
+ * \sa cc3_pixbuf_read_rows()
  *
  * @param[in] rows The number of rows to allocate space for.
  * @return A pointer to allocated memory or \a NULL if error.
  */
 uint8_t *cc3_malloc_rows (uint32_t rows);
-
-/**
- * Reset #cc3_g_pixbuf_frame to default values.
- */
-void cc3_pixbuf_frame_reset (void);
 
 /**
  * Do a row-by-row copy from the pixbuf into a block of memory.
@@ -253,6 +260,11 @@ bool cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode,
 bool cc3_pixbuf_set_coi (cc3_channel_t chan);
 
 /**
+ * Reset #cc3_g_pixbuf_frame to default values.
+ */
+void cc3_pixbuf_frame_reset (void);
+
+/**
  * Activate an LED.
  *
  * @param[in] led The LED to illuminate.
@@ -267,10 +279,11 @@ void cc3_set_led (uint8_t led);
 void cc3_clr_led (uint8_t led);
 
 /**
- * Turn off power to the camera and pixbuf.
+ * Turn off power to the camera and pixbuf. To use the camera again,
+ * call cc3_camera_init().
  * \note This may cause the image to evaporate.
  */
-void cc3_camera_kill (void);
+void cc3_camera_disable (void);
 
 /**
  * Set the resolution of the camera hardware. This does not have any
@@ -419,21 +432,16 @@ void cc3_servo_mask (uint8_t mask);
 bool cc3_servo_set (uint8_t servo, uint32_t pos);
 
 /**
- * Disable the servo subsystem to conserve power.
+ * Disable the servo subsystem to conserve power. To use the servos again,
+ * call cc3_servo_init().
  */
 void cc3_servo_disable (void);
+
 
 void cc3_gpio_set_to_input(uint8_t mask);
 void cc3_gpio_set_to_output(uint8_t mask);
 uint8_t cc3_gpio_set_pin(uint8_t pin);
 uint8_t cc3_gpio_get_pin(uint8_t pin);
-
-
-/**
- * Initialize the filesystem drivers. Without this call, the FAT filesystem
- * will not be enabled.
- */
-void cc3_filesystem_init (void);
 
 
 #endif

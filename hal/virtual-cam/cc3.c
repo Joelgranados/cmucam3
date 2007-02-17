@@ -644,12 +644,7 @@ void cc3_pixbuf_frame_reset ()
   _cc3_update_frame_bounds (&cc3_g_pixbuf_frame);
 }
 
-/**
- * cc3_camera_kill():
- * Turn camera power off
- * Turn fifo power off (may "cause picture to evaporate")
- */
-void cc3_camera_kill ()
+void cc3_camera_disable ()
 {
 // XXX I need to be implemented
 
