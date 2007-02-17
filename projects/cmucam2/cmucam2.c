@@ -24,7 +24,7 @@
 //#define SERIAL_BAUD_RATE  CC3_UART_RATE_300
 
 
-static const int MAX_ARGS = 11;
+static const int MAX_ARGS = 12;
 static const int MAX_LINE = 128;
 
 static const char *VERSION_BANNER = "CMUcam2 v1.00 c6";
@@ -48,6 +48,7 @@ typedef enum {
   GET_POLLY,
   TRACK_WINDOW,
   GET_WINDOW,
+  LED_0,
   CMUCAM2_CMD_END               // Must be last entry so array sizes are correct
 } cmucam2_command_t;
 
@@ -59,27 +60,35 @@ static void cmucam2_get_mean (cc3_color_info_pkt_t * t_pkt,
 static void cmucam2_write_s_packet (cc3_color_info_pkt_t * pkt);
 static void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
 				 bool poll_mode,
-				 bool line_mode, bool quite);
+				 bool line_mode, bool auto_led, bool quite);
 static int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list);
 static void set_cmucam2_commands (void);
 static void print_ACK (void);
 static void print_NCK (void);
 static void cmucam2_write_t_packet (cc3_track_pkt_t * pkt);
+void cmucam2_send_image_direct (bool auto_led);
 
 int main (void)
 {
   int32_t command;
   int32_t val, n;
   uint32_t arg_list[MAX_ARGS];
-  bool error, poll_mode, line_mode;
+  bool error, poll_mode, line_mode,auto_led;
   cc3_track_pkt_t t_pkt;
   cc3_color_info_pkt_t s_pkt;
 
   set_cmucam2_commands ();
 
 cmucam2_start:
+  auto_led= true; 
   poll_mode = false;
   line_mode = false;
+  t_pkt.lower_bound.channel[0] = 16;
+  t_pkt.upper_bound.channel[0] = 240;
+  t_pkt.lower_bound.channel[1] = 16;
+  t_pkt.upper_bound.channel[1] = 240;
+  t_pkt.lower_bound.channel[2] = 16;
+  t_pkt.upper_bound.channel[2] = 240;
   cc3_system_setup ();
 
   cc3_filesystem_init();
@@ -133,6 +142,21 @@ cmucam2_start:
         printf ("%s\r", VERSION_BANNER);
         break;
 
+     case LED_0:
+ 	if (n != 1 && arg_list[0]>2 ) {
+          error = true;
+          break;
+        }
+        else
+          print_ACK ();
+          auto_led=false; 
+        if (arg_list[0] == 0)
+          cc3_clr_led(0); 
+        if (arg_list[0] == 1)
+          cc3_set_led(0); 
+        if (arg_list[0] == 2)
+          auto_led=true; 
+	break;
 
       case POLL_MODE:
         if (n != 1) {
@@ -213,7 +237,7 @@ cmucam2_start:
         }
         else
           print_ACK ();
-        cc3_send_image_direct ();
+        cmucam2_send_image_direct (auto_led);
 	cc3_pixbuf_set_coi(old_coi);
         break;
 
@@ -280,7 +304,7 @@ cmucam2_start:
           t_pkt.lower_bound.channel[2] = arg_list[4];
           t_pkt.upper_bound.channel[2] = arg_list[5];
         }
-        cmucam2_track_color (&t_pkt, poll_mode, line_mode,0);
+        cmucam2_track_color (&t_pkt, poll_mode, line_mode,auto_led,0);
         break;
 
      case TRACK_WINDOW:
@@ -316,7 +340,7 @@ cmucam2_start:
           tmp= s_pkt.mean.channel[1]+threshold; if(tmp<16) tmp=16; if(tmp>240) tmp=240; t_pkt.upper_bound.channel[1] = tmp;
           tmp= s_pkt.mean.channel[2]-threshold; if(tmp<16) tmp=16; if(tmp>240) tmp=240;t_pkt.lower_bound.channel[2] = tmp;
           tmp= s_pkt.mean.channel[2]+threshold; if(tmp<16) tmp=16; if(tmp>240) tmp=240; t_pkt.upper_bound.channel[2] = tmp;
-          cmucam2_track_color (&t_pkt, poll_mode, line_mode,0);
+        cmucam2_track_color (&t_pkt, poll_mode, line_mode,auto_led,0);
 	}
 	break;
 
@@ -403,6 +427,43 @@ cmucam2_start:
 }
 
 
+void cmucam2_send_image_direct (bool auto_led)
+{
+  cc3_pixbuf_load ();
+
+  uint32_t x, y;
+  uint32_t size_x, size_y;
+  uint8_t *row = cc3_malloc_rows(1);
+  uint8_t num_channels = cc3_g_pixbuf_frame.coi == CC3_CHANNEL_ALL ? 3 : 1;
+
+
+  size_x = cc3_g_pixbuf_frame.width;
+  size_y = cc3_g_pixbuf_frame.height;
+
+  putchar (1);
+  putchar (size_x);
+  if (size_y > 255)
+    size_y = 255;
+  putchar (size_y);
+  for (y = 0; y < size_y; y++) {
+    putchar (2);
+    if(auto_led)
+	   {
+		if(y%4==0) cc3_set_led(0);
+		else cc3_clr_led(0);
+	   } 
+    cc3_pixbuf_read_rows(row, 1);
+    for (x = 0; x < size_x * num_channels; x++) {
+      uint8_t p = row[x];
+      putchar (p);
+    }
+  }
+  putchar (3);
+  
+  cc3_clr_led(0);
+  free(row);
+}
+
 void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
 		       bool poll_mode,
                        bool line_mode, bool quite)
@@ -419,6 +480,7 @@ void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
         cc3_color_info_scanline (&img, s_pkt);
       }
       cc3_color_info_scanline_finish (s_pkt);
+      while (!cc3_uart_has_data (0)) { if(fgetc(stdin)=='\r' ) free(img.pix); return; }
       if(!quite) cmucam2_write_s_packet (s_pkt);
     }
     if (!cc3_uart_has_data (0))
@@ -433,7 +495,7 @@ void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
 
 void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
 			  bool poll_mode,
-                          bool line_mode, bool quite)
+                          bool line_mode, bool auto_led, bool quite)
 {
   cc3_image_t img;
   uint16_t i;
@@ -468,8 +530,9 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
       while (cc3_pixbuf_read_rows (img.pix, 1)) {
         cc3_track_color_scanline (&img, t_pkt);
 	if (line_mode) {
-
-          for (int j = 0; j < lm_width; j++) {
+           // keep this check here if you don't want the CMUcam2 GUI to hang after exiting a command in line mode
+      	   while (!cc3_uart_has_data (0)) { if(fgetc(stdin)=='\r' ) free(img.pix); return; }
+           for (int j = 0; j < lm_width; j++) {
             if (lm[j] == 0xAA)
 	    {
               if(!quite) putchar (0xAB);
@@ -480,21 +543,27 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
           }
         }
       }
+      // keep this check here if you don't want the CMUcam2 GUI to hang after exiting a command in line mode
+      while (!cc3_uart_has_data (0)) { if(fgetc(stdin)=='\r' ) free(img.pix); return; }
       cc3_track_color_scanline_finish (t_pkt);
       if (line_mode) {
         if(!quite) putchar (0xAA);
         if(!quite) putchar (0xAA);
       }
+      if(auto_led) {
+      	if(t_pkt->int_density>2 ) cc3_set_led(0);
+	else cc3_clr_led(0);
+      }
       if(!quite) cmucam2_write_t_packet (t_pkt);
-    }
-    if (!cc3_uart_has_data (0))
+    } else return 0;
+    while (!cc3_uart_has_data (0))
     {
       if(fgetc(stdin)=='\r' )
       	break;
     }
   } while (!poll_mode);
-
   free (img.pix);
+  return 1;
 }
 
 
@@ -565,6 +634,7 @@ void set_cmucam2_commands (void)
   cmucam2_cmds[GET_POLLY] = "GP";
   cmucam2_cmds[TRACK_WINDOW] = "TW";
   cmucam2_cmds[GET_WINDOW] = "GW";
+  cmucam2_cmds[LED_0] = "L0";
 }
 
 //int32_t cmucam2_get_command(cmucam2_command_t *cmd, int32_t *arg_list)

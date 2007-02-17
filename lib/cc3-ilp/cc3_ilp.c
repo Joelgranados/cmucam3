@@ -22,38 +22,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void cc3_send_image_direct (void)
-{
-  cc3_pixbuf_load ();
-
-  uint32_t x, y;
-  uint32_t size_x, size_y;
-  uint8_t *row = cc3_malloc_rows(1);
-  uint8_t num_channels = cc3_g_pixbuf_frame.coi == CC3_CHANNEL_ALL ? 3 : 1;
-
-
-  size_x = cc3_g_pixbuf_frame.width;
-  size_y = cc3_g_pixbuf_frame.height;
-
-  putchar (1);
-  putchar (size_x);
-  if (size_y > 255)
-    size_y = 255;
-  putchar (size_y);
-  for (y = 0; y < size_y; y++) {
-    putchar (2);
-    
-    cc3_pixbuf_read_rows(row, 1);
-    for (x = 0; x < size_x * num_channels; x++) {
-      uint8_t p = row[x];
-      putchar (p);
-    }
-  }
-  putchar (3);
-  
-  free(row);
-}
-
 uint8_t cc3_load_img_rows (cc3_image_t * img, uint16_t rows)
 {
 
