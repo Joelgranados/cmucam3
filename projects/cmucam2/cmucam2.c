@@ -24,7 +24,7 @@
 //#define SERIAL_BAUD_RATE  CC3_UART_RATE_300
 
 
-static const int MAX_ARGS = 10;
+static const int MAX_ARGS = 11;
 static const int MAX_LINE = 128;
 
 static const char *VERSION_BANNER = "CMUcam2 v1.00 c6";
@@ -46,6 +46,8 @@ typedef enum {
   VIRTUAL_WINDOW,
   DOWN_SAMPLE,
   GET_POLLY,
+  TRACK_WINDOW,
+  GET_WINDOW,
   CMUCAM2_CMD_END               // Must be last entry so array sizes are correct
 } cmucam2_command_t;
 
@@ -53,11 +55,11 @@ char *cmucam2_cmds[CMUCAM2_CMD_END];
 
 static void cmucam2_get_mean (cc3_color_info_pkt_t * t_pkt,
 			      bool poll_mode,
-			      bool line_mode);
+			      bool line_mode, bool quite);
 static void cmucam2_write_s_packet (cc3_color_info_pkt_t * pkt);
 static void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
 				 bool poll_mode,
-				 bool line_mode);
+				 bool line_mode, bool quite);
 static int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list);
 static void set_cmucam2_commands (void);
 static void print_ACK (void);
@@ -242,6 +244,16 @@ cmucam2_start:
         break;
 
 
+      case GET_WINDOW:
+        if (n != 0) {
+          error = true;
+          break;
+        }
+        else
+          print_ACK ();
+          printf( "%d %d %d %d\r",cc3_g_pixbuf_frame.x0/2, cc3_g_pixbuf_frame.y0, cc3_g_pixbuf_frame.x1/2, cc3_g_pixbuf_frame.y1 );
+	break;
+
       case DOWN_SAMPLE:
         if (n != 2) {
           error = true;
@@ -268,9 +280,47 @@ cmucam2_start:
           t_pkt.lower_bound.channel[2] = arg_list[4];
           t_pkt.upper_bound.channel[2] = arg_list[5];
         }
-        cmucam2_track_color (&t_pkt, poll_mode, line_mode);
+        cmucam2_track_color (&t_pkt, poll_mode, line_mode,0);
         break;
 
+     case TRACK_WINDOW:
+        if (n != 0 && n!=1 ) {
+          error = true;
+          break;
+        }
+        else
+	{
+	  uint32_t threshold,x0,y0,x1,y1;
+	  int32_t tmp;
+	  threshold=30;
+	  if(n==1) threshold=arg_list[0];
+          print_ACK ();
+	  // set window to 1/2 size
+	  x0=cc3_g_pixbuf_frame.x0 + cc3_g_pixbuf_frame.width/4;
+	  x1=cc3_g_pixbuf_frame.x1 - cc3_g_pixbuf_frame.width/4;
+	  y0=cc3_g_pixbuf_frame.y0 + cc3_g_pixbuf_frame.width/4;
+	  y1=cc3_g_pixbuf_frame.y1 - cc3_g_pixbuf_frame.width/4;
+	  cc3_pixbuf_set_roi ( x0, y0 ,x1 ,y1 ); 
+	  // call get mean
+ 	  cmucam2_get_mean (&s_pkt, 1, line_mode,1);
+	  // set window back to full size
+	  x0=0;
+	  x1=cc3_g_pixbuf_frame.raw_width;  
+	  y0=0;
+	  y1=cc3_g_pixbuf_frame.raw_height;
+	  cc3_pixbuf_set_roi ( x0, y0 ,x1 ,y1 ); 
+	  // fill in parameters and call track color
+	  tmp= s_pkt.mean.channel[0]-threshold; if(tmp<16) tmp=16; if(tmp>240) tmp=240; t_pkt.lower_bound.channel[0] = tmp; 
+          tmp= s_pkt.mean.channel[0]+threshold; if(tmp<16) tmp=16; if(tmp>240) tmp=240; t_pkt.upper_bound.channel[0] = tmp; 
+          tmp= s_pkt.mean.channel[1]-threshold; if(tmp<16) tmp=16; if(tmp>240) tmp=240;t_pkt.lower_bound.channel[1] = tmp; 
+          tmp= s_pkt.mean.channel[1]+threshold; if(tmp<16) tmp=16; if(tmp>240) tmp=240; t_pkt.upper_bound.channel[1] = tmp;
+          tmp= s_pkt.mean.channel[2]-threshold; if(tmp<16) tmp=16; if(tmp>240) tmp=240;t_pkt.lower_bound.channel[2] = tmp;
+          tmp= s_pkt.mean.channel[2]+threshold; if(tmp<16) tmp=16; if(tmp>240) tmp=240; t_pkt.upper_bound.channel[2] = tmp;
+          cmucam2_track_color (&t_pkt, poll_mode, line_mode,0);
+	}
+	break;
+
+	
       case GET_POLLY:
         if (n != 6 ) {
           error = true;
@@ -321,7 +371,7 @@ cmucam2_start:
         }
         else
           print_ACK ();
-        cmucam2_get_mean (&s_pkt, poll_mode, line_mode);
+        cmucam2_get_mean (&s_pkt, poll_mode, line_mode,0);
         break;
 
 
@@ -355,7 +405,7 @@ cmucam2_start:
 
 void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
 		       bool poll_mode,
-                       bool line_mode)
+                       bool line_mode, bool quite)
 {
   cc3_image_t img;
   img.channels = 3;
@@ -369,10 +419,13 @@ void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
         cc3_color_info_scanline (&img, s_pkt);
       }
       cc3_color_info_scanline_finish (s_pkt);
-      cmucam2_write_s_packet (s_pkt);
+      if(!quite) cmucam2_write_s_packet (s_pkt);
     }
     if (!cc3_uart_has_data (0))
-      break;
+    {
+      if(fgetc(stdin)=='\r' )
+      	break;
+    }
   } while (!poll_mode);
 
   free (img.pix);
@@ -380,7 +433,7 @@ void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
 
 void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
 			  bool poll_mode,
-                          bool line_mode)
+                          bool line_mode, bool quite)
 {
   cc3_image_t img;
   uint16_t i;
@@ -389,6 +442,9 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
   img.width = cc3_g_pixbuf_frame.width;
   img.height = 1;               // image will hold just 1 row for scanline processing
   img.pix = cc3_malloc_rows(1);
+  if(img.pix==NULL ) {
+	return;
+  }
   do {
     cc3_pixbuf_load ();
     if (cc3_track_color_scanline_start (t_pkt) != 0) {
@@ -401,40 +457,41 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
         lm_width = img.width / 8;
         if (img.width % 8 != 0)
           lm_width++;
-        putchar (0xAA);
+        if(!quite) putchar (0xAA);
         if (cc3_g_pixbuf_frame.height > 255)
           lm_height = 255;
         else
           lm_height = cc3_g_pixbuf_frame.height;
-
-        //putchar(lm_width);
-        putchar (img.width);
-        putchar (lm_height);
-
+        if(!quite) putchar (img.width);
+        if(!quite) putchar (lm_height);
       }
       while (cc3_pixbuf_read_rows (img.pix, 1)) {
         cc3_track_color_scanline (&img, t_pkt);
-        if (line_mode) {
+	if (line_mode) {
 
           for (int j = 0; j < lm_width; j++) {
-            //      printf( "%d ",lm[j] );
             if (lm[j] == 0xAA)
-              putchar (0xAB);
-            else
-              putchar (lm[j]);
+	    {
+              if(!quite) putchar (0xAB);
+	    } else
+	    {
+              if(!quite) putchar (lm[j]);
+	    }
           }
         }
       }
       cc3_track_color_scanline_finish (t_pkt);
       if (line_mode) {
-        putchar (0xAA);
-        putchar (0xAA);
+        if(!quite) putchar (0xAA);
+        if(!quite) putchar (0xAA);
       }
-
-      cmucam2_write_t_packet (t_pkt);
+      if(!quite) cmucam2_write_t_packet (t_pkt);
     }
     if (!cc3_uart_has_data (0))
-      break;
+    {
+      if(fgetc(stdin)=='\r' )
+      	break;
+    }
   } while (!poll_mode);
 
   free (img.pix);
@@ -506,6 +563,8 @@ void set_cmucam2_commands (void)
   cmucam2_cmds[LINE_MODE] = "LM";
   cmucam2_cmds[SEND_JPEG] = "SJ";
   cmucam2_cmds[GET_POLLY] = "GP";
+  cmucam2_cmds[TRACK_WINDOW] = "TW";
+  cmucam2_cmds[GET_WINDOW] = "GW";
 }
 
 //int32_t cmucam2_get_command(cmucam2_command_t *cmd, int32_t *arg_list)
