@@ -1,6 +1,6 @@
 CC=gcc
 OBJS=lpc21isp.o
-CFLAGS=-O2 -Wall
+CFLAGS=-O2 -Wall -g
 INSTALLDIR=/usr/local/bin/
 
 all: lpc21isp
