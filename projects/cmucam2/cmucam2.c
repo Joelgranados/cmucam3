@@ -64,6 +64,8 @@ typedef enum {
   SERVO_PARAMETERS,
   SERVO_OUTPUT,
   GET_SERVO,
+  SET_INPUT,
+  GET_INPUT,
   SET_TRACK,
   CMUCAM2_CMD_END               // Must be last entry so array sizes are correct
 } cmucam2_command_t;
@@ -114,6 +116,8 @@ static void set_cmucam2_commands (void)
   cmucam2_cmds[SERVO_MASK] = "SM";
   // SP servo parameters
   cmucam2_cmds[SERVO_PARAMETERS] = "SP";
+  cmucam2_cmds[GET_INPUT] = "GI";
+  cmucam2_cmds[SET_INPUT] = "SI";
 
 
   
@@ -683,6 +687,30 @@ cmucam2_start:
 
         print_ACK ();
         printf("%d\r", cc3_gpio_get_servo_position(arg_list[0]));
+        break;
+	
+      case GET_INPUT:
+        if (n != 0) {
+          error = true;
+          break;
+        }
+
+        print_ACK ();
+        printf("%d\r",  cc3_gpio_get_value(arg_list[0])|
+			(cc3_gpio_get_value(arg_list[1])<<1)|
+			(cc3_gpio_get_value(arg_list[2])<<2)|
+			(cc3_gpio_get_value(arg_list[3])<<3)  );
+        break;
+
+
+      case SET_INPUT:
+        if (n != 1) {
+          error = true;
+          break;
+        }
+        print_ACK ();
+        cc3_gpio_set_mode (arg_list[0], CC3_GPIO_MODE_INPUT);
+
         break;
 
       case SERVO_OUTPUT:
