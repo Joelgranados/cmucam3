@@ -26,10 +26,10 @@ int main (void)
   
   cc3_camera_init ();
   
-  cc3_set_colorspace(CC3_COLORSPACE_RGB);
-  cc3_set_resolution(CC3_RES_LOW);
-  cc3_set_auto_white_balance(true);
-  cc3_set_auto_exposure(true);
+  cc3_camera_set_colorspace(CC3_COLORSPACE_RGB);
+  cc3_camera_set_resolution(CC3_CAMERA_RESOLUTION_LOW);
+  cc3_camera_set_auto_white_balance(true);
+  cc3_camera_set_auto_exposure(true);
   
   buf = cc3_malloc_rows(1);
   if (!buf) {
@@ -41,7 +41,7 @@ int main (void)
 
   i = 0;
   next_print = print_increment;
-  last_time = cc3_get_current_ms();
+  last_time = cc3_timer_get_current_ms();
 
   while(true) {
     cc3_pixbuf_load();
@@ -51,11 +51,11 @@ int main (void)
     i++;
 
     if (i >= next_print) {
-      double fps = print_increment / ((cc3_get_current_ms() - last_time) / 1000.0);
+      double fps = print_increment / ((cc3_timer_get_current_ms() - last_time) / 1000.0);
       printf("%d frames, %g fps\n", i, fps);
       
       next_print += print_increment;
-      last_time = cc3_get_current_ms();
+      last_time = cc3_timer_get_current_ms();
     }
   }
 

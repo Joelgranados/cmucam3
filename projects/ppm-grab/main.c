@@ -24,13 +24,13 @@ int main(void) {
   // use MMC
   cc3_filesystem_init();
 
-  cc3_set_resolution(CC3_RES_HIGH);
-  cc3_wait_ms(1000);
+  cc3_camera_set_resolution(CC3_CAMERA_RESOLUTION_HIGH);
+  cc3_timer_wait_ms(1000);
 
   // init
-  cc3_clr_led(0);
+  cc3_led_set_off(0);
   i = 0;
-  while(!cc3_read_button());
+  while(!cc3_button_get_state());
   while(true) {
     char filename[16];
 
@@ -62,20 +62,20 @@ int main(void) {
       }
 
       while (true) {
-	cc3_set_led(0);
-	cc3_set_led(2);
-	cc3_wait_ms(500);
-	cc3_clr_led(0);
-	cc3_clr_led(2);
-	cc3_wait_ms(500);
+	cc3_led_set_on(0);
+	cc3_led_set_on(2);
+	cc3_timer_wait_ms(500);
+	cc3_led_set_off(0);
+	cc3_led_set_off(2);
+	cc3_timer_wait_ms(500);
       }
     }
 
 
     if (light_on) {
-      cc3_set_led (2);
+      cc3_led_set_on (2);
     } else {
-      cc3_clr_led (2);
+      cc3_led_set_off (2);
     }
     light_on = !light_on;
     capture_ppm(f);
@@ -110,7 +110,7 @@ void capture_ppm(FILE *f)
 
   fprintf(f,"P6\n%d %d\n255\n",size_x,size_y );
 
-  time = cc3_get_current_ms();
+  time = cc3_timer_get_current_ms();
   for (y = 0; y < size_y; y++) {
     cc3_pixbuf_read_rows(row, 1);
 
@@ -123,7 +123,7 @@ void capture_ppm(FILE *f)
     fprintf(stderr, ".");
     fflush(stderr);
   }
-  time2 = cc3_get_current_ms();
+  time2 = cc3_timer_get_current_ms();
   write_time = time2 - time;
 
   free(row);

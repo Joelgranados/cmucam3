@@ -36,21 +36,21 @@ int main (void)
 
   cc3_camera_init ();
 
-  cc3_set_colorspace (CC3_COLORSPACE_RGB);
-  cc3_set_resolution (CC3_RES_LOW);
-  cc3_set_auto_white_balance (true);
-  cc3_set_auto_exposure (true);
+  cc3_camera_set_colorspace (CC3_COLORSPACE_RGB);
+  cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_LOW);
+  cc3_camera_set_auto_white_balance (true);
+  cc3_camera_set_auto_exposure (true);
 
 
   cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 2);
   cc3_pixbuf_set_coi (CC3_CHANNEL_GREEN);
 
-  cc3_clr_led (0);
-  cc3_clr_led (1);
-  cc3_clr_led (2);
+  cc3_led_set_off (0);
+  cc3_led_set_off (1);
+  cc3_led_set_off (2);
 
   // sample wait command in ms 
-  cc3_wait_ms (1000);
+  cc3_timer_wait_ms (1000);
 
   // initialize pixbuf
   cc3_pixbuf_load();

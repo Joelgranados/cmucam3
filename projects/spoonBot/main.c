@@ -18,11 +18,13 @@ int main (void)
     cc3_camera_init ();
 
     printf ("Starting up...\n");
-    cc3_set_led (false);
+    cc3_led_set_on (false);
 
 
-    cc3_servo_init ();
-    cc3_servo_mask (0x7);
+    cc3_gpio_set_mode(0, CC3_GPIO_MODE_SERVO);
+    cc3_gpio_set_mode(1, CC3_GPIO_MODE_SERVO);
+    cc3_gpio_set_mode(2, CC3_GPIO_MODE_SERVO);
+    cc3_gpio_set_mode(3, CC3_GPIO_MODE_OUTPUT);
 
 
      //printf ("Get calibration...\n");

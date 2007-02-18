@@ -73,7 +73,7 @@ void _cc3_uart1_setup(uint16_t baud, uint8_t mode, uint8_t fmode)
 
 }
 
-uint8_t cc3_get_uart_count(void) 
+uint8_t cc3_uart_get_count(void) 
 {
   return 2;
 }
@@ -155,7 +155,7 @@ bool cc3_uart_init (uint8_t uart,
   return true;
 }
 
-FILE *cc3_fopen_uart(uint8_t uart, const char *mode)
+FILE *cc3_uart_fopen(uint8_t uart, const char *mode)
 {
  // char buf[8];  // safe, because uint8_t
 

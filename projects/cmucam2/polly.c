@@ -43,10 +43,10 @@ int polly (polly_config_t config)
   if (config.min_blob_size > 30)
     return 0;
 
-  cc3_set_colorspace (CC3_COLORSPACE_RGB);
-  cc3_set_resolution (CC3_RES_LOW);
-  cc3_set_auto_white_balance (true);
-  cc3_set_auto_exposure (true);
+  cc3_camera_set_colorspace (CC3_COLORSPACE_RGB);
+  cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_LOW);
+  cc3_camera_set_auto_white_balance (true);
+  cc3_camera_set_auto_exposure (true);
 
   cc3_pixbuf_load ();
 
@@ -79,9 +79,9 @@ int polly (polly_config_t config)
 
 
 #ifdef MMC_DEBUG
-  cc3_set_led (2);
+  cc3_led_set_on (2);
   while (!cc3_read_button ());
-  cc3_clr_led (2);
+  cc3_led_set_off (2);
 #endif
 
   // clear polly working image
@@ -474,7 +474,7 @@ void matrix_to_pgm (cc3_image_t * img)
   fp = fopen (filename, "w");
   if (fp == NULL || pgm_cnt > 200) {
     printf ("PGM Can't open file\n");
-    cc3_set_led (3);
+    cc3_led_set_on (3);
     while (1);
   }
 
@@ -521,7 +521,7 @@ void write_raw_fifo_ppm ()
   f = fopen (filename, "w");
   if (f == NULL || ppm_cnt > 200) {
     printf ("PPM Can't open file\n");
-    cc3_set_led (3);
+    cc3_led_set_on (3);
     while (1);
   }
 

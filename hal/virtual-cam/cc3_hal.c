@@ -22,7 +22,7 @@
 #include <stdio.h>
 
 
-void reset_virtual_fifo();
+void reset_virtual_fifo(void);
 
 void reset_virtual_fifo()
 {
@@ -103,7 +103,7 @@ void _cc3_set_register_state ()
         // Set the right data bus mode
         //cc3_set_raw_register (0x14, 0x20);
         // Set the resolution and update the cc3_g_current_frame size flags
-        if (_cc3_g_current_camera_state.resolution == CC3_RES_LOW) {
+        if (_cc3_g_current_camera_state.resolution == CC3_CAMERA_RESOLUTION_LOW) {
             _cc3_g_current_camera_state.raw_width = CC3_LO_RES_WIDTH;
             _cc3_g_current_camera_state.raw_height = CC3_LO_RES_HEIGHT;
          //   cc3_set_raw_register (0x14, 0x20);
@@ -119,7 +119,7 @@ void _cc3_set_register_state ()
         }
         else {
             // No auto gain, so lets set brightness and contrast if need be
-            cc3_set_raw_register (0x13, 0x20);
+            cc3_camera_set_raw_register (0x13, 0x20);
             //if (_cc3_g_current_camera_state.brightness != -1)
             //    cc3_set_raw_register (0x06,
                                      // (_cc3_g_current_camera_state.

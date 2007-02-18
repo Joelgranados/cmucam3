@@ -46,10 +46,10 @@ int main (void)
 
     cc3_camera_init ();
    
-    cc3_set_colorspace(CC3_COLORSPACE_RGB);
-    cc3_set_resolution(CC3_RES_LOW);
-    cc3_set_auto_white_balance(true);
-    cc3_set_auto_exposure(true);
+    cc3_camera_set_colorspace(CC3_COLORSPACE_RGB);
+    cc3_camera_set_resolution(CC3_CAMERA_RESOLUTION_LOW);
+    cc3_camera_set_auto_white_balance(true);
+    cc3_camera_set_auto_exposure(true);
    
      
     printf("Hello World...\n");

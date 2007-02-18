@@ -98,27 +98,27 @@ int main (void)
   val = setvbuf (stdout, NULL, _IONBF, 0);
 
   if (!cc3_camera_init ()) {
-    cc3_set_led(0);
+    cc3_led_set_on(0);
     exit(1);
   }
 
   demo_mode=false;
   auto_servo_mode=false;
-  start_time = cc3_get_current_ms ();
+  start_time = cc3_timer_get_current_ms ();
   do 
   {
-    if(cc3_read_button()==1)
+    if(cc3_button_get_state()==1)
     {
 	// Demo Mode flag
 	demo_mode=true;
 	auto_servo_mode=true;
  	// Debounce Switch
-	cc3_clr_led(0);
-  	cc3_wait_ms(500);
+	cc3_led_set_off(0);
+  	cc3_timer_wait_ms(500);
 	break;
     }
 
-  }while(cc3_get_current_ms()<(start_time+2000));
+  }while(cc3_timer_get_current_ms()<(start_time+2000));
   
   
 cmucam2_start:
@@ -136,24 +136,28 @@ cmucam2_start:
   t_pkt.upper_bound.channel[2] = 240;
   
  
-  cc3_set_resolution(CC3_RES_LOW);
+  cc3_camera_set_resolution(CC3_CAMERA_RESOLUTION_LOW);
 
   cc3_pixbuf_load();
 
   printf ("%s\r", VERSION_BANNER);
 
-  cc3_servo_init ();
+  cc3_gpio_set_mode(0, CC3_GPIO_MODE_SERVO);
+  cc3_gpio_set_mode(1, CC3_GPIO_MODE_SERVO);
+  cc3_gpio_set_mode(2, CC3_GPIO_MODE_SERVO);
+  cc3_gpio_set_mode(3, CC3_GPIO_MODE_SERVO);
+
   cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 1);
 
   if(demo_mode) {
 	// Wait for second button press as target lock
 	while(1)
 	{
-  		cc3_set_led(0);
-  		cc3_wait_ms(100);
-  		cc3_clr_led(0);
-  		cc3_wait_ms(100);
-  		if(cc3_read_button()==1) break;
+  		cc3_led_set_on(0);
+  		cc3_timer_wait_ms(100);
+  		cc3_led_set_off(0);
+  		cc3_timer_wait_ms(100);
+  		if(cc3_button_get_state()==1) break;
 	}
 
   }
@@ -203,9 +207,9 @@ cmucam2_start:
           print_ACK ();
           auto_led=false; 
         if (arg_list[0] == 0)
-          cc3_clr_led(0); 
+          cc3_led_set_off(0); 
         if (arg_list[0] == 1)
-          cc3_set_led(0); 
+          cc3_led_set_on(0); 
         if (arg_list[0] == 2)
           auto_led=true; 
 	break;
@@ -232,9 +236,9 @@ cmucam2_start:
         else
           print_ACK ();
         if (arg_list[0] == 1)
-	  cc3_set_resolution(CC3_RES_HIGH);
+	  cc3_camera_set_resolution(CC3_CAMERA_RESOLUTION_HIGH);
         else
-	  cc3_set_resolution(CC3_RES_LOW);
+	  cc3_camera_set_resolution(CC3_CAMERA_RESOLUTION_LOW);
 
 	// re-init fifo
 	cc3_pixbuf_load();
@@ -324,7 +328,7 @@ cmucam2_start:
         else
           print_ACK ();
         for (int i = 0; i < n; i += 2)
-          cc3_set_raw_register (arg_list[i], arg_list[i + 1]);
+          cc3_camera_set_raw_register (arg_list[i], arg_list[i + 1]);
         break;
 
 
@@ -503,7 +507,7 @@ cmucam2_start:
         }
         else
           print_ACK ();
-        cc3_servo_set (arg_list[0], arg_list[1]);
+        cc3_gpio_set_servo_position (arg_list[0], arg_list[1]);
         break;
 
 
@@ -546,8 +550,8 @@ void cmucam2_send_image_direct (bool auto_led)
     putchar (2);
     if(auto_led)
 	   {
-		if(y%4==0) cc3_set_led(0);
-		else cc3_clr_led(0);
+		if(y%4==0) cc3_led_set_on(0);
+		else cc3_led_set_off(0);
 	   } 
     cc3_pixbuf_read_rows(row, 1);
     for (x = 0; x < size_x * num_channels; x++) {
@@ -557,7 +561,7 @@ void cmucam2_send_image_direct (bool auto_led)
   }
   putchar (3);
   
-  cc3_clr_led(0);
+  cc3_led_set_off(0);
   free(row);
 }
 
@@ -682,8 +686,8 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
         if(!quite) putchar (0xAA);
       }
       if(auto_led) {
-      	if(t_pkt->int_density>2 ) cc3_set_led(0);
-	else cc3_clr_led(0);
+      	if(t_pkt->int_density>2 ) cc3_led_set_on(0);
+	else cc3_led_set_off(0);
       }
       if(!quite) cmucam2_write_t_packet (t_pkt);
     } else return 0;

@@ -109,41 +109,41 @@ bool _cc3_set_register_state ()
   switch (_cc3_g_current_camera_state.camera_type) {
   case _CC3_OV6620:
     // Set the right data bus mode
-    result &= cc3_set_raw_register (0x14, 0x20);
+    result &= cc3_camera_set_raw_register (0x14, 0x20);
     // Set the resolution and update the size flags
-    if (_cc3_g_current_camera_state.resolution == CC3_RES_LOW) {
+    if (_cc3_g_current_camera_state.resolution == CC3_CAMERA_RESOLUTION_LOW) {
       _cc3_g_current_camera_state.raw_width = CC3_LO_RES_WIDTH; // 88 * 2;
       _cc3_g_current_camera_state.raw_height = CC3_LO_RES_HEIGHT;       // 144;
-      result &= cc3_set_raw_register (0x14, 0x20);
+      result &= cc3_camera_set_raw_register (0x14, 0x20);
     }
     else {
       _cc3_g_current_camera_state.raw_width = CC3_HI_RES_WIDTH; // 176 * 2;
       _cc3_g_current_camera_state.raw_height = CC3_HI_RES_HEIGHT;       //288;
-      result &= cc3_set_raw_register (0x14, 0x00);
+      result &= cc3_camera_set_raw_register (0x14, 0x00);
     }
 
     if (_cc3_g_current_camera_state.auto_exposure) {
-      result &= cc3_set_raw_register (0x13, 0x21);
+      result &= cc3_camera_set_raw_register (0x13, 0x21);
     }
     else {
       // No auto gain, so lets set brightness and contrast if need be
-      result &= cc3_set_raw_register (0x13, 0x20);
+      result &= cc3_camera_set_raw_register (0x13, 0x20);
       if (_cc3_g_current_camera_state.brightness != -1)
-        result &= cc3_set_raw_register (0x06,
+        result &= cc3_camera_set_raw_register (0x06,
 					(_cc3_g_current_camera_state.
 					 brightness & 0xFF));
 
       if (_cc3_g_current_camera_state.contrast != -1)
-        result &= cc3_set_raw_register (0x05,
+        result &= cc3_camera_set_raw_register (0x05,
 					(_cc3_g_current_camera_state.contrast & 0xFF));
     }
     // Set Colorspace and Auto White Balance
-    result &= cc3_set_raw_register (0x12,
+    result &= cc3_camera_set_raw_register (0x12,
 				    0x20 | (_cc3_g_current_camera_state.
 					    auto_white_balance << 2)
 				    | (_cc3_g_current_camera_state.colorspace << 3));
     // Set Frame Clock rate divider
-    result &= cc3_set_raw_register (0x11, _cc3_g_current_camera_state.clock_divider);
+    result &= cc3_camera_set_raw_register (0x11, _cc3_g_current_camera_state.clock_divider);
 
     break;
 

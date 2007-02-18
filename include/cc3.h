@@ -44,8 +44,8 @@
  * Allowed resolutions for the camera device.
  */
 typedef enum {
-  CC3_RES_LOW = 0,  /**< Low resolution */
-  CC3_RES_HIGH = 1  /**< High resolution */
+  CC3_CAMERA_RESOLUTION_LOW = 0,  /**< Low resolution */
+  CC3_CAMERA_RESOLUTION_HIGH = 1  /**< High resolution */
 } cc3_camera_resolution_t;
 
 /**
@@ -130,6 +130,16 @@ typedef enum {
 } cc3_uart_binmode_t;
 
 /**
+ * GPIO configuration values.
+ * @sa cc3_gpio_set_mode() and cc3_gpio_get_mode().
+ */
+typedef enum {
+  CC3_GPIO_MODE_INPUT,
+  CC3_GPIO_MODE_OUTPUT,
+  CC3_GPIO_MODE_SERVO,
+} cc3_gpio_mode_t;
+
+/**
  * Frame structure.
  * @sa #cc3_g_pixbuf_frame for the main use of this structure.
  */
@@ -201,7 +211,7 @@ void cc3_pixbuf_load (void);
  * but have not yet called cc3_pixbuf_load(), this function will return
  * the amount of memory corresponding to the old row size.
  *
- * \sa cc3_pixbuf_read_rows()
+ * @sa cc3_pixbuf_read_rows()
  *
  * @param[in] rows The number of rows to allocate space for.
  * @return A pointer to allocated memory or \a NULL if error.
@@ -267,16 +277,20 @@ void cc3_pixbuf_frame_reset (void);
 /**
  * Activate an LED.
  *
+ * \note Sometimes a LED is shared with GPIO or other functions.
+ *
  * @param[in] led The LED to illuminate.
  */
-void cc3_set_led (uint8_t led);
+void cc3_led_set_on (uint8_t led);
 
 /**
  * Deactivate an LED.
  *
+ * \note Sometimes a LED is shared with GPIO or other functions.
+ *
  * @param[in] led The LED to extinguish.
  */
-void cc3_clr_led (uint8_t led);
+void cc3_led_set_off (uint8_t led);
 
 /**
  * Turn off power to the camera and pixbuf. To use the camera again,
@@ -292,49 +306,49 @@ void cc3_camera_disable (void);
  *
  * @param[in] res Resolution to set.
  */
-void cc3_set_resolution (cc3_camera_resolution_t res);
+void cc3_camera_set_resolution (cc3_camera_resolution_t res);
 
 /**
  * Set the colorspace of the camera.
  *
  * @param[in] colorspace The colorspace.
  */
-void cc3_set_colorspace (cc3_colorspace_t colorspace);
+void cc3_camera_set_colorspace (cc3_colorspace_t colorspace);
 
 /**
  * Set the framerate divider.
  *
  * @param[in] rate_divider Desired framerate divider.
  */
-void cc3_set_framerate_divider (uint8_t rate_divider);
+void cc3_camera_set_framerate_divider (uint8_t rate_divider);
 
 /**
  * Set auto exposure.
  *
  * @param[in] ae Auto exposure value.
  */
-void cc3_set_auto_exposure (bool ae);
+void cc3_camera_set_auto_exposure (bool ae);
 
 /**
  * Set auto white balance.
  *
  * @param[in] wb Auto white balance value.
  */
-void cc3_set_auto_white_balance (bool wb);
+void cc3_camera_set_auto_white_balance (bool wb);
 
 /**
  * Set the brightness.
  *
  * @param[in] level The level.
  */
-void cc3_set_brightness (uint8_t level);
+void cc3_camera_set_brightness (uint8_t level);
 
 /**
  * Set contrast.
  *
  * @param[in] level The level.
  */
-void cc3_set_contrast (uint8_t level);
+void cc3_camera_set_contrast (uint8_t level);
 
 /**
  * Using the camera control bus, set a camera register to a value.
@@ -349,14 +363,7 @@ void cc3_set_contrast (uint8_t level);
  * @param[in] value The value.
  * @return \a true if successful.
  */
-bool cc3_set_raw_register (uint8_t address, uint8_t value);
-
-/**
- * Get the number of UARTs on this device.
- *
- * @return Number of UARTs.
- */
-uint8_t cc3_get_uart_count (void);
+bool cc3_camera_set_raw_register (uint8_t address, uint8_t value);
 
 /**
  * Initialize a serial UART. Call this for each UART to initialize.
@@ -372,13 +379,20 @@ bool cc3_uart_init (uint8_t uart,
                     cc3_uart_mode_t mode, cc3_uart_binmode_t binmode);
 
 /**
+ * Get the number of UARTs on this device.
+ *
+ * @return Number of UARTs.
+ */
+uint8_t cc3_uart_get_count (void);
+
+/**
  * Get a file handle for a UART.
  *
  * @param[in] uart The UART to open.
  * @param[in] mode Mode as in fopen.
  * @return The file handle or \a NULL if error.
  */
-FILE *cc3_fopen_uart (uint8_t uart, const char *mode);
+FILE *cc3_uart_fopen (uint8_t uart, const char *mode);
 
 /**
  * Do a non-blocking check to see if data is waiting on the UART.
@@ -393,55 +407,78 @@ bool cc3_uart_has_data (uint8_t uart);
  *
  * @return Number of milliseconds since an arbitrary time in the past.
  */
-uint32_t cc3_get_current_ms (void);
+uint32_t cc3_timer_get_current_ms (void);
 
 /**
  * Wait for a certain amount.
  *
  * @param[in] delay Number of milliseconds to sleep.
  */
-void cc3_wait_ms (uint32_t delay);
+void cc3_timer_wait_ms (uint32_t delay);
 
 /**
  * Get the value of the button right now.
  *
  * @return \a true if button is depressed.
  */
-bool cc3_read_button (void);
+bool cc3_button_get_state (void);
 
-
-/**
- * Initialize the servo subsystem.
- */
-void cc3_servo_init (void);
-
-/**
- * Set the servo mask.
- *
- * @param[in] mask The bitmask of servos to drive.
- */
-void cc3_servo_mask (uint8_t mask);
 
 /**
  * Set a servo to a position.
  *
- * @param[in] servo The servo to set.
- * @param[in] pos The position to set the servo.
+ * \note If the pin is not in servo mode, this function will still
+ * set the position, but will not change the mode of the pin.
+ *
+ * @sa cc3_gpio_set_mode() for setting a pin to servo mode.
+ *
+ * @param[in] pin The pin to set.
+ * @param[in] position The position to set the servo.
  * @return \a true if successful.
  */
-bool cc3_servo_set (uint8_t servo, uint32_t pos);
+bool cc3_gpio_set_servo_position (uint8_t pin, uint8_t position);
 
 /**
- * Disable the servo subsystem to conserve power. To use the servos again,
- * call cc3_servo_init().
+ * Configure a GPIO pin as input, output, or servo.
+ *
+ * @param[in] pin The pin to set.
+ * @param[in] mode The mode to set the pin to.
  */
-void cc3_servo_disable (void);
+void cc3_gpio_set_mode (uint8_t pin, cc3_gpio_mode_t mode);
 
+/**
+ * Get the current mode setting for a GPIO pin.
+ *
+ * @param[in] pin The pin to assign a mode to.
+ * @return The GPIO mode for this pin.
+ */
+cc3_gpio_mode_t cc3_gpio_get_mode(uint8_t pin);
 
-void cc3_gpio_set_to_input(uint8_t mask);
-void cc3_gpio_set_to_output(uint8_t mask);
-uint8_t cc3_gpio_set_pin(uint8_t pin);
-uint8_t cc3_gpio_get_pin(uint8_t pin);
+/**
+ * Set a GPIO pin to a value.
+ * \note This has no effect if a pin's mode is set to input.
+ * It has only a momentary effect if the pin's mode is set to servo.
+ *
+ * @param[in] pin The pin to set.
+ * @param[in] value The value to set the pin to.
+ */
+void cc3_gpio_set_value(uint8_t pin, bool value);
 
+/**
+ * Read the value from a GPIO pin.
+ * \note If this pin is in input mode, this will return the last value
+ * the pin was set to.
+ *
+ * @param[in] pin The pin to get.
+ * @return The value of the pin.
+ */
+bool cc3_gpio_get_value(uint8_t pin);
+
+/**
+ * Get the number of available GPIO pins.
+ *
+ * @return The number of GPIO pins.
+ */
+uint8_t cc3_gpio_get_count(void);
 
 #endif

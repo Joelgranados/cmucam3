@@ -1,5 +1,5 @@
 /*
- * Copyright 2006  Anthony Rowe and Adam Goode
+ * Copyright 2006-2007  Anthony Rowe and Adam Goode
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,51 +23,35 @@
 #include "serial.h"
 #include <stdio.h>
 
-// Set a particular servo pin low
-static void _cc3_servo_lo (uint8_t n);
+static uint8_t servo_val[MAX_SERVOS] = {
+  SERVO_RESOLUTION / 2,
+  SERVO_RESOLUTION / 2,
+  SERVO_RESOLUTION / 2,
+  SERVO_RESOLUTION / 2,
+};
 
-// Set all pins high at the start of the servo cycle
-static void _cc3_servo_hi_all (void);
-
-
-static uint32_t servo_val[MAX_SERVOS];
-static uint32_t servo_tmp[MAX_SERVOS];
+static uint8_t servo_tmp[MAX_SERVOS];
 static uint32_t servo_mask;
 
-/**
- * cc3_servo_set()
- * This function sets a servo to be at given position.
- *
- * Returns true upon success.
- * Returns false if the servo or position is out of bounds.
- *
- *  The servo will physically move on the next servo cycle.
- *  The servo operates at 50hz.
- */
-bool cc3_servo_set (uint8_t servo, uint32_t pos)
+const uint32_t _cc3_servo_map[] =
+  {
+    _CC3_SERVO_0,
+    _CC3_SERVO_1,
+    _CC3_SERVO_2,
+    _CC3_SERVO_3,
+  };
+
+
+bool cc3_gpio_set_servo_position (uint8_t servo, uint8_t pos)
 {
-    if (servo > MAX_SERVOS)
-        return false;
-    if (pos > SERVO_RESOLUTION)
-        return false;
-    servo_val[servo] = pos;
-    return true;
+  if (servo > MAX_SERVOS)
+    return false;
+  servo_val[servo] = pos;
+  return true;
 }
 
-/**
- * cc3_servo_init()
- *
- * This function sets up timer1 to control the servos.
- * It is periodically called by an interrupt in interrupt.c
- *
- * This function can be called again after servos are disabled.
- */
-void cc3_servo_init ()
+static void servo_init (void)
 {
-    int i;
-    servo_mask=0xFFFFF;
-    for (i = 0; i < MAX_SERVOS; i++)
-        servo_val[i] = SERVO_RESOLUTION / 2;
     // Setup timer1 to handle servos
     REG (TIMER1_TCR) = 0;       // turn off timer
     REG (TIMER1_TC) = 0;        // clear counter
@@ -81,27 +65,20 @@ void cc3_servo_init ()
     enable_servo_interrupt ();
 }
 
-void cc3_servo_mask(uint8_t mask)
-{
-servo_mask=mask;
-}
-
-
 /**
  * _cc3_servo_hi_all()
  *
  * This function pulls all servo pins high at the start of
  * the 20ms servo period.
  */
-void _cc3_servo_hi_all ()
+static void servo_hi_all (void)
 {
-uint32_t tmp;
-   tmp=0;
-   if(servo_mask&0x1) tmp |= _CC3_SERVO_0;
-   if(servo_mask&0x2) tmp |= _CC3_SERVO_1;
-   if(servo_mask&0x4) tmp |= _CC3_SERVO_2;
-   if(servo_mask&0x8) tmp |= _CC3_SERVO_3;
-   REG( GPIO_IOSET) = tmp;
+  uint32_t tmp = 0;
+  if(servo_mask&0x1) tmp |= _CC3_SERVO_0;
+  if(servo_mask&0x2) tmp |= _CC3_SERVO_1;
+  if(servo_mask&0x4) tmp |= _CC3_SERVO_2;
+  if(servo_mask&0x8) tmp |= _CC3_SERVO_3;
+  REG( GPIO_IOSET) = tmp;
 }
 
 /**
@@ -109,49 +86,40 @@ uint32_t tmp;
  *
  *  This pulls a particular servo line low.
  */
-void _cc3_servo_lo (uint8_t n)
+static void servo_lo (uint8_t n)
 {
-    switch (n) {
-    case 0:
-        if(servo_mask&0x1)
-           REG (GPIO_IOCLR) = _CC3_SERVO_0;
-        break;
-    case 1:
-        if(servo_mask&0x2)
-        REG (GPIO_IOCLR) = _CC3_SERVO_1;
-        break;
-    case 2:
-        if(servo_mask&0x4)
-        REG (GPIO_IOCLR) = _CC3_SERVO_2;
-        break;
-    case 3:
-        if(servo_mask&0x8)
-        REG (GPIO_IOCLR) = _CC3_SERVO_3;
-        break;
+  REG (GPIO_IOCLR) = _cc3_servo_map[n];
+}
+
+void _cc3_servo_enable(uint8_t servo, bool enable)
+{
+  bool some_servos_already_enabled = !!servo_mask;
+
+  uint32_t mask = 1 << servo;
+
+  if (enable) {
+    servo_mask |= mask;
+    if (!some_servos_already_enabled) {
+      servo_init();
+    }
+  } else {
+    servo_mask &= ~mask;
+
+    // any servos left?
+    if (!servo_mask) {
+      disable_servo_interrupt();
     }
 
+    // set to low
+    servo_lo(servo);
+  }
 }
-
-/**
- * cc3_disable()
- *
- * This function disables the servo interrupt and
- * sets the servo lines low.
- */
-void cc3_servo_disable ()
-{
-uint8_t i;
-    disable_servo_interrupt ();
-    for (i = 0; i < MAX_SERVOS; i++)
-         _cc3_servo_lo (i);
-}
-
 
 /**
  * _cc3_servo_int()
  *
  * This is where the servo magic happens.  This function is called from
- * the timer1 interrupt in interrupts.c.
+ * the timer1 interrupt in interrupt.c.
  *
  * It will schedule the next timer interrupt to fire when the next pin
  * state transition is needed.
@@ -171,7 +139,7 @@ void _cc3_servo_int ()
 	//uart0_write( "FIRST call\r\n" );	
         REG (TIMER1_TC) = 0;
         REG (TIMER1_MR0) = SERVO_RESOLUTION;    // schedule next wakeup for 1ms
-        _cc3_servo_hi_all ();
+        servo_hi_all ();
     	// Copy current values into working values to avoid changes while
 	// in the scheduling loop
     	for (i = 0; i < MAX_SERVOS; i++)
@@ -186,8 +154,8 @@ void _cc3_servo_int ()
         for (i = 0; i < MAX_SERVOS; i++) {
             if (servo_tmp[i] < min && servo_tmp[i] > (ct + safety))
                 min = servo_tmp[i];
-            if (servo_tmp[i] <= (ct+safety))
-                _cc3_servo_lo (i);
+            if ((servo_tmp[i] <= (ct+safety)) && (servo_mask & (1 << i)))
+                servo_lo (i);
         }
 	// If all pins have been serviced, set a new interrupt for the
 	// next servo period 20ms later

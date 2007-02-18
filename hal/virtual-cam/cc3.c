@@ -116,7 +116,7 @@ void cc3_pixbuf_load ()
    i=0;
    do{
    // skip every other row in low-res mode
-     if(_cc3_g_current_camera_state.resolution==CC3_RES_LOW  && col_cnt>=176 ) 
+     if(_cc3_g_current_camera_state.resolution==CC3_CAMERA_RESOLUTION_LOW  && col_cnt>=176 ) 
 	{
 	for(k=0; k<352; k++ )
 		{
@@ -144,7 +144,7 @@ void cc3_pixbuf_load ()
    g2 = fgetc(fp);
    val = b2 = fgetc(fp);
   // skip every other pixel in low-res mode
-   if(_cc3_g_current_camera_state.resolution ==CC3_RES_LOW  ) {
+   if(_cc3_g_current_camera_state.resolution ==CC3_CAMERA_RESOLUTION_LOW  ) {
     r = fgetc(fp);
     g = fgetc(fp);
     b = fgetc(fp);
@@ -272,7 +272,7 @@ void cc3_pixbuf_rewind ()
 }
 
 
-void cc3_clr_led (uint8_t select)
+void cc3_led_set_off (uint8_t select)
 {
   switch (select) {
   case 0:
@@ -289,7 +289,7 @@ void cc3_clr_led (uint8_t select)
 }
 
 
-void cc3_set_led (uint8_t select)
+void cc3_led_set_on (uint8_t select)
 {
 
   switch (select) {
@@ -457,7 +457,7 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
  * cc3_wait_ms():
  *
  */
-void cc3_wait_ms (uint32_t delay)
+void cc3_timer_wait_ms (uint32_t delay)
 {
   uint32_t start;
   //start = cc3_timer ();
@@ -471,7 +471,7 @@ void cc3_wait_ms (uint32_t delay)
  *
  * This function returns the time since startup in ms as a uint32
  */
-uint32_t cc3_timer ()
+uint32_t cc3_timer_get_current_ms ()
 {
   //return (REG (TIMER0_TC));     // REG in milliseconds
   printf( "cc3_timer not implemented!\n" );
@@ -696,7 +696,7 @@ static unsigned int _cc3_i2c_send (unsigned int num, unsigned int *buffer)
  *
  * For basic manipulation of camera parameters see other cc3_set_xxxx functions.
  */
-bool cc3_set_raw_register (uint8_t address, uint8_t value)
+bool cc3_camera_set_raw_register (uint8_t address, uint8_t value)
 {
   unsigned int data[3];
   int to;
@@ -718,7 +718,7 @@ bool cc3_set_raw_register (uint8_t address, uint8_t value)
  * Sets the resolution, also updates cc3_g_pixbuf_frame width and height
  * Takes enum CC3_LOW_RES and CC3_HIGH_RES.
  */
-void cc3_set_resolution (cc3_camera_resolution_t cam_res)
+void cc3_camera_set_resolution (cc3_camera_resolution_t cam_res)
 {
   _cc3_g_current_camera_state.resolution = cam_res;
   _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
@@ -738,45 +738,45 @@ void _cc3_update_frame_bounds (cc3_frame_t *f)
  * in YCrCb mode, use CC3_CR, CC3_Y, CC3_CB, CC3_Y2 when indexing
  * the pixel array.
  */
-void cc3_set_colorspace (cc3_colorspace_t colorspace)
+void cc3_camera_set_colorspace (cc3_colorspace_t colorspace)
 {
   _cc3_g_current_camera_state.colorspace = colorspace;
   _cc3_set_register_state ();
 }
 
 
-void cc3_set_framerate_divider (uint8_t rate_divider)
+void cc3_camera_set_framerate_divider (uint8_t rate_divider)
 {
   _cc3_g_current_camera_state.clock_divider = rate_divider;
   _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
 }
 
-void cc3_set_auto_exposure (bool exp)
+void cc3_camera_set_auto_exposure (bool exp)
 {
   _cc3_g_current_camera_state.auto_exposure = exp;
   _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
 }
 
-void cc3_set_auto_white_balance (bool awb)
+void cc3_camera_set_auto_white_balance (bool awb)
 {
   _cc3_g_current_camera_state.auto_white_balance = awb;
   _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
 }
 
-void cc3_set_brightness (uint8_t level)
+void cc3_camera_set_brightness (uint8_t level)
 {
   _cc3_g_current_camera_state.brightness = level;
   _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
 }
 
-void cc3_set_contrast (uint8_t level)
+void cc3_camera_set_contrast (uint8_t level)
 {
   _cc3_g_current_camera_state.contrast = level;
   _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
 }
 
 
-bool cc3_read_button (void)
+bool cc3_button_get_state (void)
 {
   return 1;
 }

@@ -30,30 +30,30 @@ int main (void) {
     for (i = 0; i < 8; i++) {
       if (i & 1) {
 	printf ("0");
-	cc3_set_led(0);
+	cc3_led_set_on(0);
       } else {
 	printf ("_");
-	cc3_clr_led(0);
+	cc3_led_set_off(0);
       }
 
       if (i & 2) {
 	printf ("1");
-	cc3_set_led(1);
+	cc3_led_set_on(1);
       } else {
 	printf ("_");
-	cc3_clr_led(1);
+	cc3_led_set_off(1);
       }
 
       if (i & 4) {
 	printf ("2");
-	cc3_set_led(2);
+	cc3_led_set_on(2);
       } else {
 	printf ("_");
-	cc3_clr_led(2);
+	cc3_led_set_off(2);
       }
 
       printf("\r\n");
-      cc3_wait_ms(200);
+      cc3_timer_wait_ms(200);
     }
   }
 

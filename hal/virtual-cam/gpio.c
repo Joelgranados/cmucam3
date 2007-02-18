@@ -24,24 +24,8 @@
 #include <stdbool.h>
 
 
-void cc3_gpio_set_to_input(uint8_t mask)
+void cc3_gpio_set_mode(uint8_t pin, cc3_gpio_mode_t mode)
 {
-
-}
-
-void cc3_gpio_set_to_output(uint8_t mask)
-{
-
-}
-
-uint8_t cc3_gpio_set_pin(uint8_t pin)
-{
-
-}
-
-uint8_t cc3_gpio_get_pin(uint8_t pin)
-{
-
 
 }
 

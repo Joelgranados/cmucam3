@@ -25,9 +25,9 @@ int main(void) {
   cc3_filesystem_init();
 
   //cc3_set_colorspace(CC3_COLORSPACE_YCRCB);
-  cc3_set_resolution(CC3_RES_HIGH);
+  cc3_camera_set_resolution(CC3_CAMERA_RESOLUTION_HIGH);
   // cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 2);
-  cc3_wait_ms(1000);
+  cc3_timer_wait_ms(1000);
 
   // init pixbuf with width and height
   cc3_pixbuf_load();
@@ -35,13 +35,13 @@ int main(void) {
   // init jpeg
   init_jpeg();
 
-  cc3_set_led(1);
+  cc3_led_set_on(1);
   i = 0;
   while(true) {
     char filename[16];
-    cc3_clr_led(1);
-    while(!cc3_read_button());
-    cc3_set_led(1);
+    cc3_led_set_off(1);
+    while(!cc3_button_get_state());
+    cc3_led_set_on(1);
   
    // Check if files exist, if they do then skip over them 
     do { 
@@ -63,7 +63,7 @@ int main(void) {
     f = fopen(filename, "w");
     if(f==NULL || i>200 )
     {
-	cc3_set_led(3);
+	cc3_led_set_on(3);
 	printf( "Error: Can't open file\r\n" );
 	while(1);
     }

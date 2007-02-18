@@ -1,5 +1,5 @@
 /*
- * Copyright 2006  Anthony Rowe and Adam Goode
+ * Copyright 2006-2007  Anthony Rowe and Adam Goode
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 
 
 #include "gpio.h"
+#include "servo.h"
+#include "LPC2100.h"
 #include <stdio.h>
 #include "cc3_pin_defines.h"
 #include "cc3.h"
@@ -24,24 +26,67 @@
 #include <stdbool.h>
 
 
-void cc3_gpio_set_to_input(uint8_t mask)
+void cc3_gpio_set_mode(uint8_t pin, cc3_gpio_mode_t mode)
 {
+  if (pin >= MAX_SERVOS) {
+    return;
+  }
 
+  uint32_t mask = 1 << pin;
+  uint32_t pin_val = _cc3_servo_map[pin];
+
+  switch (mode) {
+  case CC3_GPIO_MODE_INPUT:
+    // not a servo
+    _cc3_servo_enable(pin, false);
+
+    // set to 0
+    REG (GPIO_IODIR) &= ~pin_val;
+    break;
+
+  case CC3_GPIO_MODE_OUTPUT:
+    // not a servo
+    _cc3_servo_enable(pin, false);
+
+    // set to 1
+    REG (GPIO_IODIR) |= pin_val;
+    break;
+
+  case CC3_GPIO_MODE_SERVO:
+    // a servo
+    _cc3_servo_enable(pin, true);
+
+    // set to 1
+    REG (GPIO_IODIR) |= pin_val;
+    break;
+  }
 }
 
-void cc3_gpio_set_to_output(uint8_t mask)
+void cc3_gpio_set_value(uint8_t pin, bool value)
 {
+  if (pin >= MAX_SERVOS) {
+    return;
+  }
 
+  if (value) {
+    REG (GPIO_IOSET) = _cc3_servo_map[pin];
+  } else {
+    REG (GPIO_IOCLR) = _cc3_servo_map[pin];
+  }
 }
 
-uint8_t cc3_gpio_set_pin(uint8_t pin)
-{
 
+bool cc3_gpio_get_value(uint8_t pin)
+{
+  if (pin >= MAX_SERVOS) {
+    return false;
+  }
+
+  return REG (GPIO_IOPIN) & _cc3_servo_map[pin];
 }
 
-uint8_t cc3_gpio_get_pin(uint8_t pin)
+
+uint8_t cc3_gpio_get_count()
 {
-
-
+  return MAX_SERVOS;
 }
-

@@ -42,7 +42,7 @@ static uint32_t servo_mask;
  *  The servo will physically move on the next servo cycle.
  *  The servo operates at 50hz.
  */
-bool cc3_servo_set (uint8_t servo, uint32_t pos)
+bool cc3_gpio_set_servo_position (uint8_t servo, uint8_t pos)
 {
     if (servo > MAX_SERVOS)
         return false;
@@ -51,29 +51,6 @@ bool cc3_servo_set (uint8_t servo, uint32_t pos)
     servo_val[servo] = pos;
     return true;
 }
-
-/**
- * cc3_servo_init()
- *
- * This function sets up timer1 to control the servos.
- * It is periodically called by an interrupt in interrupt.c
- *
- * This function can be called again after servos are disabled.
- */
-void cc3_servo_init ()
-{
-    int i;
-    servo_mask=0xFFFFF;
-    for (i = 0; i < MAX_SERVOS; i++)
-        servo_val[i] = SERVO_RESOLUTION / 2;
-    // Setup timer1 to handle servos
-}
-
-void cc3_servo_mask(uint8_t mask)
-{
-servo_mask=mask;
-}
-
 
 /**
  * _cc3_servo_hi_all()
@@ -119,19 +96,6 @@ void _cc3_servo_lo (uint8_t n)
     }
 
 }
-
-/**
- * cc3_disable()
- *
- * This function disables the servo interrupt and 
- * sets the servo lines low.
- */
-void cc3_servo_disable ()
-{
-uint8_t i;
-printf( "cc3 servo disabled\n" );
-}
-
 
 /**
  * _cc3_servo_int()

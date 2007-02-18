@@ -32,7 +32,7 @@ static int uart_open (const char *name,
 		      int mode __attribute__((unused)))
 {
   int uart_num = process_uart_filename(name);
-  if (uart_num >= 0 && uart_num < cc3_get_uart_count()) {
+  if (uart_num >= 0 && uart_num < cc3_uart_get_count()) {
     return uart_num + max_uarts; // new uart
   } else {
     errno = ENODEV;

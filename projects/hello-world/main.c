@@ -31,20 +31,20 @@ int main (void)
 
   cc3_camera_init ();
 
-  cc3_set_colorspace (CC3_COLORSPACE_RGB);
-  cc3_set_resolution (CC3_RES_LOW);
-  cc3_set_auto_white_balance (true);
-  cc3_set_auto_exposure (true);
+  cc3_camera_set_colorspace (CC3_COLORSPACE_RGB);
+  cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_LOW);
+  cc3_camera_set_auto_white_balance (true);
+  cc3_camera_set_auto_exposure (true);
 
   printf ("Hello World...\n");
 
-  cc3_clr_led (0);
-  cc3_clr_led (1);
-  cc3_clr_led (2);
+  cc3_led_set_off (0);
+  cc3_led_set_off (1);
+  cc3_led_set_off (2);
 
   // sample wait command in ms
-  cc3_wait_ms (1000);
-  cc3_set_led (0);
+  cc3_timer_wait_ms (1000);
+  cc3_led_set_on (0);
 
 
   // sample showing how to write to the MMC card
@@ -68,12 +68,12 @@ int main (void)
 
   // sample showing how to read button
   printf ("push button on camera back to continue\n");
-  start_time = cc3_get_current_ms ();
-  while (!cc3_read_button ());
-  cc3_set_led (1);
+  start_time = cc3_timer_get_current_ms ();
+  while (!cc3_button_get_state ());
+  cc3_led_set_on (1);
   // sample showing how to use timer
   printf ("It took you %dms to press the button\n",
-          cc3_get_current_ms () - start_time);
+          cc3_timer_get_current_ms () - start_time);
 
 
 
@@ -96,21 +96,21 @@ int main (void)
     cc3_pixel_t my_pix;
 
     if (val & 0x1)
-      cc3_set_led (0);
+      cc3_led_set_on (0);
     else
-      cc3_clr_led (0);
+      cc3_led_set_off (0);
     if (val & 0x2)
-      cc3_set_led (1);
+      cc3_led_set_on (1);
     else
-      cc3_clr_led (1);
+      cc3_led_set_off (1);
     if (val & 0x3)
-      cc3_set_led (2);
+      cc3_led_set_on (2);
     else
-      cc3_clr_led (2);
+      cc3_led_set_off (2);
     if (val & 0x4)
-      cc3_set_led (3);
+      cc3_led_set_on (3);
     else
-      cc3_clr_led (3);
+      cc3_led_set_off (3);
     val++;
 
     // This tells the camera to grab a new frame into the fifo and reset
@@ -122,7 +122,7 @@ int main (void)
     // red search!
 
     // *** slow method for red search
-    start_time = cc3_get_current_ms();
+    start_time = cc3_timer_get_current_ms();
     max_red = 0;
     my_x = 0;
     my_y = 0;
@@ -140,7 +140,7 @@ int main (void)
       }
       y++;
     }
-    end_time = cc3_get_current_ms();
+    end_time = cc3_timer_get_current_ms();
 
     printf ("Found max red value %d at %d, %d\n", max_red, my_x, my_y);
     printf (" cc3_get_pixel version took %d ms to complete\n",
@@ -148,7 +148,7 @@ int main (void)
 
     // *** faster method for red search
     cc3_pixbuf_rewind();  // use exactly the same pixbuf contents
-    start_time = cc3_get_current_ms();
+    start_time = cc3_timer_get_current_ms();
     max_red = 0;
     my_x = 0;
     my_y = 0;
@@ -166,7 +166,7 @@ int main (void)
       y++;
     }
     my_x /= 3; // correct channel offset
-    end_time = cc3_get_current_ms();
+    end_time = cc3_timer_get_current_ms();
 
     printf ("Found max red value %d at %d, %d\n", max_red, my_x, my_y);
     printf (" faster version took %d ms to complete\n",
@@ -175,7 +175,7 @@ int main (void)
     // *** even faster method for red search
     cc3_pixbuf_rewind();  // use exactly the same pixbuf contents
     cc3_pixbuf_set_coi(CC3_CHANNEL_RED);
-    start_time = cc3_get_current_ms();
+    start_time = cc3_timer_get_current_ms();
     max_red = 0;
     my_x = 0;
     my_y = 0;
@@ -192,7 +192,7 @@ int main (void)
       }
       y++;
     }
-    end_time = cc3_get_current_ms();
+    end_time = cc3_timer_get_current_ms();
 
     printf ("Found max red value %d at %d, %d\n", max_red, my_x, my_y);
     printf (" even faster version took %d ms to complete\n",
