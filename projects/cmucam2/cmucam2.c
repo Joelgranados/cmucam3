@@ -768,28 +768,80 @@ void print_NCK ()
 void set_cmucam2_commands (void)
 {
   cmucam2_cmds[RETURN] = "**";
-  cmucam2_cmds[RESET] = "RS";
-  cmucam2_cmds[TRACK_COLOR] = "TC";
-  cmucam2_cmds[SEND_FRAME] = "SF";
-  cmucam2_cmds[HI_RES] = "HR";
-  cmucam2_cmds[FRAME_DIFF] = "FD";
-  cmucam2_cmds[GET_VERSION] = "GV";
+
+  /* Buffer Commands */
+  //  BM buffer mode
+  //  RF read frame
+
+  /* Camera Module Commands */
   cmucam2_cmds[CAMERA_REG] = "CR";
+  //  CP camera power
+  //  CT camera type
+
+  /* Data Rate Commands */
+  //  DM delay mode
   cmucam2_cmds[POLL_MODE] = "PM";
-  cmucam2_cmds[GET_MEAN] = "GM";
+  //  PS packet skip
+  //  RM raw mode
+  //  PF packet filter
+  //  OM output packet mask
+
+  /* Servo Commands */
   cmucam2_cmds[SET_SERVO] = "SV";
-  cmucam2_cmds[VIRTUAL_WINDOW] = "VW";
+  //  SP servo parameters
+  //  GP get servo position
+  //  SM servo mask
+  //  SO servo output
+
+  /* Image Windowing Commands */
+  cmucam2_cmds[SEND_FRAME] = "SF";
   cmucam2_cmds[DOWN_SAMPLE] = "DS";
+  cmucam2_cmds[VIRTUAL_WINDOW] = "VW";
+  //  FS frame stream
+  cmucam2_cmds[HI_RES] = "HR";
+  cmucam2_cmds[GET_WINDOW] = "GW";
+  //  PD pixel difference
+
+  /* Auxiliary I/O Commands */
+  //  GB get button
+  //  GI get auxiliary I/O
+  cmucam2_cmds[LED_0] = "L0";
+  //  L1 LED control
+
+  /* Color Tracking Commands */
+  cmucam2_cmds[TRACK_COLOR] = "TC";
+  cmucam2_cmds[TRACK_INVERT] = "TI";
+  cmucam2_cmds[TRACK_WINDOW] = "TW";
+  cmucam2_cmds[NOISE_FILTER] = "NF";
   cmucam2_cmds[LINE_MODE] = "LM";
+  cmucam2_cmds[GET_TRACK] = "GT";
+  //  ST set tracking parameters
+
+  /* Histogram Commands */
+  cmucam2_cmds[GET_HISTOGRAM] = "GH";
+  //  HC histogram config
+  //  HT histogram track
+
+  /* Frame Differencing Commands */
+  cmucam2_cmds[FRAME_DIFF] = "FD";
+  //  DC difference channel
+  //  LF load frame
+  //  MD mask difference
+  //  UD upload difference
+  //  HD hires difference
+
+  /* Color Statistics Commands */
+  cmucam2_cmds[GET_MEAN] = "GM";
+
+  /* System Level Commands */
+  //  SD sleep deeply
+  //  SL sleep
+  cmucam2_cmds[RESET] = "RS";
+  cmucam2_cmds[GET_VERSION] = "GV";
+
+  /* CMUcam3 New Commands */
   cmucam2_cmds[SEND_JPEG] = "SJ";
   cmucam2_cmds[GET_POLLY] = "GP";
-  cmucam2_cmds[TRACK_WINDOW] = "TW";
-  cmucam2_cmds[GET_WINDOW] = "GW";
-  cmucam2_cmds[NOISE_FILTER] = "NF";
-  cmucam2_cmds[GET_TRACK] = "GT";
-  cmucam2_cmds[GET_HISTOGRAM] = "GH";
-  cmucam2_cmds[LED_0] = "L0";
-  cmucam2_cmds[TRACK_INVERT] = "TI";
 }
 
 //int32_t cmucam2_get_command(cmucam2_command_t *cmd, int32_t *arg_list)
