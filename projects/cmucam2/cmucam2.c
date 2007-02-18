@@ -258,8 +258,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         printf ("\r");
         goto cmucam2_start;
         break;
@@ -270,8 +270,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         printf ("%s\r", VERSION_BANNER);
         break;
 
@@ -280,8 +280,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         auto_led = false;
         if (arg_list[0] == 0)
           cc3_led_set_off (0);
@@ -296,8 +296,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         if (arg_list[0] == 1)
           poll_mode = true;
         else
@@ -310,8 +310,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         if (arg_list[0] == 1)
           cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_HIGH);
         else
@@ -326,8 +326,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         if (arg_list[0] == 0)
           t_pkt.track_invert = 0;
         else
@@ -339,8 +339,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         t_pkt.noise_filter = arg_list[0];
         break;
 
@@ -349,8 +349,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         // FIXME: Make bitmasks later
         if (arg_list[0] == 0) {
           if (arg_list[1] == 1)
@@ -366,8 +366,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         //init_jpeg();
         // cc3_set_resolution(CC3_RES_HIGH);
         //cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, 1, 1);
@@ -390,8 +390,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         cmucam2_send_image_direct (auto_led);
         cc3_pixbuf_set_coi (old_coi);
         break;
@@ -402,8 +402,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         for (int i = 0; i < n; i += 2)
           cc3_camera_set_raw_register (arg_list[i], arg_list[i + 1]);
         break;
@@ -414,8 +414,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         cc3_pixbuf_set_roi (arg_list[0] * 2,
                             arg_list[1], arg_list[2] * 2, arg_list[3]);
         break;
@@ -425,8 +425,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         printf ("%d %d %d %d %d %d\r", t_pkt.lower_bound.channel[0],
                 t_pkt.lower_bound.channel[1], t_pkt.lower_bound.channel[2],
                 t_pkt.upper_bound.channel[0], t_pkt.upper_bound.channel[1],
@@ -438,8 +438,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         printf ("%d %d %d %d\r", cc3_g_pixbuf_frame.x0 / 2,
                 cc3_g_pixbuf_frame.y0, cc3_g_pixbuf_frame.x1 / 2,
                 cc3_g_pixbuf_frame.y1);
@@ -450,8 +450,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, arg_list[0] * 2,
                                   arg_list[1]);
         break;
@@ -462,8 +462,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         if (n == 6) {
           t_pkt.lower_bound.channel[0] = arg_list[0];
           t_pkt.upper_bound.channel[0] = arg_list[1];
@@ -549,8 +549,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         {
           uint8_t *x_axis;
           polly_config_t p_config;
@@ -595,8 +595,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         cmucam2_get_mean (&s_pkt, poll_mode, line_mode, 0);
         break;
 
@@ -606,8 +606,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         h_pkt.channel = arg_list[0];
         cmucam2_get_histogram (&h_pkt, poll_mode, 0);
         break;
@@ -618,8 +618,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         cc3_gpio_set_mode (arg_list[0], CC3_GPIO_MODE_SERVO);
         cc3_gpio_set_servo_position (arg_list[0], arg_list[1]);
         break;
