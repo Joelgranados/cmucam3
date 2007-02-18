@@ -64,6 +64,7 @@ typedef enum {
   SERVO_PARAMETERS,
   SERVO_OUTPUT,
   GET_SERVO,
+  SET_TRACK,
   CMUCAM2_CMD_END               // Must be last entry so array sizes are correct
 } cmucam2_command_t;
 
@@ -138,6 +139,7 @@ static void set_cmucam2_commands (void)
   cmucam2_cmds[NOISE_FILTER] = "NF";
   cmucam2_cmds[LINE_MODE] = "LM";
   cmucam2_cmds[GET_TRACK] = "GT";
+  cmucam2_cmds[SET_TRACK] = "ST";
   //  ST set tracking parameters
 
   /* Histogram Commands */
@@ -254,10 +256,10 @@ cmucam2_start:
   servo_settings.y=SERVO_MID;
   servo_settings.pan_range_far=16;
   servo_settings.pan_range_near=8;
-  servo_settings.pan_step=5;
+  servo_settings.pan_step=10;
   servo_settings.tilt_range_far=30;
   servo_settings.tilt_range_near=15;
-  servo_settings.tilt_step=5;
+  servo_settings.tilt_step=10;
 
 
   cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_LOW);
@@ -534,6 +536,21 @@ cmucam2_start:
                                   arg_list[1]);
         break;
 
+     case SET_TRACK:
+        if (n != 0 && n != 6) {
+          error = true;
+          break;
+        }
+        print_ACK ();
+        if (n == 6) {
+          t_pkt.lower_bound.channel[0] = arg_list[0];
+          t_pkt.upper_bound.channel[0] = arg_list[1];
+          t_pkt.lower_bound.channel[1] = arg_list[2];
+          t_pkt.upper_bound.channel[1] = arg_list[3];
+          t_pkt.lower_bound.channel[2] = arg_list[4];
+          t_pkt.upper_bound.channel[2] = arg_list[5];
+        }
+        break;
 
       case TRACK_COLOR:
         if (n != 0 && n != 6) {
