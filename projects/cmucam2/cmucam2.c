@@ -69,6 +69,7 @@ typedef enum {
   SET_TRACK,
   BUF_MODE,
   READ_FRAME,
+  PACKET_FILTER,
   CONF_HISTOGRAM,
   CMUCAM2_CMD_END               // Must be last entry so array sizes are correct
 } cmucam2_command_t;
@@ -94,9 +95,7 @@ static void set_cmucam2_commands (void)
 
   /* Buffer Commands */
   cmucam2_cmds[BUF_MODE] = "BM";
-  //  BM buffer mode
   cmucam2_cmds[READ_FRAME] = "RF";
-  //  RF read frame
 
   /* Camera Module Commands */
   cmucam2_cmds[CAMERA_REG] = "CR";
@@ -108,7 +107,7 @@ static void set_cmucam2_commands (void)
   cmucam2_cmds[POLL_MODE] = "PM";
   //  PS packet skip
   //  RM raw mode
-  //  PF packet filter
+  cmucam2_cmds[PACKET_FILTER] = "PF";
   //  OM output packet mask
 
   /* Servo Commands */
@@ -193,7 +192,7 @@ static void cmucam2_write_t_packet (cc3_track_pkt_t * pkt, cmucam2_servo_t *serv
 static void cmucam2_write_h_packet (cc3_histogram_pkt_t * pkt);
 static void cmucam2_send_image_direct (bool auto_led);
 
-
+bool packet_filter_flag;
 
 int main (void)
 {
@@ -250,6 +249,7 @@ cmucam2_start:
   poll_mode = false;
   line_mode = false;
   buf_mode = false;
+  packet_filter_flag = false;
   h_pkt.bins = 28;
   t_pkt.track_invert = false;
   t_pkt.noise_filter = 0;
@@ -374,8 +374,21 @@ cmucam2_start:
           buf_mode = false;
         break;
 
+      case PACKET_FILTER:
+        if (n != 1 || arg_list[0]>1) {
+          error = true;
+          break;
+        }
+
+        print_ACK ();
+        if (arg_list[0] == 1)
+          packet_filter_flag= true;
+        else
+          packet_filter_flag= false;
+        break;
+
       case POLL_MODE:
-        if (n != 1) {
+        if (n != 1 || arg_list[0]>1) {
           error = true;
           break;
         }
@@ -1035,6 +1048,8 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
 
 void cmucam2_write_t_packet (cc3_track_pkt_t * pkt, cmucam2_servo_t *servo_settings)
 {
+static bool empty_cnt=0;
+
   if (pkt->centroid_x > 255)
     pkt->centroid_x = 255;
   if (pkt->centroid_y > 255)
@@ -1053,15 +1068,29 @@ void cmucam2_write_t_packet (cc3_track_pkt_t * pkt, cmucam2_servo_t *servo_setti
     pkt->int_density = 255;
 
   if (pkt->num_pixels == 0)
-    printf ("T 0 0 0 0 0 0 0 0");
+  {
+    if(packet_filter_flag==0)
+    	printf ("T 0 0 0 0 0 0 0 0");
+    if(packet_filter_flag==1)
+    {
+	if(empty_cnt==0) printf ("T 0 0 0 0 0 0 0 0");
+    }
+  }
   else
+  {
+    empty_cnt=0;
     printf ("T %d %d %d %d %d %d %d %d", pkt->centroid_x, pkt->centroid_y,
             pkt->x0, pkt->y0, pkt->x1, pkt->y1, pkt->num_pixels,
             pkt->int_density);
+  }
   if(servo_settings->x_report) printf( " %d",servo_settings->x );
   if(servo_settings->y_report) printf( " %d",servo_settings->y );
-  printf( "\r" );
-
+  if(packet_filter_flag==0) printf( "\r" );
+  if(packet_filter_flag==1)
+    {
+	if(empty_cnt==0) printf ("\r");
+  	if (pkt->num_pixels == 0) empty_cnt=1;
+    }
 }
 
 void cmucam2_write_h_packet (cc3_histogram_pkt_t * pkt)
