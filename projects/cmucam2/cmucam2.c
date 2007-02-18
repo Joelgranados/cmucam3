@@ -12,8 +12,8 @@
 #include <cc3_jpg.h>
 #include <cc3_math.h>
 
-// Uncomment the line below to reverse the servo direction
-//#define REVERSE_SERVO_DIRECTION
+// Uncomment line below to reverse servo direction for auto-servo and demo mode 
+//#define SERVO_REVERSE_DIRECTION
 
 //#define SERIAL_BAUD_RATE  CC3_UART_RATE_230400
 #define SERIAL_BAUD_RATE  CC3_UART_RATE_115200
@@ -892,12 +892,21 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
       if( t_pkt->int_density>5) {
        if(servo_settings->x_control ) 
 	      	{
-		if(t_pkt->centroid_x>x_mid+servo_settings->pan_range_far) servo_settings->x+=servo_settings->pan_step;
-		else if(t_pkt->centroid_x>x_mid+servo_settings->pan_range_near) servo_settings->x+=servo_settings->pan_step/2;
+		int8_t t_step;
+		t_step=0;
+		if(t_pkt->centroid_x>x_mid+servo_settings->pan_range_far) t_step=servo_settings->pan_step;
+		else if(t_pkt->centroid_x>x_mid+servo_settings->pan_range_near) t_step=(servo_settings->pan_step/2);
 
-		if(t_pkt->centroid_x<x_mid-servo_settings->pan_range_far) servo_settings->x-=servo_settings->pan_step;
-		else if(t_pkt->centroid_x<x_mid-servo_settings->pan_range_near) servo_settings->x-=servo_settings->pan_step/2;
+		if(t_pkt->centroid_x<x_mid-servo_settings->pan_range_far) t_step=-servo_settings->pan_step;
+		else if(t_pkt->centroid_x<x_mid-servo_settings->pan_range_near) t_step=-(servo_settings->pan_step/2);
 
+		
+		#ifdef SERVO_REVERSE_DIRECTION
+			servo_settings->x-=t_step;	
+		#else
+			servo_settings->x+=t_step;	
+		#endif
+		
 		if(servo_settings->x>SERVO_MAX) servo_settings->x=SERVO_MAX;
 		if(servo_settings->x<SERVO_MIN) servo_settings->x=SERVO_MIN;
 		cc3_gpio_set_servo_position (0, servo_settings->x);
