@@ -59,6 +59,86 @@ typedef enum {
 
 char *cmucam2_cmds[CMUCAM2_CMD_END];
 
+static void set_cmucam2_commands (void)
+{
+  cmucam2_cmds[RETURN] = "**";
+
+  /* Buffer Commands */
+  //  BM buffer mode
+  //  RF read frame
+
+  /* Camera Module Commands */
+  cmucam2_cmds[CAMERA_REG] = "CR";
+  //  CP camera power
+  //  CT camera type
+
+  /* Data Rate Commands */
+  //  DM delay mode
+  cmucam2_cmds[POLL_MODE] = "PM";
+  //  PS packet skip
+  //  RM raw mode
+  //  PF packet filter
+  //  OM output packet mask
+
+  /* Servo Commands */
+  cmucam2_cmds[SET_SERVO] = "SV";
+  //  SP servo parameters
+  //  GP get servo position
+  //  SM servo mask
+  //  SO servo output
+
+  /* Image Windowing Commands */
+  cmucam2_cmds[SEND_FRAME] = "SF";
+  cmucam2_cmds[DOWN_SAMPLE] = "DS";
+  cmucam2_cmds[VIRTUAL_WINDOW] = "VW";
+  //  FS frame stream
+  cmucam2_cmds[HI_RES] = "HR";
+  cmucam2_cmds[GET_WINDOW] = "GW";
+  //  PD pixel difference
+
+  /* Auxiliary I/O Commands */
+  //  GB get button
+  //  GI get auxiliary I/O
+  cmucam2_cmds[LED_0] = "L0";
+  //  L1 LED control
+
+  /* Color Tracking Commands */
+  cmucam2_cmds[TRACK_COLOR] = "TC";
+  cmucam2_cmds[TRACK_INVERT] = "TI";
+  cmucam2_cmds[TRACK_WINDOW] = "TW";
+  cmucam2_cmds[NOISE_FILTER] = "NF";
+  cmucam2_cmds[LINE_MODE] = "LM";
+  cmucam2_cmds[GET_TRACK] = "GT";
+  //  ST set tracking parameters
+
+  /* Histogram Commands */
+  cmucam2_cmds[GET_HISTOGRAM] = "GH";
+  //  HC histogram config
+  //  HT histogram track
+
+  /* Frame Differencing Commands */
+  cmucam2_cmds[FRAME_DIFF] = "FD";
+  //  DC difference channel
+  //  LF load frame
+  //  MD mask difference
+  //  UD upload difference
+  //  HD hires difference
+
+  /* Color Statistics Commands */
+  cmucam2_cmds[GET_MEAN] = "GM";
+
+  /* System Level Commands */
+  //  SD sleep deeply
+  //  SL sleep
+  cmucam2_cmds[RESET] = "RS";
+  cmucam2_cmds[GET_VERSION] = "GV";
+
+  /* CMUcam3 New Commands */
+  cmucam2_cmds[SEND_JPEG] = "SJ";
+  cmucam2_cmds[GET_POLLY] = "GP";
+}
+
+
 static void cmucam2_get_histogram(cc3_histogram_pkt_t *h_pkt, bool poll_mode, bool quiet);
 static void cmucam2_get_mean (cc3_color_info_pkt_t * t_pkt,
 			      bool poll_mode,
@@ -68,12 +148,11 @@ static void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
 				 bool poll_mode,
 				 bool line_mode, bool auto_led, bool quite);
 static int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list);
-static void set_cmucam2_commands (void);
 static void print_ACK (void);
 static void print_NCK (void);
 static void cmucam2_write_t_packet (cc3_track_pkt_t * pkt);
 static void cmucam2_write_h_packet (cc3_histogram_pkt_t *pkt);
-void cmucam2_send_image_direct (bool auto_led);
+static void cmucam2_send_image_direct (bool auto_led);
 
 int main (void)
 {
@@ -765,84 +844,6 @@ void print_NCK ()
 }
 
 
-void set_cmucam2_commands (void)
-{
-  cmucam2_cmds[RETURN] = "**";
-
-  /* Buffer Commands */
-  //  BM buffer mode
-  //  RF read frame
-
-  /* Camera Module Commands */
-  cmucam2_cmds[CAMERA_REG] = "CR";
-  //  CP camera power
-  //  CT camera type
-
-  /* Data Rate Commands */
-  //  DM delay mode
-  cmucam2_cmds[POLL_MODE] = "PM";
-  //  PS packet skip
-  //  RM raw mode
-  //  PF packet filter
-  //  OM output packet mask
-
-  /* Servo Commands */
-  cmucam2_cmds[SET_SERVO] = "SV";
-  //  SP servo parameters
-  //  GP get servo position
-  //  SM servo mask
-  //  SO servo output
-
-  /* Image Windowing Commands */
-  cmucam2_cmds[SEND_FRAME] = "SF";
-  cmucam2_cmds[DOWN_SAMPLE] = "DS";
-  cmucam2_cmds[VIRTUAL_WINDOW] = "VW";
-  //  FS frame stream
-  cmucam2_cmds[HI_RES] = "HR";
-  cmucam2_cmds[GET_WINDOW] = "GW";
-  //  PD pixel difference
-
-  /* Auxiliary I/O Commands */
-  //  GB get button
-  //  GI get auxiliary I/O
-  cmucam2_cmds[LED_0] = "L0";
-  //  L1 LED control
-
-  /* Color Tracking Commands */
-  cmucam2_cmds[TRACK_COLOR] = "TC";
-  cmucam2_cmds[TRACK_INVERT] = "TI";
-  cmucam2_cmds[TRACK_WINDOW] = "TW";
-  cmucam2_cmds[NOISE_FILTER] = "NF";
-  cmucam2_cmds[LINE_MODE] = "LM";
-  cmucam2_cmds[GET_TRACK] = "GT";
-  //  ST set tracking parameters
-
-  /* Histogram Commands */
-  cmucam2_cmds[GET_HISTOGRAM] = "GH";
-  //  HC histogram config
-  //  HT histogram track
-
-  /* Frame Differencing Commands */
-  cmucam2_cmds[FRAME_DIFF] = "FD";
-  //  DC difference channel
-  //  LF load frame
-  //  MD mask difference
-  //  UD upload difference
-  //  HD hires difference
-
-  /* Color Statistics Commands */
-  cmucam2_cmds[GET_MEAN] = "GM";
-
-  /* System Level Commands */
-  //  SD sleep deeply
-  //  SL sleep
-  cmucam2_cmds[RESET] = "RS";
-  cmucam2_cmds[GET_VERSION] = "GV";
-
-  /* CMUcam3 New Commands */
-  cmucam2_cmds[SEND_JPEG] = "SJ";
-  cmucam2_cmds[GET_POLLY] = "GP";
-}
 
 //int32_t cmucam2_get_command(cmucam2_command_t *cmd, int32_t *arg_list)
 int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list)
