@@ -130,20 +130,25 @@ bool _cc3_set_register_state ()
       result &= cc3_camera_set_raw_register (0x13, 0x20);
       if (_cc3_g_current_camera_state.brightness != -1)
         result &= cc3_camera_set_raw_register (0x06,
-					(_cc3_g_current_camera_state.
-					 brightness & 0xFF));
+                                               (_cc3_g_current_camera_state.
+                                                brightness & 0xFF));
 
       if (_cc3_g_current_camera_state.contrast != -1)
         result &= cc3_camera_set_raw_register (0x05,
-					(_cc3_g_current_camera_state.contrast & 0xFF));
+                                               (_cc3_g_current_camera_state.
+                                                contrast & 0xFF));
     }
     // Set Colorspace and Auto White Balance
     result &= cc3_camera_set_raw_register (0x12,
-				    0x20 | (_cc3_g_current_camera_state.
-					    auto_white_balance << 2)
-				    | (_cc3_g_current_camera_state.colorspace << 3));
+                                           0x20 |
+                                           (_cc3_g_current_camera_state.
+                                            auto_white_balance << 2)
+                                           | (_cc3_g_current_camera_state.
+                                              colorspace << 3));
     // Set Frame Clock rate divider
-    result &= cc3_camera_set_raw_register (0x11, _cc3_g_current_camera_state.clock_divider);
+    result &=
+      cc3_camera_set_raw_register (0x11,
+                                   _cc3_g_current_camera_state.clock_divider);
 
     break;
 
