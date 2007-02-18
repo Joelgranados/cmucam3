@@ -19,7 +19,7 @@ CSOURCES=cc3.c cc3_hal.c serial.c \
 	gpio.c servo.c
 INCLUDES=cc3_hal.h devices.h lpc_config.h \
 	cc3_pin_defines.h LPC2100.h serial.h \
-	gpio.h servo.h
+	gpio.h servo.h ../../include/cc3.h
 
 COBJS=$(patsubst %.c, %.o,$(CSOURCES))
 ASMOBJS=$(patsubst %.s, %$.o,$(ASMSOURCES))
