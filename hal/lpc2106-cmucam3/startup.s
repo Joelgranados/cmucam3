@@ -36,7 +36,7 @@
         .set  UND_STACK_SIZE, 0x00000004
         .set  ABT_STACK_SIZE, 0x00000004
         .set  FIQ_STACK_SIZE, 0x00000004
-        .set  IRQ_STACK_SIZE, 0X00000080
+        .set  IRQ_STACK_SIZE, 0x00000080
         .set  SVC_STACK_SIZE, 0x00000004
 
 @ Standard definitions of Mode bits and Interrupt (I & F) flags in PSRs
@@ -84,9 +84,9 @@ _fiq:   .word __fiq                     @ FIQ
 
 __undf: b     undefined                 @ undefined
 __swi:  b     swi                       @ SWI
-__pabt: b     .				@ prefetch abort
-__dabt: b     .			 	@ data abort
-__fiq:  nop                              @ FIQ
+__pabt: b     prefetch_abort		@ prefetch abort
+__dabt: b     data_abort                @ data abort
+__fiq:  nop                             @ FIQ
 __irq:  stmfd   sp!, { lr }               /* save return address on stack */
 	mrs     lr, spsr                  /* use lr to save spsr_irq */
 	stmfd   sp!, { r0-r3, r12, lr }   /* save work regs & spsr on stack */
