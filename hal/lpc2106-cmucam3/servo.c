@@ -44,7 +44,7 @@ const uint32_t _cc3_servo_map[] =
 
 bool cc3_gpio_set_servo_position (uint8_t servo, uint8_t pos)
 {
-  if (servo > MAX_SERVOS)
+  if (servo >= MAX_SERVOS)
     return false;
   servo_val[servo] = pos;
   return true;
