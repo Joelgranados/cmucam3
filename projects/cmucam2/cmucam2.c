@@ -54,6 +54,7 @@ typedef enum {
   LED_0,
   NOISE_FILTER,
   TRACK_INVERT,
+  SERVO_OUTPUT,
   CMUCAM2_CMD_END               // Must be last entry so array sizes are correct
 } cmucam2_command_t;
 
@@ -85,7 +86,7 @@ static void set_cmucam2_commands (void)
   //  SP servo parameters
   //  GP get servo position
   //  SM servo mask
-  //  SO servo output
+  cmucam2_cmds[SERVO_OUTPUT] = "SO";
 
   /* Image Windowing Commands */
   cmucam2_cmds[SEND_FRAME] = "SF";
@@ -586,9 +587,20 @@ cmucam2_start:
         }
         else
           print_ACK ();
+	cc3_gpio_set_mode(arg_list[0], CC3_GPIO_MODE_SERVO);
         cc3_gpio_set_servo_position (arg_list[0], arg_list[1]);
         break;
 
+      case SERVO_OUTPUT:
+	if (n != 2) {
+	  error = true;
+	  break;
+	}
+	print_ACK ();
+	cc3_gpio_set_mode(arg_list[0], CC3_GPIO_MODE_OUTPUT);
+	cc3_gpio_set_value(arg_list[0], arg_list[1]);
+
+	break;
 
       default:
         print_ACK ();
