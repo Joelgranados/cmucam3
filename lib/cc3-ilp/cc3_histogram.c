@@ -30,7 +30,7 @@ uint8_t i;
 
 if(pkt->hist==NULL ) return 0;
 if(cc3_g_pixbuf_frame.coi!=CC3_CHANNEL_ALL)
-	pkt->channel=cc3_g_pixbuf_frame.coi;
+	pkt->channel=0; //cc3_g_pixbuf_frame.coi;
 for(i=0; i<pkt->bins; i++ )
 {
  pkt->hist[i]=0;
@@ -50,11 +50,11 @@ for(y=pkt->scratch_y; y<(pkt->scratch_y+img->height); y++ )
 for(x=0; x<img->width; x++ )
 {
 	uint8_t i;
-	cc3_get_pixel( img, x, 0, &cp );	
+	cc3_get_pixel( img, x, y-pkt->scratch_y, &cp );	
 	i=cp.channel[pkt->channel]/pkt->bin_div;
 	if(i>0) i--;
 	if(i>=pkt->bins) i=pkt->bins-1;
-	pkt->hist[i-1]++;
+	pkt->hist[i]++;
 }
 pkt->scratch_y=y;
 

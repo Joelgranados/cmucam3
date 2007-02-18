@@ -67,6 +67,7 @@ typedef enum {
   SET_INPUT,
   GET_INPUT,
   SET_TRACK,
+  CONF_HISTOGRAM,
   CMUCAM2_CMD_END               // Must be last entry so array sizes are correct
 } cmucam2_command_t;
 
@@ -116,8 +117,6 @@ static void set_cmucam2_commands (void)
   cmucam2_cmds[SERVO_MASK] = "SM";
   // SP servo parameters
   cmucam2_cmds[SERVO_PARAMETERS] = "SP";
-  cmucam2_cmds[GET_INPUT] = "GI";
-  cmucam2_cmds[SET_INPUT] = "SI";
 
 
   
@@ -131,8 +130,9 @@ static void set_cmucam2_commands (void)
   //  PD pixel difference
 
   /* Auxiliary I/O Commands */
+  cmucam2_cmds[GET_INPUT] = "GI";
+  cmucam2_cmds[SET_INPUT] = "SI";
   //  GB get button
-  //  GI get auxiliary I/O
   cmucam2_cmds[LED_0] = "L0";
   //  L1 LED control
 
@@ -144,10 +144,10 @@ static void set_cmucam2_commands (void)
   cmucam2_cmds[LINE_MODE] = "LM";
   cmucam2_cmds[GET_TRACK] = "GT";
   cmucam2_cmds[SET_TRACK] = "ST";
-  //  ST set tracking parameters
 
   /* Histogram Commands */
   cmucam2_cmds[GET_HISTOGRAM] = "GH";
+  cmucam2_cmds[CONF_HISTOGRAM] = "HC";
   //  HC histogram config
   //  HT histogram track
 
@@ -405,6 +405,18 @@ cmucam2_start:
         cc3_pixbuf_load ();
         break;
 
+
+      case CONF_HISTOGRAM:
+        if (n != 1 || arg_list<1 ) {
+          error = true;
+          break;
+        }
+  	h_pkt.bins = arg_list[0];
+        print_ACK ();
+        
+	break;	
+
+	
       case TRACK_INVERT:
         if (n != 1 || arg_list[0] > 1) {
           error = true;
@@ -790,6 +802,11 @@ void cmucam2_get_histogram (cc3_histogram_pkt_t * h_pkt, bool poll_mode,
   img.height = 1;               // image will hold just 1 row for scanline processing
   img.pix = malloc (3 * img.width);
   h_pkt->hist = malloc (h_pkt->bins * sizeof (uint32_t));
+  if(img.pix==NULL || h_pkt->hist==NULL )
+	{
+	printf( "INTERNAL ERROR\r" );
+	return;
+	}
   do {
     cc3_pixbuf_load ();
     if (cc3_histogram_scanline_start (h_pkt) != 0) {
@@ -799,9 +816,11 @@ void cmucam2_get_histogram (cc3_histogram_pkt_t * h_pkt, bool poll_mode,
       cc3_histogram_scanline_finish (h_pkt);
       while (!cc3_uart_has_data (0)) {
         if (fgetc (stdin) == '\r')
+	{
           free (img.pix);
-        free (h_pkt->hist);
-        return;
+          free (h_pkt->hist);
+          return;
+	}
       }
       if (!quiet)
         cmucam2_write_h_packet (h_pkt);
