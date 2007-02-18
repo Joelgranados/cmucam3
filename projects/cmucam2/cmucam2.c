@@ -59,7 +59,7 @@ typedef enum {
 
 char *cmucam2_cmds[CMUCAM2_CMD_END];
 
-static void cmucam2_get_histogram(cc3_histogram_pkt_t *h_pkt, bool poll_mode, bool quite);
+static void cmucam2_get_histogram(cc3_histogram_pkt_t *h_pkt, bool poll_mode, bool quiet);
 static void cmucam2_get_mean (cc3_color_info_pkt_t * t_pkt,
 			      bool poll_mode,
 			      bool line_mode, bool quite);
