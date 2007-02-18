@@ -143,11 +143,11 @@ static void set_cmucam2_commands (void)
 static void cmucam2_get_histogram (cc3_histogram_pkt_t * h_pkt,
                                    bool poll_mode, bool quiet);
 static void cmucam2_get_mean (cc3_color_info_pkt_t * t_pkt, bool poll_mode,
-                              bool line_mode, bool quite);
+                              bool line_mode, bool quiet);
 static void cmucam2_write_s_packet (cc3_color_info_pkt_t * pkt);
 static void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
                                  bool poll_mode,
-                                 bool line_mode, bool auto_led, bool quite);
+                                 bool line_mode, bool auto_led, bool quiet);
 static int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list);
 static void print_ACK (void);
 static void print_NCK (void);
@@ -693,7 +693,7 @@ void cmucam2_send_image_direct (bool auto_led)
 
 
 void cmucam2_get_histogram (cc3_histogram_pkt_t * h_pkt, bool poll_mode,
-                            bool quite)
+                            bool quiet)
 {
   cc3_image_t img;
   img.channels = 3;
@@ -714,7 +714,7 @@ void cmucam2_get_histogram (cc3_histogram_pkt_t * h_pkt, bool poll_mode,
         free (h_pkt->hist);
         return;
       }
-      if (!quite)
+      if (!quiet)
         cmucam2_write_h_packet (h_pkt);
     }
     if (!cc3_uart_has_data (0)) {
@@ -731,7 +731,7 @@ void cmucam2_get_histogram (cc3_histogram_pkt_t * h_pkt, bool poll_mode,
 
 
 void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
-                       bool poll_mode, bool line_mode, bool quite)
+                       bool poll_mode, bool line_mode, bool quiet)
 {
   cc3_image_t img;
   img.channels = 3;
@@ -750,7 +750,7 @@ void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
           free (img.pix);
         return;
       }
-      if (!quite)
+      if (!quiet)
         cmucam2_write_s_packet (s_pkt);
     }
     if (!cc3_uart_has_data (0)) {
@@ -764,7 +764,7 @@ void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
 
 void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
                           bool poll_mode,
-                          bool line_mode, bool auto_led, bool quite)
+                          bool line_mode, bool auto_led, bool quiet)
 {
   cc3_image_t img;
   uint16_t i;
@@ -788,15 +788,15 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
         lm_width = img.width / 8;
         if (img.width % 8 != 0)
           lm_width++;
-        if (!quite)
+        if (!quiet)
           putchar (0xAA);
         if (cc3_g_pixbuf_frame.height > 255)
           lm_height = 255;
         else
           lm_height = cc3_g_pixbuf_frame.height;
-        if (!quite)
+        if (!quiet)
           putchar (img.width);
-        if (!quite)
+        if (!quiet)
           putchar (lm_height);
       }
       while (cc3_pixbuf_read_rows (img.pix, 1)) {
@@ -810,11 +810,11 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
           }
           for (int j = 0; j < lm_width; j++) {
             if (lm[j] == 0xAA) {
-              if (!quite)
+              if (!quiet)
                 putchar (0xAB);
             }
             else {
-              if (!quite)
+              if (!quiet)
                 putchar (lm[j]);
             }
           }
@@ -828,9 +828,9 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
       }
       cc3_track_color_scanline_finish (t_pkt);
       if (line_mode) {
-        if (!quite)
+        if (!quiet)
           putchar (0xAA);
-        if (!quite)
+        if (!quiet)
           putchar (0xAA);
       }
       if (auto_led) {
@@ -839,7 +839,7 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
         else
           cc3_led_set_off (0);
       }
-      if (!quite)
+      if (!quiet)
         cmucam2_write_t_packet (t_pkt);
     }
     else
