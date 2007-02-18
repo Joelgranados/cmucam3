@@ -571,9 +571,9 @@ void cc3_camera_disable ()
 
 }
 
-
+// called from startup.s before main!
 void
-cc3_system_setup (void)
+_cc3_system_setup (void)
 {
 
   // --- enable and connect the PLL (Phase Locked Loop) ---

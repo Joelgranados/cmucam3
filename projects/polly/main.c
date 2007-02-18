@@ -22,9 +22,6 @@ int main (void)
   uint8_t *x_axis,*h,cnt,conf;
   polly_config_t p_config;
 
-  // setup system    
-  cc3_system_setup ();
-
   cc3_filesystem_init();
 
   // configure uarts

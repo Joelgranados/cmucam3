@@ -651,13 +651,6 @@ void cc3_camera_disable ()
 }
 
 
-void
-cc3_system_setup (void)
-{
-   printf( "cc3_system_setup()\n" );
-}
-
-
 static void _cc3_set_cam_ddr_i2c_idle (void)
 {
   //REG (GPIO_IODIR) = _CC3_I2C_PORT_DDR_IDLE;

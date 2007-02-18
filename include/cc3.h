@@ -29,6 +29,12 @@
 #include <stdio.h>
 
 /**
+ * Version number of API.
+ */
+#define CC3_API_VERSION  1
+
+
+/**
  * Mark a boolean expression as "likely".
  * This is sometimes useful for assisting the compiler in predicting branches.
  */
@@ -134,9 +140,9 @@ typedef enum {
  * @sa cc3_gpio_set_mode() and cc3_gpio_get_mode().
  */
 typedef enum {
-  CC3_GPIO_MODE_INPUT,
-  CC3_GPIO_MODE_OUTPUT,
-  CC3_GPIO_MODE_SERVO,
+  CC3_GPIO_MODE_INPUT,       /**< Set pin for input */
+  CC3_GPIO_MODE_OUTPUT,      /**< Set pin for output */
+  CC3_GPIO_MODE_SERVO,       /**< Set pin for servo output */
 } cc3_gpio_mode_t;
 
 /**
@@ -158,7 +164,7 @@ typedef struct {
   uint16_t width;              /**< Width of clipping region */
   uint16_t height;             /**< Height of clipping region */
   uint8_t channels;            /**< Number of channels */
-  bool reset_on_next_load;     /**< True if the camera parameters have
+  bool reset_on_next_load;     /**< \a true if the camera parameters have
 				  changed */
 } cc3_frame_t;
 
@@ -177,11 +183,6 @@ typedef struct {
 extern cc3_frame_t cc3_g_pixbuf_frame;
 
 /**
- * Initialize the system. Very little is likely to happen without this call.
- */
-void cc3_system_setup (void);
-
-/**
  * Initialize camera hardware.
  *
  * @return \a true if successful.
@@ -193,7 +194,6 @@ bool cc3_camera_init (void);
  * will not be enabled, saving significant code space.
  */
 void cc3_filesystem_init (void);
-
 
 /**
  * Take a picture with the camera and load it into the internal pixbuf.

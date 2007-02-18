@@ -33,9 +33,6 @@ int main (void)
     FILE *fp;
     cc3_image_t img;
 
-    // setup system    
-    cc3_system_setup ();
-
     // configure uarts
     cc3_uart_init (0, CC3_UART_RATE_115200,CC3_UART_MODE_8N1,CC3_UART_BINMODE_TEXT);
     // Make it so that stdout and stdin are not buffered

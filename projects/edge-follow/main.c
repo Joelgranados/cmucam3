@@ -28,9 +28,6 @@ int main (void)
   cc3_pixel_t p, p_filter;
   cc3_pixel_t p_black, p_white;
 
-  // setup system    
-  cc3_system_setup ();
-
   cc3_filesystem_init ();
 
   // configure uarts

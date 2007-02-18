@@ -151,6 +151,13 @@ _mainCRTStartup:
         blo   1b                        @ loop until done
 
 
+@ Call system init function before main
+@ -------------------------------------
+        ldr   r10,=_cc3_system_setup
+        mov   lr,pc
+        bx    r10
+
+
 @ Call main program: main(0)
 @ --------------------------
         mov   r0,#0                     @ no arguments (argc = 0)
@@ -159,12 +166,10 @@ _mainCRTStartup:
         mov   fp,r0                     @ null frame pointer
         mov   r7,r0                     @ null frame pointer for thumb
         ldr   r10,=main
-        mov   lr,pc
+        ldr   lr,=_start                @ reset if return
 
-/* Enter the C code, use BX instruction so as to never return */
-/* use BLX (?) main if you want to use c++ destructors below */
-        @msr     cpsr_c, #0x13       /* I=0 F=0 T=0 MODE=supervisor */
-        msr   CPSR_c,#MODE_SYS|F_BIT @ System Mode
+/* Enter the C code */
+        msr   CPSR_c,#MODE_SYS|F_BIT    @ System Mode
         bx    r10                       @ enter main()
 
 _reset:

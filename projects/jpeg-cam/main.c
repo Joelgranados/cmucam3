@@ -13,8 +13,6 @@ int main(void) {
   int i;
   FILE *f;
 
-  // setup system    
-  cc3_system_setup ();
   cc3_uart_init (0, 
 		 CC3_UART_RATE_115200,
 		 CC3_UART_MODE_8N1,

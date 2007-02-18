@@ -15,9 +15,6 @@ int main (void)
   int i;
   int next_print;
   
-  // setup system    
-  cc3_system_setup ();
-  
   // configure uarts
   cc3_uart_init (0, 
 		 CC3_UART_RATE_115200,

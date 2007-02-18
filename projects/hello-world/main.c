@@ -16,9 +16,6 @@ int main (void)
   FILE *fp;
   cc3_image_t img;
 
-  // setup system
-  cc3_system_setup ();
-
   // init filesystem driver
   cc3_filesystem_init ();
 

@@ -168,9 +168,6 @@ int main (void)
 
   set_cmucam2_commands ();
 
-
-  cc3_system_setup ();
-
   cc3_filesystem_init ();
 
   cc3_uart_init (0,

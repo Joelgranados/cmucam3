@@ -301,9 +301,6 @@ int main (void)
    
    int32_t temp1, temp2; // temp variables used for computations
    
-   // setup system    
-   cc3_system_setup ();
-
    cc3_filesystem_init();
    
    // configure uarts
