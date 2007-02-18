@@ -439,6 +439,14 @@ bool cc3_button_get_state (void);
 bool cc3_gpio_set_servo_position (uint8_t pin, uint8_t position);
 
 /**
+ * Get a the position of a servo.
+ *
+ * @param[in] pin The pin to query.
+ * @return The servo position value.
+ */
+uint8_t cc3_gpio_get_servo_position (uint8_t pin);
+
+/**
  * Configure a GPIO pin as input, output, or servo.
  *
  * @param[in] pin The pin to set.

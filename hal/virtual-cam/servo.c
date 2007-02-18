@@ -52,6 +52,13 @@ bool cc3_gpio_set_servo_position (uint8_t servo, uint8_t pos)
     return true;
 }
 
+uint8_t cc3_gpio_get_servo_position (uint8_t servo)
+{
+    if (servo >= MAX_SERVOS)
+        return 0;
+    return servo_val[servo];
+}
+
 /**
  * _cc3_servo_hi_all()
  *

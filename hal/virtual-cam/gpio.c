@@ -29,3 +29,7 @@ void cc3_gpio_set_mode(uint8_t pin, cc3_gpio_mode_t mode)
 
 }
 
+void cc3_gpio_set_value (uint8_t pin, bool value)
+{
+
+}
