@@ -48,6 +48,7 @@ typedef enum {
   GET_MEAN,
   SET_SERVO,
   CAMERA_REG,
+  CAMERA_POWER,
   POLL_MODE,
   LINE_MODE,
   SEND_JPEG,
@@ -100,7 +101,7 @@ static void set_cmucam2_commands (void)
 
   /* Camera Module Commands */
   cmucam2_cmds[CAMERA_REG] = "CR";
-  //  CP camera power
+  cmucam2_cmds[CAMERA_POWER] = "CP";
   //  CT camera type
 
   /* Data Rate Commands */
@@ -272,6 +273,7 @@ cmucam2_start:
   servo_settings.tilt_step=10;
 
 
+  cc3_camera_set_power_state (true);
   cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_LOW);
 
   cc3_pixbuf_load ();
@@ -555,6 +557,15 @@ cmucam2_start:
           cc3_camera_set_raw_register (arg_list[i], arg_list[i + 1]);
         break;
 
+      case CAMERA_POWER:
+        if (n != 1) {
+          error = true;
+          break;
+        }
+
+        print_ACK ();
+        cc3_camera_set_power_state(arg_list[0]);
+        break;
 
       case VIRTUAL_WINDOW:
         if (n != 4) {

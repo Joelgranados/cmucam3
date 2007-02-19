@@ -29,22 +29,17 @@
 #include <stdio.h>
 
 /**
- * Version number of API.
+ * Major version number of API. This is incremented when
+ * backwards-incompatible changes are made in a release.
  */
-#define CC3_API_VERSION  1
-
-
-/**
- * Mark a boolean expression as "likely".
- * This is sometimes useful for assisting the compiler in predicting branches.
- */
-#define likely(x)   __builtin_expect(x,1)
+#define CC3_API_MAJOR_VERSION  1
 
 /**
- * Mark a boolean expression as "unlikely".
- * This is sometimes useful for assisting the compiler in predicting branches.
+ * Minor version number of API. This is incremented when compatible
+ * new features are added in a release.
  */
-#define unlikely(x) __builtin_expect(x,0)
+#define CC3_API_MINOR_VERSION  0
+
 
 /**
  * Allowed resolutions for the camera device.
@@ -293,11 +288,15 @@ void cc3_led_set_on (uint8_t led);
 void cc3_led_set_off (uint8_t led);
 
 /**
- * Turn off power to the camera and pixbuf. To use the camera again,
- * call cc3_camera_init().
- * \note This may cause the image to evaporate.
+ * Set the power state of the camera and (possibly) pixbuf. Used to
+ * conserve power when the camera is not being used.
+ *
+ * \note If state is set to \a false, the camera will not work.
+ *
+ * @param[in] state Set to \a true for normal operation,
+ * set to \a false to disable power to the camera.
  */
-void cc3_camera_disable (void);
+void cc3_camera_set_power_state (bool state);
 
 /**
  * Set the resolution of the camera hardware. This does not have any
