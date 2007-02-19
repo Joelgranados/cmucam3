@@ -3,6 +3,7 @@
 #include <cc3_color_track.h>
 #include <cc3_color_info.h>
 #include <cc3_histogram.h>
+#include <cc3_frame_diff.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -74,6 +75,8 @@ typedef enum {
   PACKET_FILTER,
   CONF_HISTOGRAM,
   GET_BUTTON,
+  FRAME_DIFF_CHANNEL,
+  LOAD_FRAME,
   CMUCAM2_CMD_END               // Must be last entry so array sizes are correct
 } cmucam2_command_t;
 
@@ -155,8 +158,8 @@ static void set_cmucam2_commands (void)
 
   /* Frame Differencing Commands */
   cmucam2_cmds[FRAME_DIFF] = "FD";
-  //  DC difference channel
-  //  LF load frame
+  cmucam2_cmds[LOAD_FRAME] = "LF";
+  cmucam2_cmds[FRAME_DIFF_CHANNEL] = "DC";
   //  MD mask difference
   //  UD upload difference
   //  HD hires difference
@@ -175,6 +178,7 @@ static void set_cmucam2_commands (void)
 }
 
 
+static void cmucam2_load_frame(cc3_frame_diff_pkt_t *pkt, bool buf_mode);
 static void cmucam2_get_histogram (cc3_histogram_pkt_t * h_pkt,
                                    bool poll_mode, bool buf_mode, bool quiet);
 static void cmucam2_get_mean (cc3_color_info_pkt_t * t_pkt, bool poll_mode,
@@ -205,6 +209,7 @@ int main (void)
   cc3_track_pkt_t t_pkt;
   cc3_color_info_pkt_t s_pkt;
   cc3_histogram_pkt_t h_pkt;
+  cc3_frame_diff_pkt_t fd_pkt;
   cmucam2_servo_t servo_settings;
 
   set_cmucam2_commands ();
@@ -226,7 +231,10 @@ int main (void)
   servo_settings.x_report=false;
   servo_settings.y_report=false;
   demo_mode = false;
-
+  
+  // Keep this memory in the bank for frame differencing
+  fd_pkt.previous_template=malloc(16*16*sizeof(uint32_t));
+  if(fd_pkt.previous_template==NULL ) printf( "Malloc FD startup error!\r" );
   start_time = cc3_timer_get_current_ms ();
 
   do {
@@ -453,8 +461,45 @@ cmucam2_start:
           cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_HIGH);
         else
           cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_LOW);
-
         cc3_pixbuf_frame_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 1);
+        break;
+
+
+     
+     case LOAD_FRAME:
+        if (n != 1) {
+          error = true;
+          break;
+        }
+        print_ACK ();
+	fd_pkt.total_x=cc3_g_pixbuf_frame.width;
+	fd_pkt.total_y=cc3_g_pixbuf_frame.height;
+	fd_pkt.load_frame=1;  // load a new frame
+	fd_pkt.template_width=8;
+	fd_pkt.template_height=8;
+	cmucam2_load_frame(&fd_pkt,buf_mode);
+	// arg_list[0] is the threshold
+	
+        break;
+
+     case FRAME_DIFF:
+        if (n != 1) {
+          error = true;
+          break;
+        }
+        print_ACK ();
+	// arg_list[0] is the threshold
+	
+        break;
+
+     case FRAME_DIFF_CHANNEL:
+        if (n != 1 || arg_list[0]>2) {
+          error = true;
+          break;
+        }
+        print_ACK ();
+	// arg_list[0] is the channel 
+	
         break;
 
 
@@ -934,6 +979,28 @@ void cmucam2_get_histogram (cc3_histogram_pkt_t * h_pkt, bool poll_mode, bool bu
 
 }
 
+void cmucam2_load_frame(cc3_frame_diff_pkt_t *pkt,bool buf_mode)
+{
+ cc3_image_t img;
+  img.channels = 3;
+  img.width = cc3_g_pixbuf_frame.width;
+  img.height = 1;               // image will hold just 1 row for scanline processing
+  img.pix = malloc (3 * img.width);
+
+    if(!buf_mode) cc3_pixbuf_load ();
+    else cc3_pixbuf_rewind();
+
+    if (cc3_frame_diff_scanline_start (pkt) != 0) {
+      while (cc3_pixbuf_read_rows (img.pix, 1)) {
+        cc3_frame_diff_scanline (&img, pkt);
+      }
+      cc3_frame_diff_scanline_finish (pkt);
+    } else printf( "frame diff start error\r" );
+
+  free (img.pix);
+
+
+}
 
 void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
                        bool poll_mode, bool line_mode,bool buf_mode, bool quiet)
