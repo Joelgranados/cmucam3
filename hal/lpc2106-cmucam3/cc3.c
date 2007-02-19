@@ -1,5 +1,5 @@
 /*
- * Copyright 2006  Anthony Rowe and Adam Goode
+ * Copyright 2006-2007  Anthony Rowe and Adam Goode
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,8 @@ cc3_pixel_t cc3_g_current_pixel;        // global that gets updated with pixbuf 
 cc3_frame_t cc3_g_pixbuf_frame;        // global that keeps clip, stride
 
 
+static _cc3_camera_state_t _cc3_g_current_camera_state;
+
 static inline void _cc3_seek_left (void);
 static inline void _cc3_seek_top (void);
 
@@ -60,7 +62,8 @@ static bool _cc3_second_green_valid;
 
 static void _cc3_update_frame_bounds (cc3_frame_t *);
 
-static void _cc3_pixbuf_resize (void);
+static bool _cc3_set_register_state (void);
+
 
 void cc3_pixbuf_load ()
 {
@@ -70,10 +73,6 @@ void cc3_pixbuf_load ()
 
   if (!_cc3_g_current_camera_state.power_state) {
     return;
-  }
-
-  if (cc3_g_pixbuf_frame.reset_on_next_load) {
-    _cc3_pixbuf_resize();
   }
 
   //REG(GPIO_IOCLR)=CAM_IE;
@@ -184,13 +183,6 @@ void _cc3_pixbuf_read_pixel (uint8_t * pixel,
     *(pixel + off1) = _cc3_pixbuf_read_subpixel ();
     *(pixel + off2) = _cc3_pixbuf_read_subpixel ();
   }
-}
-
-void _cc3_pixbuf_resize ()
-{
-  cc3_g_pixbuf_frame.raw_width = _cc3_g_current_camera_state.raw_width;
-  cc3_g_pixbuf_frame.raw_height = _cc3_g_current_camera_state.raw_height;
-  cc3_pixbuf_frame_reset();
 }
 
 /**
@@ -408,11 +400,11 @@ uint32_t cc3_timer_get_current_ms ()
 }
 
 /**
- * cc3_pixbuf_set_roi():
+ * cc3_pixbuf_frame_set_roi():
  * Sets the region of interest in cc3_frame_t for virtual windowing.
  * This function changes the way data is read from the FIFO.
  */
-bool cc3_pixbuf_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
+bool cc3_pixbuf_frame_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
 {
   int w = cc3_g_pixbuf_frame.raw_width;
   int h = cc3_g_pixbuf_frame.raw_height;
@@ -464,11 +456,11 @@ bool cc3_pixbuf_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
 }
 
 /**
- * cc3_pixbuf_set_subsample():
+ * cc3_pixbuf_frame_set_subsample():
  * Sets the subsampling step and mode in cc3_frame_t.
  * This function changes the way data is read from the FIFO.
  */
-bool cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
+bool cc3_pixbuf_frame_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
 			       uint8_t y_step)
 {
   bool result = true;
@@ -502,11 +494,11 @@ bool cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
 }
 
 /**
- * cc3_pixbuf_set_coi():
+ * cc3_pixbuf_frame_set_coi():
  * Sets the channel of interest 1 or all.
  * This function changes the way data is read from the FIFO.
  */
-bool cc3_pixbuf_set_coi (cc3_channel_t chan)
+bool cc3_pixbuf_frame_set_coi (cc3_channel_t chan)
 {
   if (chan > 4)
     return false;                   // Sanity check on bounds
@@ -548,8 +540,6 @@ bool cc3_camera_init ()
 
   result = _cc3_set_register_state ();
 
-  _cc3_pixbuf_resize();
-
   return result;
 }
 
@@ -563,9 +553,8 @@ void cc3_pixbuf_frame_reset ()
   cc3_g_pixbuf_frame.y1 = cc3_g_pixbuf_frame.raw_height;
   cc3_g_pixbuf_frame.y_loc = 0;
   cc3_g_pixbuf_frame.subsample_mode = CC3_SUBSAMPLE_NEAREST;
-  cc3_g_pixbuf_frame.reset_on_next_load = false;
 
-  cc3_pixbuf_set_coi(CC3_CHANNEL_ALL);
+  cc3_pixbuf_frame_set_coi(CC3_CHANNEL_ALL);
 
   _cc3_update_frame_bounds (&cc3_g_pixbuf_frame);
 }
@@ -698,7 +687,6 @@ void cc3_camera_set_resolution (cc3_camera_resolution_t cam_res)
 {
   _cc3_g_current_camera_state.resolution = cam_res;
   _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
-  cc3_g_pixbuf_frame.reset_on_next_load = true;
 }
 
 void _cc3_update_frame_bounds (cc3_frame_t *f)
@@ -754,5 +742,80 @@ void cc3_camera_set_contrast (uint8_t level)
 bool cc3_button_get_state (void)
 {
   bool result = !(REG (GPIO_IOPIN) & _CC3_BUTTON);
+  return result;
+}
+
+
+/*
+ * This function goes through the register state structures and sets the corresponding camera registers.
+ * It also updates any internal camera structures such as resolution that may change.
+ */
+bool _cc3_set_register_state ()
+{
+  bool result = true;
+
+  switch (_cc3_g_current_camera_state.camera_type) {
+  case _CC3_OV6620:
+    // Set the right data bus mode
+    result &= cc3_camera_set_raw_register (0x14, 0x20);
+
+    // set the power state
+    if (_cc3_g_current_camera_state.power_state) {
+      // wake up the camera
+      result &= cc3_camera_set_raw_register (0x3F, 0x02);
+    } else {
+      // sleep the camera
+      result &= cc3_camera_set_raw_register (0x3F, 0x12);
+    }
+
+    // Set the resolution and update the size flags
+    if (_cc3_g_current_camera_state.resolution == CC3_CAMERA_RESOLUTION_LOW) {
+      cc3_g_pixbuf_frame.raw_width = CC3_LO_RES_WIDTH; // 88 * 2;
+      cc3_g_pixbuf_frame.raw_height = CC3_LO_RES_HEIGHT;       // 144;
+      result &= cc3_camera_set_raw_register (0x14, 0x20);
+    }
+    else {
+      cc3_g_pixbuf_frame.raw_width = CC3_HI_RES_WIDTH; // 176 * 2;
+      cc3_g_pixbuf_frame.raw_height = CC3_HI_RES_HEIGHT;       //288;
+      result &= cc3_camera_set_raw_register (0x14, 0x00);
+    }
+
+    if (_cc3_g_current_camera_state.auto_exposure) {
+      result &= cc3_camera_set_raw_register (0x13, 0x21);
+    }
+    else {
+      // No auto gain, so lets set brightness and contrast if need be
+      result &= cc3_camera_set_raw_register (0x13, 0x20);
+      if (_cc3_g_current_camera_state.brightness != -1)
+        result &= cc3_camera_set_raw_register (0x06,
+                                               (_cc3_g_current_camera_state.
+                                                brightness & 0xFF));
+
+      if (_cc3_g_current_camera_state.contrast != -1)
+        result &= cc3_camera_set_raw_register (0x05,
+                                               (_cc3_g_current_camera_state.
+                                                contrast & 0xFF));
+    }
+    // Set Colorspace and Auto White Balance
+    result &= cc3_camera_set_raw_register (0x12,
+                                           0x20 |
+                                           (_cc3_g_current_camera_state.
+                                            auto_white_balance << 2)
+                                           | (_cc3_g_current_camera_state.
+                                              colorspace << 3));
+    // Set Frame Clock rate divider
+    result &=
+      cc3_camera_set_raw_register (0x11,
+                                   _cc3_g_current_camera_state.clock_divider);
+
+    break;
+
+  case _CC3_OV7620:
+    // XXX I need code.  The CMUcam2 is kind of wrong, so lets fix it...
+    result = false;
+    break;
+  }
+
+  cc3_pixbuf_frame_reset();
   return result;
 }

@@ -59,8 +59,6 @@ typedef struct {
     bool auto_exposure;
     bool auto_white_balance;
     uint8_t resolution;
-    uint16_t raw_width;
-    uint16_t raw_height;
     _cc3_camera_type_t camera_type;
 } _cc3_camera_state_t;
 

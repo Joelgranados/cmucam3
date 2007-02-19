@@ -43,9 +43,9 @@ int main (void)
   cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_LOW);
   cc3_camera_set_auto_white_balance (false);
   cc3_camera_set_auto_exposure (true);
-  cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 2);
-  //cc3_pixbuf_set_coi (CC3_CHANNEL_GREEN);
-  cc3_pixbuf_set_coi (CC3_CHANNEL_ALL);
+  cc3_pixbuf_frame_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 2);
+  //cc3_pixbuf_frame_set_coi (CC3_CHANNEL_GREEN);
+  cc3_pixbuf_frame_set_coi (CC3_CHANNEL_ALL);
 
   cc3_led_set_off (1);
   cc3_led_set_off (2);

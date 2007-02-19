@@ -159,9 +159,6 @@ typedef struct {
   uint16_t width;              /**< Width of clipping region */
   uint16_t height;             /**< Height of clipping region */
   uint8_t channels;            /**< Number of channels */
-
-  bool reset_on_next_load;     /**< \a true if the camera parameters have
-				  changed */
 } cc3_frame_t;
 
 /**
@@ -174,12 +171,11 @@ typedef struct {
 /**
  * Current parameters for the internal pixbuf, should be
  * considered read only.
- * @sa cc3_pixbuf_frame_reset()
  */
 extern cc3_frame_t cc3_g_pixbuf_frame;
 
 /**
- * Initialize camera hardware.
+ * Initialize camera hardware. This resets all camera and pixbuf parameters.
  *
  * @return \a true if successful.
  */
@@ -193,8 +189,6 @@ void cc3_filesystem_init (void);
 
 /**
  * Take a picture with the camera and load it into the internal pixbuf.
- * If #cc3_g_pixbuf_frame has cc3_frame_t.reset_on_next_load set,
- * then #cc3_g_pixbuf_frame is completely reset with new values.
  */
 void cc3_pixbuf_load (void);
 
@@ -202,10 +196,6 @@ void cc3_pixbuf_load (void);
  * Use malloc() to allocate a number of rows of the correct size based
  * on the values in #cc3_g_pixbuf_frame. You must manually use free()
  * to deallocate this memory when you are done.
- *
- * \warning If you have changed resolution using cc3_set_resolution(),
- * but have not yet called cc3_pixbuf_load(), this function will return
- * the amount of memory corresponding to the old row size.
  *
  * @sa cc3_pixbuf_read_rows()
  *
@@ -216,7 +206,7 @@ uint8_t *cc3_malloc_rows (uint32_t rows);
 
 /**
  * Do a row-by-row copy from the pixbuf into a block of memory.
- * This function takes into account all the parameters listed in
+ * This function takes into account all of the parameters listed in
  * #cc3_g_pixbuf_frame.
  *
  * @param[out] mem The memory to write the rows to.
@@ -241,7 +231,10 @@ void cc3_pixbuf_rewind (void);
  * @param[in] y_1 Bottom vertical clipping boundary.
  * @return \a true if successful.
  */
-bool cc3_pixbuf_set_roi (int16_t x_0, int16_t y_0, int16_t x_1, int16_t y_1);
+bool cc3_pixbuf_frame_set_roi (int16_t x_0,
+                               int16_t y_0,
+                               int16_t x_1,
+                               int16_t y_1);
 
 /**
  * Set the subsample steps and mode in #cc3_g_pixbuf_frame.
@@ -252,9 +245,9 @@ bool cc3_pixbuf_set_roi (int16_t x_0, int16_t y_0, int16_t x_1, int16_t y_1);
  * @return \a true if completely successful. Some settings may be partially
  *         applied even if \a false.
  */
-bool cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode,
-			       uint8_t x_step,
-			       uint8_t y_step);
+bool cc3_pixbuf_frame_set_subsample (cc3_subsample_mode_t mode,
+                                     uint8_t x_step,
+                                     uint8_t y_step);
 
 /**
  * Set the channel of interest for reading from the pixbuf. Use
@@ -263,7 +256,7 @@ bool cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode,
  * @param[in] chan The channel of interest.
  * @return \a true on success.
  */
-bool cc3_pixbuf_set_coi (cc3_channel_t chan);
+bool cc3_pixbuf_frame_set_coi (cc3_channel_t chan);
 
 /**
  * Reset #cc3_g_pixbuf_frame to default values.
@@ -289,7 +282,7 @@ void cc3_led_set_on (uint8_t led);
 void cc3_led_set_off (uint8_t led);
 
 /**
- * Set the power state of the camera and (possibly) pixbuf. Used to
+ * Set the power state of the camera and reset #cc3_g_pixbuf_frame. Used to
  * conserve power when the camera is not being used.
  *
  * \note If state is set to \a false, the camera will not work.
@@ -300,51 +293,49 @@ void cc3_led_set_off (uint8_t led);
 void cc3_camera_set_power_state (bool state);
 
 /**
- * Set the resolution of the camera hardware. This does not have any
- * effect on the pixbuf or #cc3_g_pixbuf_frame until cc3_pixbuf_load()
- * is called again.
+ * Set the resolution of the camera hardware and reset #cc3_g_pixbuf_frame.
  *
  * @param[in] res Resolution to set.
  */
 void cc3_camera_set_resolution (cc3_camera_resolution_t res);
 
 /**
- * Set the colorspace of the camera.
+ * Set the colorspace of the camera and reset #cc3_g_pixbuf_frame.
  *
  * @param[in] colorspace The colorspace.
  */
 void cc3_camera_set_colorspace (cc3_colorspace_t colorspace);
 
 /**
- * Set the framerate divider.
+ * Set the framerate divider and reset #cc3_g_pixbuf_frame.
  *
  * @param[in] rate_divider Desired framerate divider.
  */
 void cc3_camera_set_framerate_divider (uint8_t rate_divider);
 
 /**
- * Set auto exposure.
+ * Set auto exposure and reset #cc3_g_pixbuf_frame.
  *
  * @param[in] ae Auto exposure value.
  */
 void cc3_camera_set_auto_exposure (bool ae);
 
 /**
- * Set auto white balance.
+ * Set auto white balance and reset #cc3_g_pixbuf_frame.
  *
  * @param[in] wb Auto white balance value.
  */
 void cc3_camera_set_auto_white_balance (bool wb);
 
 /**
- * Set the brightness.
+ * Set the brightness and reset #cc3_g_pixbuf_frame.
  *
  * @param[in] level The level.
  */
 void cc3_camera_set_brightness (uint8_t level);
 
 /**
- * Set contrast.
+ * Set contrast and reset #cc3_g_pixbuf_frame.
  *
  * @param[in] level The level.
  */
@@ -356,7 +347,7 @@ void cc3_camera_set_contrast (uint8_t level);
  * and set it on the camera.  This should be used for advanced low level
  * manipulation of the camera modes.  Currently, this will not set the
  * corresponding cc3 internal data structure that keeps record of the camera
- * mode.
+ * mode, nor will it change #cc3_g_pixbuf_frame.
  * \warning Use with CAUTION.
  *
  * @param[in] address The address.

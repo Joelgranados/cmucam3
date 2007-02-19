@@ -112,7 +112,7 @@ int main (void)
 
     // This tells the camera to grab a new frame into the fifo and reset
     // any internal location information.
-    cc3_pixbuf_set_coi(CC3_CHANNEL_ALL);
+    cc3_pixbuf_frame_set_coi(CC3_CHANNEL_ALL);
     cc3_pixbuf_load ();
 
 
@@ -171,7 +171,7 @@ int main (void)
 
     // *** even faster method for red search
     cc3_pixbuf_rewind();  // use exactly the same pixbuf contents
-    cc3_pixbuf_set_coi(CC3_CHANNEL_RED);
+    cc3_pixbuf_frame_set_coi(CC3_CHANNEL_RED);
     start_time = cc3_timer_get_current_ms();
     max_red = 0;
     my_x = 0;

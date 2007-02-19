@@ -49,8 +49,6 @@ typedef enum {
  */
 typedef struct {
     _cc3_camera_type_t camera_type;
-    uint16_t raw_width;
-    uint16_t raw_height;
     int16_t brightness;
     int16_t contrast;
     uint8_t colorspace;
@@ -61,16 +59,9 @@ typedef struct {
     bool power_state;
 } _cc3_camera_state_t;
 
-/**
- * This is the global structure that the different cc3_set_xxxx() functions use in order to maintain consistency
- * if an attribute is changed that shares the same register as others.
- */
-extern _cc3_camera_state_t _cc3_g_current_camera_state;
-
 // called only from startup.s
 void _cc3_system_setup (void);
 
-bool _cc3_set_register_state (void);
 void _cc3_camera_reset (void);
 void _cc3_fifo_reset (void);
 void _cc3_delay_us_4 (int cnt);

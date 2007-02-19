@@ -54,8 +54,8 @@ int main (void)
     cc3_camera_set_auto_exposure(true);
     
 
-    cc3_pixbuf_set_subsample( CC3_NEAREST, 2, 2 ); 
-    cc3_pixbuf_set_coi(CC3_RED);
+    cc3_pixbuf_frame_set_subsample( CC3_NEAREST, 2, 2 ); 
+    cc3_pixbuf_frame_set_coi(CC3_RED);
     
     cc3_led_set_off (0);
     cc3_led_set_off (1);

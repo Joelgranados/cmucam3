@@ -71,9 +71,9 @@ int polly( polly_config_t config, cc3_image_t *img, cc3_image_t *mask )
     cc3_pixbuf_load ();
 
 #ifdef MMC_DEBUG
-    cc3_pixbuf_set_coi (CC3_ALL);
+    cc3_pixbuf_frame_set_coi (CC3_ALL);
     write_raw_fifo_ppm();
-    cc3_pixbuf_set_coi (CC3_GREEN);
+    cc3_pixbuf_frame_set_coi (CC3_GREEN);
     cc3_pixbuf_rewind();
 #endif
 

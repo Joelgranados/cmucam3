@@ -52,8 +52,8 @@ int polly (polly_config_t config)
 
   cc3_pixbuf_load();
 
-  cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 2);
-  cc3_pixbuf_set_coi (CC3_CHANNEL_GREEN);
+  cc3_pixbuf_frame_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 2);
+  cc3_pixbuf_frame_set_coi (CC3_CHANNEL_GREEN);
 
 
   // setup an image structure 
@@ -94,9 +94,9 @@ int polly (polly_config_t config)
 
 
 #ifdef MMC_DEBUG
-  cc3_pixbuf_set_coi (CC3_CHANNEL_ALL);
+  cc3_pixbuf_frame_set_coi (CC3_CHANNEL_ALL);
   write_raw_fifo_ppm ();
-  cc3_pixbuf_set_coi (CC3_CHANNEL_GREEN);
+  cc3_pixbuf_frame_set_coi (CC3_CHANNEL_GREEN);
   cc3_pixbuf_rewind ();
 #endif
 

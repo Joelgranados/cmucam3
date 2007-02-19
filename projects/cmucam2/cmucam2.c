@@ -35,7 +35,7 @@
 static const int MAX_ARGS = 10;
 static const int MAX_LINE = 128;
 
-static const char *VERSION_BANNER = "CMUcam2 v1.00 c6";
+static const char VERSION_BANNER[] = "CMUcam2 v1.00 c6";
 
 typedef enum {
   RETURN,
@@ -223,9 +223,9 @@ int main (void)
   servo_settings.x_report=false;
   servo_settings.y_report=false;
   demo_mode = false;
- 
+
   start_time = cc3_timer_get_current_ms ();
-  
+
   do {
     if (cc3_button_get_state () == 1) {
       // Demo Mode flag
@@ -260,8 +260,8 @@ cmucam2_start:
   t_pkt.upper_bound.channel[1] = 240;
   t_pkt.lower_bound.channel[2] = 16;
   t_pkt.upper_bound.channel[2] = 240;
- 
-  
+
+
   servo_settings.x=SERVO_MID;
   servo_settings.y=SERVO_MID;
   servo_settings.pan_range_far=16;
@@ -275,21 +275,19 @@ cmucam2_start:
   cc3_camera_set_power_state (true);
   cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_LOW);
 
-  cc3_pixbuf_load ();
-
   printf ("%s\r", VERSION_BANNER);
 
   cc3_gpio_set_mode (0, CC3_GPIO_MODE_SERVO);
   cc3_gpio_set_mode (1, CC3_GPIO_MODE_SERVO);
   cc3_gpio_set_mode (2, CC3_GPIO_MODE_SERVO);
   cc3_gpio_set_mode (3, CC3_GPIO_MODE_SERVO);
-  
+
   cc3_gpio_set_servo_position (0, SERVO_MID);
   cc3_gpio_set_servo_position (1, SERVO_MID);
   cc3_gpio_set_servo_position (2, SERVO_MID);
   cc3_gpio_set_servo_position (3, SERVO_MID);
 
-  cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 1);
+  cc3_pixbuf_frame_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 1);
 
   if (demo_mode) {
     // Wait for second button press as target lock
@@ -413,7 +411,7 @@ cmucam2_start:
           poll_mode = false;
         break;
 
-	case SERVO_PARAMETERS:
+      case SERVO_PARAMETERS:
         if (n != 6) {
           error = true;
           break;
@@ -427,8 +425,8 @@ cmucam2_start:
 	servo_settings.tilt_range_near=arg_list[4];
 	servo_settings.tilt_step=arg_list[5];
         break;
-	
- 	case SERVO_MASK:
+
+      case SERVO_MASK:
         if (n != 1) {
           error = true;
           break;
@@ -441,7 +439,7 @@ cmucam2_start:
 	servo_settings.y_report=!!(arg_list[0]&0x8);
         break;
 
-	case HI_RES:
+      case HI_RES:
         if (n != 1) {
           error = true;
           break;
@@ -453,9 +451,7 @@ cmucam2_start:
         else
           cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_LOW);
 
-        // re-init fifo
-        cc3_pixbuf_load ();
-        cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 1);
+        cc3_pixbuf_frame_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 1);
         break;
 
 
@@ -466,10 +462,10 @@ cmucam2_start:
         }
   	h_pkt.bins = arg_list[0];
         print_ACK ();
-        
-	break;	
 
-	
+	break;
+
+
       case TRACK_INVERT:
         if (n != 1 || arg_list[0] > 1) {
           error = true;
@@ -519,7 +515,7 @@ cmucam2_start:
         print_ACK ();
         //init_jpeg();
         // cc3_set_resolution(CC3_RES_HIGH);
-        //cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, 1, 1);
+        //cc3_pixbuf_frame_set_subsample (CC3_SUBSAMPLE_NEAREST, 1, 1);
 
         cc3_jpeg_send_simple ();
         printf ("JPG_END\r");
@@ -533,7 +529,7 @@ cmucam2_start:
             error = true;
             break;
           }
-          cc3_pixbuf_set_coi (arg_list[0]);
+          cc3_pixbuf_frame_set_coi (arg_list[0]);
         }
         else if (n > 1) {
           error = true;
@@ -542,7 +538,7 @@ cmucam2_start:
 
         print_ACK ();
         cmucam2_send_image_direct (auto_led);
-        cc3_pixbuf_set_coi (old_coi);
+        cc3_pixbuf_frame_set_coi (old_coi);
         break;
 
 
@@ -564,7 +560,22 @@ cmucam2_start:
         }
 
         print_ACK ();
-        cc3_camera_set_power_state(arg_list[0]);
+        {
+          // save
+          uint16_t x_0 = cc3_g_pixbuf_frame.x0;
+          uint16_t y_0 = cc3_g_pixbuf_frame.y0;
+          uint16_t x_1 = cc3_g_pixbuf_frame.x1;
+          uint16_t y_1 = cc3_g_pixbuf_frame.y1;
+          uint8_t x_step = cc3_g_pixbuf_frame.x_step;
+          uint8_t y_step = cc3_g_pixbuf_frame.y_step;
+          cc3_subsample_mode_t ss_mode = cc3_g_pixbuf_frame.subsample_mode;
+
+          cc3_camera_set_power_state(arg_list[0]);
+
+          // restore
+          cc3_pixbuf_frame_set_roi(x_0, y_0, x_1, y_1);
+          cc3_pixbuf_frame_set_subsample (ss_mode, x_step, y_step);
+        }
         break;
 
       case VIRTUAL_WINDOW:
@@ -574,8 +585,8 @@ cmucam2_start:
         }
 
         print_ACK ();
-        cc3_pixbuf_set_roi (arg_list[0] * 2,
-                            arg_list[1], arg_list[2] * 2, arg_list[3]);
+        cc3_pixbuf_frame_set_roi (arg_list[0] * 2,
+                                  arg_list[1], arg_list[2] * 2, arg_list[3]);
         break;
 
       case GET_TRACK:
@@ -610,8 +621,8 @@ cmucam2_start:
         }
 
         print_ACK ();
-        cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, arg_list[0] * 2,
-                                  arg_list[1]);
+        cc3_pixbuf_frame_set_subsample (CC3_SUBSAMPLE_NEAREST, arg_list[0] * 2,
+                                        arg_list[1]);
         break;
 
      case SET_TRACK:
@@ -665,7 +676,7 @@ cmucam2_start:
           x1 = cc3_g_pixbuf_frame.x1 - cc3_g_pixbuf_frame.width / 4;
           y0 = cc3_g_pixbuf_frame.y0 + cc3_g_pixbuf_frame.width / 4;
           y1 = cc3_g_pixbuf_frame.y1 - cc3_g_pixbuf_frame.width / 4;
-          cc3_pixbuf_set_roi (x0, y0, x1, y1);
+          cc3_pixbuf_frame_set_roi (x0, y0, x1, y1);
           // call get mean
           cmucam2_get_mean (&s_pkt, 1, line_mode,buf_mode, 1);
           // set window back to full size
@@ -673,7 +684,7 @@ cmucam2_start:
           x1 = cc3_g_pixbuf_frame.raw_width;
           y0 = 0;
           y1 = cc3_g_pixbuf_frame.raw_height;
-          cc3_pixbuf_set_roi (x0, y0, x1, y1);
+          cc3_pixbuf_frame_set_roi (x0, y0, x1, y1);
           // fill in parameters and call track color
           tmp = s_pkt.mean.channel[0] - threshold;
           if (tmp < 16)
@@ -844,6 +855,13 @@ void cmucam2_send_image_direct (bool auto_led)
     cc3_pixbuf_read_rows (row, 1);
     for (x = 0; x < size_x * num_channels; x++) {
       uint8_t p = row[x];
+
+      // avoid confusion from FIFO corruptions
+      if (p < 16) {
+        p = 16;
+      } else if (p > 240) {
+        p = 240;
+      }
       putchar (p);
     }
   }

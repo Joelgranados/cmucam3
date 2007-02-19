@@ -1,5 +1,5 @@
 /*
- * Copyright 2006  Anthony Rowe and Adam Goode
+ * Copyright 2006-2007  Anthony Rowe and Adam Goode
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,6 @@ static uint8_t _cc3_second_green;
 static bool _cc3_second_green_valid;
 
 static void _cc3_update_frame_bounds (cc3_frame_t *);
-static void _cc3_resize_pixbuf (void);
 
 void cc3_pixbuf_load ()
 {
@@ -70,9 +69,6 @@ void cc3_pixbuf_load ()
   char c;
   static int img_cnt=0;
 
-  if (cc3_g_pixbuf_frame.reset_on_next_load) {
-    _cc3_resize_pixbuf();
-  }
   
   if( _cc3_virtual_cam_path_prefix==NULL )
 	  	{
@@ -305,13 +301,6 @@ void cc3_led_set_on (uint8_t select)
   }
 }
 
-void _cc3_resize_pixbuf ()
-{
-  cc3_g_pixbuf_frame.raw_width = _cc3_g_current_camera_state.raw_width;
-  cc3_g_pixbuf_frame.raw_height = _cc3_g_current_camera_state.raw_height;
-
-}
-
 uint8_t *cc3_malloc_rows (uint32_t rows)
 {
   int channels = cc3_g_pixbuf_frame.channels;
@@ -479,12 +468,12 @@ uint32_t cc3_timer_get_current_ms ()
 }
 
 /**
- * cc3_pixbuf_set_roi():
+ * cc3_pixbuf_frame_set_roi():
  * Sets the region of interest in cc3_frame_t for virtual windowing.
  * This function changes the way data is read from the FIFO.
  * Returns 1 upon success and 0 on an out of bounds failure.
  */
-bool cc3_pixbuf_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
+bool cc3_pixbuf_frame_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
 {
   int w = cc3_g_pixbuf_frame.raw_width;
   int h = cc3_g_pixbuf_frame.raw_height;
@@ -536,11 +525,11 @@ bool cc3_pixbuf_set_roi (int16_t x0, int16_t y0, int16_t x1, int16_t y1)
 }
 
 /**
- * cc3_pixbuf_set_subsample():
+ * cc3_pixbuf_frame_set_subsample():
  * Sets the subsampling step and mode in cc3_frame_t.
  * This function changes the way data is read from the FIFO.
  */
-bool cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
+bool cc3_pixbuf_frame_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
                               uint8_t y_step)
 {
   bool result = 1;
@@ -574,12 +563,12 @@ bool cc3_pixbuf_set_subsample (cc3_subsample_mode_t mode, uint8_t x_step,
 }
 
 /**
- * cc3_pixbuf_set_coi():
+ * cc3_pixbuf_frame_set_coi():
  * Sets the channel of interest 1 or all.
  * This function changes the way data is read from the FIFO.
  * Returns 1 upon success and 0 on failure.
  */
-bool cc3_pixbuf_set_coi (cc3_channel_t chan)
+bool cc3_pixbuf_frame_set_coi (cc3_channel_t chan)
 {
   if (chan > 4)
     return 0;                   // Sanity check on bounds
@@ -615,7 +604,6 @@ bool cc3_camera_init ()
   _cc3_g_current_camera_state.colorspace = CC3_COLORSPACE_RGB;
   _cc3_set_register_state ();
 
-  _cc3_resize_pixbuf ();
   printf( "cc3_camera_init()\n" );
   _cc3_virtual_cam_path_prefix = getenv("CC3_VCAM_PATH"); 
   if( _cc3_virtual_cam_path_prefix == NULL )
@@ -637,9 +625,8 @@ void cc3_pixbuf_frame_reset ()
   cc3_g_pixbuf_frame.y1 = cc3_g_pixbuf_frame.raw_height;
   cc3_g_pixbuf_frame.y_loc = 0;
   cc3_g_pixbuf_frame.subsample_mode = CC3_SUBSAMPLE_NEAREST;
-  cc3_g_pixbuf_frame.reset_on_next_load = false;
 
-  cc3_pixbuf_set_coi(CC3_CHANNEL_ALL);
+  cc3_pixbuf_frame_set_coi(CC3_CHANNEL_ALL);
 
   _cc3_update_frame_bounds (&cc3_g_pixbuf_frame);
 }
@@ -714,7 +701,6 @@ void cc3_camera_set_resolution (cc3_camera_resolution_t cam_res)
 {
   _cc3_g_current_camera_state.resolution = cam_res;
   _cc3_set_register_state ();   // XXX Don't reset all of them, this is just quick and dirty...
-  cc3_g_pixbuf_frame.reset_on_next_load = true;
 }
 
 void _cc3_update_frame_bounds (cc3_frame_t *f)

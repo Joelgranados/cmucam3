@@ -104,13 +104,13 @@ void _cc3_set_register_state ()
         //cc3_set_raw_register (0x14, 0x20);
         // Set the resolution and update the cc3_g_current_frame size flags
         if (_cc3_g_current_camera_state.resolution == CC3_CAMERA_RESOLUTION_LOW) {
-            _cc3_g_current_camera_state.raw_width = CC3_LO_RES_WIDTH;
-            _cc3_g_current_camera_state.raw_height = CC3_LO_RES_HEIGHT;
+            cc3_g_pixbuf_frame.raw_width = CC3_LO_RES_WIDTH;
+            cc3_g_pixbuf_frame.raw_height = CC3_LO_RES_HEIGHT;
          //   cc3_set_raw_register (0x14, 0x20);
         }
         else {
-            _cc3_g_current_camera_state.raw_width = CC3_HI_RES_WIDTH;
-            _cc3_g_current_camera_state.raw_height = CC3_HI_RES_HEIGHT;
+            cc3_g_pixbuf_frame.raw_width = CC3_HI_RES_WIDTH;
+            cc3_g_pixbuf_frame.raw_height = CC3_HI_RES_HEIGHT;
            // cc3_set_raw_register (0x14, 0x00);
         }
 
@@ -148,6 +148,5 @@ void _cc3_set_register_state ()
         // XXX I need code.  The CMUcam2 is kind of wrong, so lets fix it...
         break;
     }
-
-
+    cc3_pixbuf_frame_reset();
 }
