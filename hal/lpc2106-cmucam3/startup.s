@@ -172,6 +172,11 @@ _mainCRTStartup:
         msr   CPSR_c,#MODE_SYS|F_BIT    @ System Mode
         bx    r10                       @ enter main()
 
+        .size _start, . - _start
+        .endfunc
+
+
+        .func _reset
 _reset:
 reset:
 exit:
