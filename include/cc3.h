@@ -159,6 +159,7 @@ typedef struct {
   uint16_t width;              /**< Width of clipping region */
   uint16_t height;             /**< Height of clipping region */
   uint8_t channels;            /**< Number of channels */
+
   bool reset_on_next_load;     /**< \a true if the camera parameters have
 				  changed */
 } cc3_frame_t;
@@ -193,7 +194,7 @@ void cc3_filesystem_init (void);
 /**
  * Take a picture with the camera and load it into the internal pixbuf.
  * If #cc3_g_pixbuf_frame has cc3_frame_t.reset_on_next_load set,
- * then #cc3_g_pixbuf_frame is also reset with new values.
+ * then #cc3_g_pixbuf_frame is completely reset with new values.
  */
 void cc3_pixbuf_load (void);
 
