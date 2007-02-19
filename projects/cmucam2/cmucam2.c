@@ -973,7 +973,7 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
                           bool line_mode, bool auto_led,cmucam2_servo_t *servo_settings,bool buf_mode, bool quiet)
 {
   cc3_image_t img;
-  uint16_t i,x_mid,y_mid;
+  uint16_t x_mid,y_mid;
 
   img.channels = 3;
   img.width = cc3_g_pixbuf_frame.width;
@@ -1091,7 +1091,7 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
       if(!quiet) cmucam2_write_t_packet (t_pkt,servo_settings);
 
     } 
-    else return 0;
+    else return;
     while (!cc3_uart_has_data (0))
     {
       if(fgetc(stdin)=='\r' )
@@ -1099,7 +1099,7 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
     }
   } while (!poll_mode);
   free (img.pix);
-  return 1;
+  return;
 }
 
 
