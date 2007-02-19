@@ -69,6 +69,7 @@ typedef enum {
   SET_TRACK,
   BUF_MODE,
   READ_FRAME,
+  OUTPUT_MASK,
   PACKET_FILTER,
   CONF_HISTOGRAM,
   CMUCAM2_CMD_END               // Must be last entry so array sizes are correct
@@ -108,7 +109,7 @@ static void set_cmucam2_commands (void)
   //  PS packet skip
   //  RM raw mode
   cmucam2_cmds[PACKET_FILTER] = "PF";
-  //  OM output packet mask
+  cmucam2_cmds[OUTPUT_MASK] = "OM";
 
   /* Servo Commands */
   cmucam2_cmds[SET_SERVO] = "SV";
@@ -189,6 +190,8 @@ static void cmucam2_write_h_packet (cc3_histogram_pkt_t * pkt);
 static void cmucam2_send_image_direct (bool auto_led);
 
 bool packet_filter_flag;
+uint8_t t_pkt_mask;
+uint8_t s_pkt_mask;
 
 int main (void)
 {
@@ -246,6 +249,8 @@ cmucam2_start:
   line_mode = false;
   buf_mode = false;
   packet_filter_flag = false;
+  t_pkt_mask= 0xFF;
+  s_pkt_mask= 0xFF;
   h_pkt.bins = 28;
   t_pkt.track_invert = false;
   t_pkt.noise_filter = 0;
@@ -330,6 +335,17 @@ cmucam2_start:
         print_ACK ();
         cc3_pixbuf_load ();
         break;
+   
+     case OUTPUT_MASK:
+        if (n != 2 || arg_list[0]>1) {
+          error = true;
+          break;
+        }
+	if(arg_list[0]==0) t_pkt_mask=arg_list[1];
+	if(arg_list[0]==1) s_pkt_mask=arg_list[1];
+        print_ACK ();
+        break;
+
 
       case GET_VERSION:
         if (n != 0) {
@@ -1066,18 +1082,45 @@ static bool empty_cnt=0;
   if (pkt->num_pixels == 0)
   {
     if(packet_filter_flag==0)
-    	printf ("T 0 0 0 0 0 0 0 0");
-    if(packet_filter_flag==1)
+     {
+	printf( "T" );
+        if((t_pkt_mask & 0x01) !=0) printf( " 0");
+        if((t_pkt_mask & 0x02) !=0) printf( " 0");
+        if((t_pkt_mask & 0x04) !=0) printf( " 0");
+        if((t_pkt_mask & 0x08) !=0) printf( " 0");
+        if((t_pkt_mask & 0x10) !=0) printf( " 0");
+        if((t_pkt_mask & 0x20) !=0) printf( " 0");
+        if((t_pkt_mask & 0x40) !=0) printf( " 0");
+        if((t_pkt_mask & 0x80) !=0) printf( " 0");
+     }
+    if(packet_filter_flag==1 && empty_cnt==0)
     {
-	if(empty_cnt==0) printf ("T 0 0 0 0 0 0 0 0");
+	printf( "T" );
+        if((t_pkt_mask & 0x01) !=0) printf( " 0");
+        if((t_pkt_mask & 0x02) !=0) printf( " 0");
+        if((t_pkt_mask & 0x04) !=0) printf( " 0");
+        if((t_pkt_mask & 0x08) !=0) printf( " 0");
+        if((t_pkt_mask & 0x10) !=0) printf( " 0");
+        if((t_pkt_mask & 0x20) !=0) printf( " 0");
+        if((t_pkt_mask & 0x40) !=0) printf( " 0");
+        if((t_pkt_mask & 0x80) !=0) printf( " 0");
     }
   }
   else
   {
     empty_cnt=0;
-    printf ("T %d %d %d %d %d %d %d %d", pkt->centroid_x, pkt->centroid_y,
-            pkt->x0, pkt->y0, pkt->x1, pkt->y1, pkt->num_pixels,
-            pkt->int_density);
+    printf( "T" );
+    if((t_pkt_mask & 0x01) !=0) printf( " %d",pkt->centroid_x );
+    if((t_pkt_mask & 0x02) !=0) printf( " %d",pkt->centroid_y );
+    if((t_pkt_mask & 0x04) !=0) printf( " %d",pkt->x0);
+    if((t_pkt_mask & 0x08) !=0) printf( " %d",pkt->y0);
+    if((t_pkt_mask & 0x10) !=0) printf( " %d",pkt->x1);
+    if((t_pkt_mask & 0x20) !=0) printf( " %d",pkt->y1);
+    if((t_pkt_mask & 0x40) !=0) printf( " %d",pkt->num_pixels);
+    if((t_pkt_mask & 0x80) !=0) printf( " %d",pkt->int_density);
+    //printf ("T %d %d %d %d %d %d %d %d", pkt->centroid_x, pkt->centroid_y,
+      //      pkt->x0, pkt->y0, pkt->x1, pkt->y1, pkt->num_pixels,
+        //    pkt->int_density);
   }
   if(servo_settings->x_report) printf( " %d",servo_settings->x );
   if(servo_settings->y_report) printf( " %d",servo_settings->y );
@@ -1107,9 +1150,15 @@ void cmucam2_write_h_packet (cc3_histogram_pkt_t * pkt)
 
 void cmucam2_write_s_packet (cc3_color_info_pkt_t * pkt)
 {
-  printf ("S %d %d %d %d %d %d\r", pkt->mean.channel[0], pkt->mean.channel[1],
-          pkt->mean.channel[2], pkt->deviation.channel[0],
-          pkt->deviation.channel[1], pkt->deviation.channel[2]);
+
+  printf( "S" );
+  if((s_pkt_mask & 0x01) !=0) printf( " %d",pkt->mean.channel[0]);
+  if((s_pkt_mask & 0x02) !=0) printf( " %d",pkt->mean.channel[1]);
+  if((s_pkt_mask & 0x04) !=0) printf( " %d",pkt->mean.channel[2]);
+  if((s_pkt_mask & 0x08) !=0) printf( " %d",pkt->deviation.channel[0]);
+  if((s_pkt_mask & 0x10) !=0) printf( " %d",pkt->deviation.channel[1]);
+  if((s_pkt_mask & 0x20) !=0) printf( " %d",pkt->deviation.channel[2]);
+  printf( "\r" );
 
 }
 
