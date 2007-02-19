@@ -644,9 +644,8 @@ void cc3_pixbuf_frame_reset ()
   _cc3_update_frame_bounds (&cc3_g_pixbuf_frame);
 }
 
-void cc3_camera_disable ()
+void cc3_camera_set_power_state (bool state)
 {
-// XXX I need to be implemented
 
 }
 

@@ -33,3 +33,8 @@ void cc3_gpio_set_value (uint8_t pin, bool value)
 {
 
 }
+
+bool cc3_gpio_get_value (uint8_t pin)
+{
+  return false;
+}
