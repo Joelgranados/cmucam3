@@ -453,9 +453,9 @@ cmucam2_start:
         else
           cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_LOW);
 
-        cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 1);
         // re-init fifo
         cc3_pixbuf_load ();
+        cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 1);
         break;
 
 

@@ -1,4 +1,4 @@
-COURCES=cmucam2.c
+CSOURCES=cmucam2.c
 PROJECT=cmucam2
 LIBS=cc3-ilp jpeg-6b
 
