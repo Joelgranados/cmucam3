@@ -186,6 +186,8 @@ static void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
 static int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list);
 static void print_ACK (void);
 static void print_NCK (void);
+static void print_prompt (void);
+static void print_cr (void);
 static void cmucam2_write_t_packet (cc3_track_pkt_t * pkt, cmucam2_servo_t *servo_settings);
 static void cmucam2_write_h_packet (cc3_histogram_pkt_t * pkt);
 static void cmucam2_send_image_direct (bool auto_led);
@@ -305,7 +307,7 @@ cmucam2_start:
   while (true) {
     cc3_channel_t old_coi;
 
-    printf (":");
+    print_prompt();
     error = false;
     if (demo_mode == true) {
       n = 0;
@@ -323,7 +325,7 @@ cmucam2_start:
         }
 
         print_ACK ();
-        printf ("\r");
+        print_cr();
         goto cmucam2_start;
         break;
 
@@ -1215,7 +1217,15 @@ void print_NCK ()
   printf ("NCK\r");
 }
 
+void print_prompt ()
+{
+  printf (":");
+}
 
+void print_cr ()
+{
+  printf ("\r");
+}
 
 //int32_t cmucam2_get_command(cmucam2_command_t *cmd, int32_t *arg_list)
 int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list)
