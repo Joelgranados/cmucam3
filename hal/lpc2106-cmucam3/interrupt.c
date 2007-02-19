@@ -89,9 +89,10 @@ void interrupt (void)
 
 void undefined (void)
 {
-    uart0_write ("undefined instruction!\r\n");
-    // XXX: tell us which instruction!
-    exit (-1);
+  // blink
+  while (1) {
+    
+  }
 }
 
 void swi (void)

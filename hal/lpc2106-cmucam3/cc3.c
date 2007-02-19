@@ -68,6 +68,10 @@ void cc3_pixbuf_load ()
 
   unsigned int i;
 
+  if (!_cc3_g_current_camera_state.power_state) {
+    return;
+  }
+
   if (cc3_g_pixbuf_frame.reset_on_next_load) {
     _cc3_pixbuf_resize();
   }
@@ -534,6 +538,7 @@ bool cc3_camera_init ()
   _cc3_fifo_reset ();
 
   _cc3_g_current_camera_state.camera_type = _CC3_OV6620;        // XXX add autodetect code
+  _cc3_g_current_camera_state.power_state = true;
   _cc3_g_current_camera_state.clock_divider = 0;
   _cc3_g_current_camera_state.brightness = -1;
   _cc3_g_current_camera_state.contrast = -1;
@@ -565,57 +570,6 @@ void cc3_pixbuf_frame_reset ()
   _cc3_update_frame_bounds (&cc3_g_pixbuf_frame);
 }
 
-void cc3_camera_disable ()
-{
-// XXX I need to be implemented
-
-}
-
-// called from startup.s before main!
-void
-_cc3_system_setup (void)
-{
-
-  // --- enable and connect the PLL (Phase Locked Loop) ---
-  // a. set multiplier and divider
-  REG(SYSCON_PLLCFG) = MSEL | (1<<PSEL1) | (0<<PSEL0);
-  // b. enable PLL
-  REG(SYSCON_PLLCON) = (1<<PLLE);
-  // c. feed sequence
-  REG(SYSCON_PLLFEED) = PLL_FEED1;
-  REG(SYSCON_PLLFEED) = PLL_FEED2;
-  // d. wait for PLL lock (PLOCK bit is set if locked)
-  while (!(REG(SYSCON_PLLSTAT) & (1<<PLOCK)));
-  // e. connect (and enable) PLL
-  REG(SYSCON_PLLCON) = (1<<PLLE) | (1<<PLLC);
-  // f. feed sequence
-  REG(SYSCON_PLLFEED) = PLL_FEED1;
-  REG(SYSCON_PLLFEED) = PLL_FEED2;
-
-  // --- setup and enable the MAM (Memory Accelerator Module) ---
-  // a. start change by turning of the MAM (redundant)
-  REG(MAMCR) = 0;
-  // b. set MAM-Fetch cycle to 3 cclk as recommended for >40MHz
-  REG(MAMTIM) = MAM_FETCH;
-  // c. enable MAM
-  REG(MAMCR) = MAM_MODE;
-
-  // --- set VPB speed ---
-  REG(SYSCON_VPBDIV) = VPBDIV_VAL;
-
-  // --- map INT-vector ---
-  REG(SYSCON_MEMMAP) = MEMMAP_USER_FLASH_MODE;
-
-  //REG(PCB_PINSEL1) = 0x1;  // External interrupt 0
-
-  // Setup timer0 to count by milliseconds starting from 0
-  REG(TIMER0_TCR)=0;   // turn off timer
-  REG(TIMER0_MCR)=0;    // disable interrupt
-  REG(TIMER0_TC)=0;    // clear counter
-  REG(TIMER0_PC)=0;    // clear prescale count
-  REG(TIMER0_PR) = (int)((FOSC*PLL_M)/1000);  // every 1 ms
-  REG(TIMER0_TCR)=1;   // start the timer
-}
 
 
 static void _cc3_set_cam_ddr_sccb_idle (void)
@@ -753,6 +707,11 @@ void _cc3_update_frame_bounds (cc3_frame_t *f)
   f->height = (f->y1 - f->y0) / f->y_step;
 }
 
+void cc3_camera_set_power_state (bool state)
+{
+  _cc3_g_current_camera_state.power_state = state;
+  _cc3_set_register_state ();
+}
 
 void cc3_camera_set_colorspace (cc3_colorspace_t colorspace)
 {

@@ -48,16 +48,17 @@ typedef enum {
  * This structure manages the internal record keeping that can get mapped into camera registers.
  */
 typedef struct {
-    uint8_t colorspace;
-    int16_t brightness;
-    int16_t contrast;
-    uint8_t clock_divider;
-    bool auto_exposure;
-    bool auto_white_balance;
-    uint8_t resolution;
+    _cc3_camera_type_t camera_type;
     uint16_t raw_width;
     uint16_t raw_height;
-    _cc3_camera_type_t camera_type;
+    int16_t brightness;
+    int16_t contrast;
+    uint8_t colorspace;
+    uint8_t clock_divider;
+    uint8_t resolution;
+    bool auto_exposure;
+    bool auto_white_balance;
+    bool power_state;
 } _cc3_camera_state_t;
 
 /**
@@ -65,6 +66,9 @@ typedef struct {
  * if an attribute is changed that shares the same register as others.
  */
 extern _cc3_camera_state_t _cc3_g_current_camera_state;
+
+// called only from startup.s
+void _cc3_system_setup (void);
 
 bool _cc3_set_register_state (void);
 void _cc3_camera_reset (void);
