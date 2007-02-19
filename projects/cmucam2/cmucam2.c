@@ -171,7 +171,6 @@ static void set_cmucam2_commands (void)
 
   /* CMUcam3 New Commands */
   cmucam2_cmds[SEND_JPEG] = "SJ";
-  //cmucam2_cmds[GET_POLLY] = "GP";
 }
 
 
