@@ -27,44 +27,71 @@
 #include "servo.h"
 #include "cc3_hal.h"
 
+volatile bool _cc3_button_trigger;
+
 void disable_ext_interrupt (void)
 {
-    // Enable bit 14, which is the external interrupt 0...
+    // Disable bit 14, which is the external interrupt 0...
     REG (VICIntEnClr) = 0x4000;
-    REG (PCB_PINSEL1) = 0x0;    // Switch from EINT0 mode to GPIO
-
+    // Switch from EINT0 mode to GPIO
+    REG (PCB_PINSEL1) = 0x0;
+    // Clear the interrupt
+    REG (SYSCON_EXTINT) = 0x1;
 }
 
 
 void enable_ext_interrupt (void)
 {
-    REG (SYSCON_EXTINT) = 0x1;
+    // Switch from GPIO to EINT0 mode
+    REG (PCB_PINSEL1) = 0x1;
     // Enable bit 14, which is the external interrupt 0...
     REG (VICIntEnable) = 0x4000;
-    // Clear the interrupt status flag...
-    REG (PCB_PINSEL1) = 0x1;    // Switch from GPIO to EIN0 mode
 }
 
 void enable_servo_interrupt (void)
 {
-   //uart0_write("Enable Servo Int\r\n" );
+    //uart0_write("Enable Servo Int\r\n" );
     REG (VICIntEnable) = 0x20;
-
 }
 
 void disable_servo_interrupt (void)
 {
     REG (VICIntEnClr) = 0x20;
-
 }
 
+void enable_button_interrupt (void)
+{
+  //uart0_write("button int enable\r\n");
+  // pin select
+  REG(PCB_PINSEL0) = (REG(PCB_PINSEL0) &
+                      ~_CC3_BUTTON_PINSEL_MASK) | _CC3_BUTTON_PINSEL;
+
+  // vic bit 15: EINT1
+  REG (VICIntEnable) = 0x8000;
+}
+
+void disable_button_interrupt (void)
+{
+  //uart0_write("button int disable\r\n");
+
+  // vic bit 15: EINT1
+  REG (VICIntEnClr) = 0x8000;
+
+  // pin select back to GPIO
+  REG(PCB_PINSEL0) = (REG(PCB_PINSEL0) & ~_CC3_BUTTON_PINSEL_MASK);
+
+  // clear the interrupt
+  REG (SYSCON_EXTINT) = 0x2;
+}
 
 void interrupt (void)
 {
 //asm volatile ( "msr cpsr_c,0x1F" ); // MODE_SYS
 
+  //uart0_write_hex(REG(VICRawIntr));
     //printf( "Got interrupt: %d\r\n",REG(VICRawIntr) );
     if (REG (VICRawIntr) & 0x4000) {
+      //uart0_write("vref interrupt\r\n");
         // Triggered on VREF telling when a frame is complete.
         // Simply disable the FIFO once the frame has been captured. 
         REG (GPIO_IOCLR) = _CC3_BUF_WEE;        //BUF_WEE=0
@@ -72,6 +99,13 @@ void interrupt (void)
 	// are near each other the FIFO gets angry
 	_cc3_pixbuf_write_rewind ();
         disable_ext_interrupt ();
+    }
+
+    if (REG (VICRawIntr) & 0x8000) {
+      // button press
+      //uart0_write("button int\r\n");
+      _cc3_button_trigger = true;
+      disable_button_interrupt ();
     }
 
 //if(REG(VICRawIntr)&0x20)

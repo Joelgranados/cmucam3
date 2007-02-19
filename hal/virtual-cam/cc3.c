@@ -759,6 +759,11 @@ bool cc3_button_get_state (void)
   return 1;
 }
 
+bool cc3_button_get_and_reset_trigger (void)
+{
+  return 1;
+}
+
 void cc3_filesystem_init (void)
 {
   // nothing to initialize

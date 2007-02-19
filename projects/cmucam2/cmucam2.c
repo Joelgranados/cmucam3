@@ -73,6 +73,7 @@ typedef enum {
   OUTPUT_MASK,
   PACKET_FILTER,
   CONF_HISTOGRAM,
+  GET_BUTTON,
   CMUCAM2_CMD_END               // Must be last entry so array sizes are correct
 } cmucam2_command_t;
 
@@ -133,7 +134,7 @@ static void set_cmucam2_commands (void)
   /* Auxiliary I/O Commands */
   cmucam2_cmds[GET_INPUT] = "GI";
   cmucam2_cmds[SET_INPUT] = "SI";  // new for cmucam3
-  //  GB get button
+  cmucam2_cmds[GET_BUTTON] = "GB";
   cmucam2_cmds[LED_0] = "L0";
   //  L1 LED control
 
@@ -773,7 +774,7 @@ cmucam2_start:
         print_ACK ();
         printf("%d\r", cc3_gpio_get_servo_position(arg_list[0]));
         break;
-	
+
       case GET_INPUT:
         if (n != 0) {
           error = true;
@@ -796,6 +797,19 @@ cmucam2_start:
         print_ACK ();
         cc3_gpio_set_mode (arg_list[0], CC3_GPIO_MODE_INPUT);
 
+        break;
+
+      case GET_BUTTON:
+        if (n != 0) {
+          error = true;
+          break;
+        }
+        print_ACK ();
+        if (cc3_button_get_and_reset_trigger()) {
+          printf("1\r");
+        } else {
+          printf("0\r");
+        }
         break;
 
       case SERVO_OUTPUT:

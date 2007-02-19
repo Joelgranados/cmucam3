@@ -18,6 +18,7 @@
 
 #include "cc3_hal.h"
 #include "cc3_pin_defines.h"
+#include "interrupt.h"
 #include "serial.h"
 #include <stdio.h>
 
@@ -58,6 +59,8 @@ _cc3_system_setup (void)
   REG(SYSCON_MEMMAP) = MEMMAP_USER_FLASH_MODE;
 
   //REG(PCB_PINSEL1) = 0x1;  // External interrupt 0
+
+  enable_button_interrupt ();
 
   // Setup timer0 to count by milliseconds starting from 0
   REG(TIMER0_TCR)=0;   // turn off timer

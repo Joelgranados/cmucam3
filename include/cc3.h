@@ -414,6 +414,13 @@ void cc3_timer_wait_ms (uint32_t delay);
  */
 bool cc3_button_get_state (void);
 
+/**
+ * Get and reset the trigger functionality of the button.
+ *
+ * @return \a true if the button has been pressed since the
+ * last time this function was called.
+ */
+bool cc3_button_get_and_reset_trigger (void);
 
 /**
  * Set a servo to a position.

@@ -741,7 +741,25 @@ void cc3_camera_set_contrast (uint8_t level)
 
 bool cc3_button_get_state (void)
 {
-  bool result = !(REG (GPIO_IOPIN) & _CC3_BUTTON);
+  if (!_cc3_button_trigger) {
+    // button has not been pressed
+    return false;
+  }
+
+  // otherwise, it has been pressed, but it's in GPIO mode
+  return !(REG (GPIO_IOPIN) & _CC3_BUTTON);
+}
+
+bool cc3_button_get_and_reset_trigger (void)
+{
+  bool result = _cc3_button_trigger;
+  _cc3_button_trigger = false;
+
+  // reset interrupt
+  if (result) {
+    enable_button_interrupt();
+  }
+
   return result;
 }
 
