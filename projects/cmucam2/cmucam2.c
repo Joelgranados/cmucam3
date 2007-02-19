@@ -1067,6 +1067,7 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
       lm_width = 0;
       lm_height = 0;
       if (line_mode) {
+	// FIXME: This doesn't make sense
         lm = &t_pkt->binary_scanline;
         lm_width = img.width / 8;
         if (img.width % 8 != 0)
