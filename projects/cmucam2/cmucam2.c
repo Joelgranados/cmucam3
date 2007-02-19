@@ -487,6 +487,8 @@ cmucam2_start:
           error = true;
           break;
         }
+          error = true;
+          break;
         print_ACK ();
 	// arg_list[0] is the threshold
 	
@@ -497,6 +499,8 @@ cmucam2_start:
           error = true;
           break;
         }
+          error = true;
+          break;
         print_ACK ();
 	// arg_list[0] is the channel 
 	
