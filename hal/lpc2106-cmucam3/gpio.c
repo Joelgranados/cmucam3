@@ -32,7 +32,6 @@ void cc3_gpio_set_mode(uint8_t pin, cc3_gpio_mode_t mode)
     return;
   }
 
-  uint32_t mask = 1 << pin;
   uint32_t pin_val = _cc3_servo_map[pin];
 
   switch (mode) {
