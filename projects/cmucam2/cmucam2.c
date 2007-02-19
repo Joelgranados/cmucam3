@@ -114,15 +114,11 @@ static void set_cmucam2_commands (void)
   cmucam2_cmds[SET_SERVO] = "SV";
   //  SP servo parameters
   cmucam2_cmds[GET_SERVO] = "GS";
-  //  SM servo mask
   cmucam2_cmds[SERVO_OUTPUT] = "SO";
-   // SM servo mask 
   cmucam2_cmds[SERVO_MASK] = "SM";
   // SP servo parameters
   cmucam2_cmds[SERVO_PARAMETERS] = "SP";
 
-
-  
   /* Image Windowing Commands */
   cmucam2_cmds[SEND_FRAME] = "SF";
   cmucam2_cmds[DOWN_SAMPLE] = "DS";
@@ -134,7 +130,7 @@ static void set_cmucam2_commands (void)
 
   /* Auxiliary I/O Commands */
   cmucam2_cmds[GET_INPUT] = "GI";
-  cmucam2_cmds[SET_INPUT] = "SI";
+  cmucam2_cmds[SET_INPUT] = "SI";  // new for cmucam3
   //  GB get button
   cmucam2_cmds[LED_0] = "L0";
   //  L1 LED control
