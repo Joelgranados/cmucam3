@@ -90,92 +90,89 @@ typedef enum {
   GET_BUTTON,
   FRAME_DIFF_CHANNEL,
   LOAD_FRAME,
-  CMUCAM2_CMD_END               // Must be last entry so array sizes are correct
+  CMUCAM2_CMDS_COUNT               // Must be last entry so array sizes are correct
 } cmucam2_command_t;
 
-char *cmucam2_cmds[CMUCAM2_CMD_END];
-
-static void set_cmucam2_commands (void)
-{
-  cmucam2_cmds[RETURN] = "**";
+static const char cmucam2_cmds[CMUCAM2_CMDS_COUNT][3] = {
+  [RETURN] = "**",
 
   /* Buffer Commands */
-  cmucam2_cmds[BUF_MODE] = "BM";
-  cmucam2_cmds[READ_FRAME] = "RF";
+  [BUF_MODE] = "BM",
+  [READ_FRAME] = "RF",
 
   /* Camera Module Commands */
-  cmucam2_cmds[CAMERA_REG] = "CR";
-  cmucam2_cmds[CAMERA_POWER] = "CP";
+  [CAMERA_REG] = "CR",
+  [CAMERA_POWER] = "CP",
   //  CT camera type
 
   /* Data Rate Commands */
   //  DM delay mode
-  cmucam2_cmds[POLL_MODE] = "PM";
+  [POLL_MODE] = "PM",
   //  PS packet skip
   //  RM raw mode
-  cmucam2_cmds[PACKET_FILTER] = "PF";
-  cmucam2_cmds[OUTPUT_MASK] = "OM";
+  [PACKET_FILTER] = "PF",
+  [OUTPUT_MASK] = "OM",
 
   /* Servo Commands */
-  cmucam2_cmds[SET_SERVO] = "SV";
+  [SET_SERVO] = "SV",
   //  SP servo parameters
-  cmucam2_cmds[GET_SERVO] = "GS";
-  cmucam2_cmds[SERVO_OUTPUT] = "SO";
-  cmucam2_cmds[SERVO_MASK] = "SM";
+  [GET_SERVO] = "GS",
+  [SERVO_OUTPUT] = "SO",
+  [SERVO_MASK] = "SM",
   // SP servo parameters
-  cmucam2_cmds[SERVO_PARAMETERS] = "SP";
+  [SERVO_PARAMETERS] = "SP",
 
   /* Image Windowing Commands */
-  cmucam2_cmds[SEND_FRAME] = "SF";
-  cmucam2_cmds[DOWN_SAMPLE] = "DS";
-  cmucam2_cmds[VIRTUAL_WINDOW] = "VW";
+  [SEND_FRAME] = "SF",
+  [DOWN_SAMPLE] = "DS",
+  [VIRTUAL_WINDOW] = "VW",
   //  FS frame stream
-  cmucam2_cmds[HI_RES] = "HR";
-  cmucam2_cmds[GET_WINDOW] = "GW";
+  [HI_RES] = "HR",
+  [GET_WINDOW] = "GW",
   //  PD pixel difference
 
   /* Auxiliary I/O Commands */
-  cmucam2_cmds[GET_INPUT] = "GI";
-  cmucam2_cmds[SET_INPUT] = "SI";       // new for cmucam3
-  cmucam2_cmds[GET_BUTTON] = "GB";
-  cmucam2_cmds[LED_0] = "L0";
+  [GET_INPUT] = "GI",
+  [SET_INPUT] = "SI",       // new for cmucam3
+  [GET_BUTTON] = "GB",
+  [LED_0] = "L0",
   //  L1 LED control
 
   /* Color Tracking Commands */
-  cmucam2_cmds[TRACK_COLOR] = "TC";
-  cmucam2_cmds[TRACK_INVERT] = "TI";
-  cmucam2_cmds[TRACK_WINDOW] = "TW";
-  cmucam2_cmds[NOISE_FILTER] = "NF";
-  cmucam2_cmds[LINE_MODE] = "LM";
-  cmucam2_cmds[GET_TRACK] = "GT";
-  cmucam2_cmds[SET_TRACK] = "ST";
+  [TRACK_COLOR] = "TC",
+  [TRACK_INVERT] = "TI",
+  [TRACK_WINDOW] = "TW",
+  [NOISE_FILTER] = "NF",
+  [LINE_MODE] = "LM",
+  [GET_TRACK] = "GT",
+  [SET_TRACK] = "ST",
 
   /* Histogram Commands */
-  cmucam2_cmds[GET_HISTOGRAM] = "GH";
-  cmucam2_cmds[CONF_HISTOGRAM] = "HC";
+  [GET_HISTOGRAM] = "GH",
+  [CONF_HISTOGRAM] = "HC",
   //  HC histogram config
   //  HT histogram track
 
   /* Frame Differencing Commands */
-  cmucam2_cmds[FRAME_DIFF] = "FD";
-  cmucam2_cmds[LOAD_FRAME] = "LF";
-  cmucam2_cmds[FRAME_DIFF_CHANNEL] = "DC";
+  [FRAME_DIFF] = "FD",
+  [LOAD_FRAME] = "LF",
+  [FRAME_DIFF_CHANNEL] = "DC",
   //  MD mask difference
   //  UD upload difference
   //  HD hires difference
 
   /* Color Statistics Commands */
-  cmucam2_cmds[GET_MEAN] = "GM";
+  [GET_MEAN] = "GM",
 
   /* System Level Commands */
   //  SD sleep deeply
   //  SL sleep
-  cmucam2_cmds[RESET] = "RS";
-  cmucam2_cmds[GET_VERSION] = "GV";
+  [RESET] = "RS",
+  [GET_VERSION] = "GV",
 
   /* CMUcam3 New Commands */
-  cmucam2_cmds[SEND_JPEG] = "SJ";
-}
+  [SEND_JPEG] = "SJ",
+};
 
 
 static void cmucam2_load_frame (cc3_frame_diff_pkt_t * pkt, bool buf_mode);
@@ -214,8 +211,6 @@ int main (void)
   cc3_histogram_pkt_t h_pkt;
   cc3_frame_diff_pkt_t fd_pkt;
   cmucam2_servo_t servo_settings;
-
-  set_cmucam2_commands ();
 
   cc3_filesystem_init ();
 
@@ -1405,7 +1400,7 @@ int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list)
   for (i = 0; i < strlen (token); i++)
     token[i] = toupper (token[i]);
   fail = 1;
-  for (i = 0; i < CMUCAM2_CMD_END; i++) {
+  for (i = 0; i < CMUCAM2_CMDS_COUNT; i++) {
     if (strcmp (token, cmucam2_cmds[i]) == 0) {
       fail = 0;
       *cmd = i;
