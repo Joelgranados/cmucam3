@@ -38,6 +38,19 @@ static const int MAX_LINE = 128;
 
 static const char VERSION_BANNER[] = "CMUcam2 v1.00 c6";
 
+typedef struct {
+  uint8_t pan_step, tilt_step;
+  uint8_t pan_range_near, tilt_range_near;
+  uint8_t pan_range_far, tilt_range_far;
+  int16_t x;
+  int16_t y;
+  bool y_control;
+  bool x_control;
+  bool y_report;
+  bool x_report;
+} cmucam2_servo_t;
+
+
 typedef enum {
   RETURN,
   RESET,
@@ -79,19 +92,6 @@ typedef enum {
   LOAD_FRAME,
   CMUCAM2_CMD_END               // Must be last entry so array sizes are correct
 } cmucam2_command_t;
-
-typedef struct {
-  uint8_t pan_step, tilt_step;
-  uint8_t pan_range_near, tilt_range_near;
-  uint8_t pan_range_far, tilt_range_far;
-  int16_t x;
-  int16_t y;
-  bool y_control;
-  bool x_control;
-  bool y_report;
-  bool x_report;
-} cmucam2_servo_t;
-
 
 char *cmucam2_cmds[CMUCAM2_CMD_END];
 
