@@ -27,11 +27,14 @@
 typedef struct {
     uint16_t x0,y0,x1,y1;
     uint32_t centroid_x,centroid_y;
+    uint32_t num_pixels;
+    uint32_t int_density;
     uint32_t *previous_template;
     uint32_t *current_template;
     uint16_t template_width, template_height;
     uint8_t threshold;
     uint16_t total_x, total_y;
+    uint8_t coi;
     bool load_frame;
     uint32_t _scratch_y;
     uint16_t _bin_div_x;

@@ -90,7 +90,8 @@ typedef enum {
   GET_BUTTON,
   FRAME_DIFF_CHANNEL,
   LOAD_FRAME,
-  CMUCAM2_CMDS_COUNT               // Must be last entry so array sizes are correct
+  HIRES_DIFF,
+  CMUCAM2_CMDS_COUNT            // Must be last entry so array sizes are correct
 } cmucam2_command_t;
 
 static const char cmucam2_cmds[CMUCAM2_CMDS_COUNT][3] = {
@@ -133,7 +134,7 @@ static const char cmucam2_cmds[CMUCAM2_CMDS_COUNT][3] = {
 
   /* Auxiliary I/O Commands */
   [GET_INPUT] = "GI",
-  [SET_INPUT] = "SI",       // new for cmucam3
+  [SET_INPUT] = "SI",           // new for cmucam3
   [GET_BUTTON] = "GB",
   [LED_0] = "L0",
   //  L1 LED control
@@ -157,9 +158,9 @@ static const char cmucam2_cmds[CMUCAM2_CMDS_COUNT][3] = {
   [FRAME_DIFF] = "FD",
   [LOAD_FRAME] = "LF",
   [FRAME_DIFF_CHANNEL] = "DC",
+  [HIRES_DIFF] = "HD",
   //  MD mask difference
   //  UD upload difference
-  //  HD hires difference
 
   /* Color Statistics Commands */
   [GET_MEAN] = "GM",
@@ -186,6 +187,9 @@ static void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
                                  bool line_mode, bool auto_led,
                                  cmucam2_servo_t * servo_settings,
                                  bool buf_mode, bool quiet);
+void cmucam2_frame_diff (cc3_frame_diff_pkt_t * pkt,
+                         bool poll_mode, bool line_mode, bool buf_mode,
+                         bool auto_led, bool quiet);
 static int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list);
 static void print_ACK (void);
 static void print_NCK (void);
@@ -262,6 +266,9 @@ cmucam2_start:
   t_pkt_mask = 0xFF;
   s_pkt_mask = 0xFF;
   h_pkt.bins = 28;
+  fd_pkt.coi = 1;
+  fd_pkt.template_width = 8;
+  fd_pkt.template_height = 8;
   t_pkt.track_invert = false;
   t_pkt.noise_filter = 0;
   t_pkt.lower_bound.channel[0] = 16;
@@ -468,7 +475,7 @@ cmucam2_start:
 
 
       case LOAD_FRAME:
-        if (n != 1) {
+        if (n != 0) {
           error = true;
           break;
         }
@@ -476,11 +483,22 @@ cmucam2_start:
         fd_pkt.total_x = cc3_g_pixbuf_frame.width;
         fd_pkt.total_y = cc3_g_pixbuf_frame.height;
         fd_pkt.load_frame = 1;  // load a new frame
-        fd_pkt.template_width = 8;
-        fd_pkt.template_height = 8;
         cmucam2_load_frame (&fd_pkt, buf_mode);
-        // arg_list[0] is the threshold
-
+        break;
+      case HIRES_DIFF:
+        if (n != 1 || arg_list[0] > 1) {
+          error = true;
+          break;
+        }
+        print_ACK ();
+        if (arg_list[0] == 0) {
+          fd_pkt.template_width = 8;
+          fd_pkt.template_height = 8;
+        }
+        else {
+          fd_pkt.template_width = 16;
+          fd_pkt.template_height = 16;
+        }
         break;
 
       case FRAME_DIFF:
@@ -488,11 +506,13 @@ cmucam2_start:
           error = true;
           break;
         }
-        error = true;
-        break;
         print_ACK ();
-        // arg_list[0] is the threshold
-
+        fd_pkt.threshold = arg_list[0];
+        fd_pkt.load_frame = 0;
+        fd_pkt.total_x = cc3_g_pixbuf_frame.width;
+        fd_pkt.total_y = cc3_g_pixbuf_frame.height;
+        cmucam2_frame_diff (&fd_pkt, poll_mode, line_mode, buf_mode, auto_led,
+                            0);
         break;
 
       case FRAME_DIFF_CHANNEL:
@@ -500,11 +520,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        error = true;
-        break;
         print_ACK ();
-        // arg_list[0] is the channel 
-
+        fd_pkt.coi = arg_list[0];
         break;
 
 
@@ -993,10 +1010,15 @@ void cmucam2_get_histogram (cc3_histogram_pkt_t * h_pkt, bool poll_mode,
 void cmucam2_load_frame (cc3_frame_diff_pkt_t * pkt, bool buf_mode)
 {
   cc3_image_t img;
-  img.channels = 3;
+  uint8_t old_coi;
+
+  old_coi = cc3_g_pixbuf_frame.coi;
+  cc3_pixbuf_frame_set_coi (pkt->coi);
+
+  img.channels = 1;
   img.width = cc3_g_pixbuf_frame.width;
   img.height = 1;               // image will hold just 1 row for scanline processing
-  img.pix = malloc (3 * img.width);
+  img.pix = malloc (img.width);
 
   if (!buf_mode)
     cc3_pixbuf_load ();
@@ -1012,9 +1034,78 @@ void cmucam2_load_frame (cc3_frame_diff_pkt_t * pkt, bool buf_mode)
   else
     printf ("frame diff start error\r");
 
+  cc3_pixbuf_frame_set_coi (old_coi);
   free (img.pix);
 
 
+}
+
+void cmucam2_frame_diff (cc3_frame_diff_pkt_t * pkt,
+                         bool poll_mode, bool line_mode, bool buf_mode,
+                         bool auto_led, bool quiet)
+{
+  cc3_track_pkt_t t_pkt;
+  cc3_image_t img;
+  uint8_t old_coi;
+
+  old_coi = cc3_g_pixbuf_frame.coi;
+  cc3_pixbuf_frame_set_coi (pkt->coi);
+  img.channels = 1;
+  img.width = cc3_g_pixbuf_frame.width;
+  img.height = 1;               // image will hold just 1 row for scanline processing
+  img.pix = malloc (img.width);
+  pkt->current_template =
+    malloc (pkt->template_width * pkt->template_height * sizeof (uint32_t));
+  if (pkt->current_template == NULL)
+    printf ("Malloc failed in frame diff\r");
+  do {
+    if (!buf_mode)
+      cc3_pixbuf_load ();
+    else
+      cc3_pixbuf_rewind ();
+
+    if (cc3_frame_diff_scanline_start (pkt) != 0) {
+
+      while (cc3_pixbuf_read_rows (img.pix, 1)) {
+        cc3_frame_diff_scanline (&img, pkt);
+      }
+      cc3_frame_diff_scanline_finish (pkt);
+
+      while (!cc3_uart_has_data (0)) {
+        if (fgetc (stdin) == '\r')
+          cc3_pixbuf_frame_set_coi (old_coi);
+        free (pkt->current_template);
+        free (img.pix);
+        return;
+      }
+      if (!quiet) {
+        t_pkt.x0 = pkt->x0 + 1;
+        t_pkt.y0 = pkt->y0 + 1;
+        t_pkt.x1 = pkt->x1 + 1;
+        t_pkt.y1 = pkt->y1 + 1;
+        t_pkt.num_pixels = pkt->num_pixels;
+        t_pkt.centroid_x = pkt->centroid_x + 1;
+        t_pkt.centroid_y = pkt->centroid_y + 1;
+        t_pkt.int_density = pkt->int_density;
+        if (auto_led) {
+          if (t_pkt.num_pixels > 2)
+            cc3_led_set_state (0, true);
+          else
+            cc3_led_set_state (0, false);
+        }
+
+        cmucam2_write_t_packet (&t_pkt, NULL);
+      }
+    }
+    if (!cc3_uart_has_data (0)) {
+      if (fgetc (stdin) == '\r')
+        break;
+    }
+  } while (!poll_mode);
+
+  cc3_pixbuf_frame_set_coi (old_coi);
+  free (pkt->current_template);
+  free (img.pix);
 }
 
 void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
@@ -1142,7 +1233,7 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
           cc3_led_set_state (0, false);
       }
 
-      if (t_pkt->int_density > 5) {
+      if (t_pkt->int_density > 5 && servo_settings != NULL) {
         if (servo_settings->x_control) {
           int8_t t_step;
           t_step = 0;
@@ -1291,10 +1382,12 @@ void cmucam2_write_t_packet (cc3_track_pkt_t * pkt,
     //      pkt->x0, pkt->y0, pkt->x1, pkt->y1, pkt->num_pixels,
     //    pkt->int_density);
   }
-  if (servo_settings->x_report)
-    printf (" %d", servo_settings->x);
-  if (servo_settings->y_report)
-    printf (" %d", servo_settings->y);
+  if (servo_settings != NULL) {
+    if (servo_settings->x_report)
+      printf (" %d", servo_settings->x);
+    if (servo_settings->y_report)
+      printf (" %d", servo_settings->y);
+  }
   if (packet_filter_flag == 0)
     printf ("\r");
   if (packet_filter_flag == 1) {
