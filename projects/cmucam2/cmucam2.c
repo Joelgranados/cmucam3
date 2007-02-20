@@ -81,15 +81,15 @@ typedef enum {
 } cmucam2_command_t;
 
 typedef struct {
-uint8_t pan_step,tilt_step;
-uint8_t pan_range_near,tilt_range_near;
-uint8_t pan_range_far,tilt_range_far;
-int16_t x;
-int16_t y;
-bool y_control;
-bool x_control;
-bool y_report;
-bool x_report;
+  uint8_t pan_step, tilt_step;
+  uint8_t pan_range_near, tilt_range_near;
+  uint8_t pan_range_far, tilt_range_far;
+  int16_t x;
+  int16_t y;
+  bool y_control;
+  bool x_control;
+  bool y_report;
+  bool x_report;
 } cmucam2_servo_t;
 
 
@@ -136,7 +136,7 @@ static void set_cmucam2_commands (void)
 
   /* Auxiliary I/O Commands */
   cmucam2_cmds[GET_INPUT] = "GI";
-  cmucam2_cmds[SET_INPUT] = "SI";  // new for cmucam3
+  cmucam2_cmds[SET_INPUT] = "SI";       // new for cmucam3
   cmucam2_cmds[GET_BUTTON] = "GB";
   cmucam2_cmds[LED_0] = "L0";
   //  L1 LED control
@@ -178,21 +178,24 @@ static void set_cmucam2_commands (void)
 }
 
 
-static void cmucam2_load_frame(cc3_frame_diff_pkt_t *pkt, bool buf_mode);
+static void cmucam2_load_frame (cc3_frame_diff_pkt_t * pkt, bool buf_mode);
 static void cmucam2_get_histogram (cc3_histogram_pkt_t * h_pkt,
                                    bool poll_mode, bool buf_mode, bool quiet);
 static void cmucam2_get_mean (cc3_color_info_pkt_t * t_pkt, bool poll_mode,
                               bool line_mode, bool buf_mode, bool quiet);
 static void cmucam2_write_s_packet (cc3_color_info_pkt_t * pkt);
 static void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
-				 bool poll_mode,
-				 bool line_mode, bool auto_led, cmucam2_servo_t *servo_settings,bool buf_mode, bool quiet);
+                                 bool poll_mode,
+                                 bool line_mode, bool auto_led,
+                                 cmucam2_servo_t * servo_settings,
+                                 bool buf_mode, bool quiet);
 static int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list);
 static void print_ACK (void);
 static void print_NCK (void);
 static void print_prompt (void);
 static void print_cr (void);
-static void cmucam2_write_t_packet (cc3_track_pkt_t * pkt, cmucam2_servo_t *servo_settings);
+static void cmucam2_write_t_packet (cc3_track_pkt_t * pkt,
+                                    cmucam2_servo_t * servo_settings);
 static void cmucam2_write_h_packet (cc3_histogram_pkt_t * pkt);
 static void cmucam2_send_image_direct (bool auto_led);
 
@@ -205,7 +208,7 @@ int main (void)
   int32_t command;
   int32_t val, n;
   uint32_t arg_list[MAX_ARGS], start_time;
-  bool error, poll_mode, line_mode, auto_led, demo_mode,buf_mode;
+  bool error, poll_mode, line_mode, auto_led, demo_mode, buf_mode;
   cc3_track_pkt_t t_pkt;
   cc3_color_info_pkt_t s_pkt;
   cc3_histogram_pkt_t h_pkt;
@@ -226,25 +229,26 @@ int main (void)
     exit (1);
   }
 
-  servo_settings.x_control=false;
-  servo_settings.y_control=false;
-  servo_settings.x_report=false;
-  servo_settings.y_report=false;
+  servo_settings.x_control = false;
+  servo_settings.y_control = false;
+  servo_settings.x_report = false;
+  servo_settings.y_report = false;
   demo_mode = false;
-  
+
   // Keep this memory in the bank for frame differencing
-  fd_pkt.previous_template=malloc(16*16*sizeof(uint32_t));
-  if(fd_pkt.previous_template==NULL ) printf( "Malloc FD startup error!\r" );
+  fd_pkt.previous_template = malloc (16 * 16 * sizeof (uint32_t));
+  if (fd_pkt.previous_template == NULL)
+    printf ("Malloc FD startup error!\r");
   start_time = cc3_timer_get_current_ms ();
 
   do {
     if (cc3_button_get_state () == 1) {
       // Demo Mode flag
       demo_mode = true;
-      servo_settings.x_control=true;
-      servo_settings.y_control=true;
-      servo_settings.x_report=true;
-      servo_settings.y_report=true;
+      servo_settings.x_control = true;
+      servo_settings.y_control = true;
+      servo_settings.x_report = true;
+      servo_settings.y_report = true;
       // Debounce Switch
       cc3_led_set_off (0);
       cc3_timer_wait_ms (500);
@@ -260,8 +264,8 @@ cmucam2_start:
   line_mode = false;
   buf_mode = false;
   packet_filter_flag = false;
-  t_pkt_mask= 0xFF;
-  s_pkt_mask= 0xFF;
+  t_pkt_mask = 0xFF;
+  s_pkt_mask = 0xFF;
   h_pkt.bins = 28;
   t_pkt.track_invert = false;
   t_pkt.noise_filter = 0;
@@ -273,14 +277,14 @@ cmucam2_start:
   t_pkt.upper_bound.channel[2] = 240;
 
 
-  servo_settings.x=SERVO_MID;
-  servo_settings.y=SERVO_MID;
-  servo_settings.pan_range_far=16;
-  servo_settings.pan_range_near=8;
-  servo_settings.pan_step=10;
-  servo_settings.tilt_range_far=30;
-  servo_settings.tilt_range_near=15;
-  servo_settings.tilt_step=10;
+  servo_settings.x = SERVO_MID;
+  servo_settings.y = SERVO_MID;
+  servo_settings.pan_range_far = 16;
+  servo_settings.pan_range_near = 8;
+  servo_settings.pan_step = 10;
+  servo_settings.tilt_range_far = 30;
+  servo_settings.tilt_range_near = 15;
+  servo_settings.tilt_step = 10;
 
 
   cc3_camera_set_power_state (true);
@@ -315,7 +319,7 @@ cmucam2_start:
   while (true) {
     cc3_channel_t old_coi;
 
-    print_prompt();
+    print_prompt ();
     error = false;
     if (demo_mode == true) {
       n = 0;
@@ -333,11 +337,11 @@ cmucam2_start:
         }
 
         print_ACK ();
-        print_cr();
+        print_cr ();
         goto cmucam2_start;
         break;
 
-     case READ_FRAME:
+      case READ_FRAME:
         if (n != 0) {
           error = true;
           break;
@@ -345,14 +349,16 @@ cmucam2_start:
         print_ACK ();
         cc3_pixbuf_load ();
         break;
-   
-     case OUTPUT_MASK:
-        if (n != 2 || arg_list[0]>1) {
+
+      case OUTPUT_MASK:
+        if (n != 2 || arg_list[0] > 1) {
           error = true;
           break;
         }
-	if(arg_list[0]==0) t_pkt_mask=arg_list[1];
-	if(arg_list[0]==1) s_pkt_mask=arg_list[1];
+        if (arg_list[0] == 0)
+          t_pkt_mask = arg_list[1];
+        if (arg_list[0] == 1)
+          s_pkt_mask = arg_list[1];
         print_ACK ();
         break;
 
@@ -382,9 +388,9 @@ cmucam2_start:
         if (arg_list[0] == 2)
           auto_led = true;
         break;
-      
+
       case BUF_MODE:
-        if (n != 1 || arg_list[0]>1) {
+        if (n != 1 || arg_list[0] > 1) {
           error = true;
           break;
         }
@@ -397,20 +403,20 @@ cmucam2_start:
         break;
 
       case PACKET_FILTER:
-        if (n != 1 || arg_list[0]>1) {
+        if (n != 1 || arg_list[0] > 1) {
           error = true;
           break;
         }
 
         print_ACK ();
         if (arg_list[0] == 1)
-          packet_filter_flag= true;
+          packet_filter_flag = true;
         else
-          packet_filter_flag= false;
+          packet_filter_flag = false;
         break;
 
       case POLL_MODE:
-        if (n != 1 || arg_list[0]>1) {
+        if (n != 1 || arg_list[0] > 1) {
           error = true;
           break;
         }
@@ -428,13 +434,13 @@ cmucam2_start:
           break;
         }
         else
-        print_ACK ();
-	servo_settings.pan_range_far=arg_list[0];
-	servo_settings.pan_range_near=arg_list[1];
-	servo_settings.pan_step=arg_list[2];
-	servo_settings.tilt_range_far=arg_list[3];
-	servo_settings.tilt_range_near=arg_list[4];
-	servo_settings.tilt_step=arg_list[5];
+          print_ACK ();
+        servo_settings.pan_range_far = arg_list[0];
+        servo_settings.pan_range_near = arg_list[1];
+        servo_settings.pan_step = arg_list[2];
+        servo_settings.tilt_range_far = arg_list[3];
+        servo_settings.tilt_range_near = arg_list[4];
+        servo_settings.tilt_step = arg_list[5];
         break;
 
       case SERVO_MASK:
@@ -443,11 +449,11 @@ cmucam2_start:
           break;
         }
         else
-        print_ACK ();
-	servo_settings.x_control=!!(arg_list[0]&0x1);
-	servo_settings.y_control=!!(arg_list[0]&0x2);
-	servo_settings.x_report=!!(arg_list[0]&0x4);
-	servo_settings.y_report=!!(arg_list[0]&0x8);
+          print_ACK ();
+        servo_settings.x_control = !!(arg_list[0] & 0x1);
+        servo_settings.y_control = !!(arg_list[0] & 0x2);
+        servo_settings.x_report = !!(arg_list[0] & 0x4);
+        servo_settings.y_report = !!(arg_list[0] & 0x8);
         break;
 
       case HI_RES:
@@ -465,57 +471,57 @@ cmucam2_start:
         break;
 
 
-     
-     case LOAD_FRAME:
+
+      case LOAD_FRAME:
         if (n != 1) {
           error = true;
           break;
         }
         print_ACK ();
-	fd_pkt.total_x=cc3_g_pixbuf_frame.width;
-	fd_pkt.total_y=cc3_g_pixbuf_frame.height;
-	fd_pkt.load_frame=1;  // load a new frame
-	fd_pkt.template_width=8;
-	fd_pkt.template_height=8;
-	cmucam2_load_frame(&fd_pkt,buf_mode);
-	// arg_list[0] is the threshold
-	
+        fd_pkt.total_x = cc3_g_pixbuf_frame.width;
+        fd_pkt.total_y = cc3_g_pixbuf_frame.height;
+        fd_pkt.load_frame = 1;  // load a new frame
+        fd_pkt.template_width = 8;
+        fd_pkt.template_height = 8;
+        cmucam2_load_frame (&fd_pkt, buf_mode);
+        // arg_list[0] is the threshold
+
         break;
 
-     case FRAME_DIFF:
+      case FRAME_DIFF:
         if (n != 1) {
           error = true;
           break;
         }
-          error = true;
-          break;
+        error = true;
+        break;
         print_ACK ();
-	// arg_list[0] is the threshold
-	
+        // arg_list[0] is the threshold
+
         break;
 
-     case FRAME_DIFF_CHANNEL:
-        if (n != 1 || arg_list[0]>2) {
+      case FRAME_DIFF_CHANNEL:
+        if (n != 1 || arg_list[0] > 2) {
           error = true;
           break;
         }
-          error = true;
-          break;
+        error = true;
+        break;
         print_ACK ();
-	// arg_list[0] is the channel 
-	
+        // arg_list[0] is the channel 
+
         break;
 
 
       case CONF_HISTOGRAM:
-        if (n != 1 || arg_list<1 ) {
+        if (n != 1 || arg_list < 1) {
           error = true;
           break;
         }
-  	h_pkt.bins = arg_list[0];
+        h_pkt.bins = arg_list[0];
         print_ACK ();
 
-	break;
+        break;
 
 
       case TRACK_INVERT:
@@ -622,10 +628,10 @@ cmucam2_start:
           uint8_t y_step = cc3_g_pixbuf_frame.y_step;
           cc3_subsample_mode_t ss_mode = cc3_g_pixbuf_frame.subsample_mode;
 
-          cc3_camera_set_power_state(arg_list[0]);
+          cc3_camera_set_power_state (arg_list[0]);
 
           // restore
-          cc3_pixbuf_frame_set_roi(x_0, y_0, x_1, y_1);
+          cc3_pixbuf_frame_set_roi (x_0, y_0, x_1, y_1);
           cc3_pixbuf_frame_set_subsample (ss_mode, x_step, y_step);
         }
         break;
@@ -673,11 +679,11 @@ cmucam2_start:
         }
 
         print_ACK ();
-        cc3_pixbuf_frame_set_subsample (CC3_SUBSAMPLE_NEAREST, arg_list[0] * 2,
-                                        arg_list[1]);
+        cc3_pixbuf_frame_set_subsample (CC3_SUBSAMPLE_NEAREST,
+                                        arg_list[0] * 2, arg_list[1]);
         break;
 
-     case SET_TRACK:
+      case SET_TRACK:
         if (n != 0 && n != 6) {
           error = true;
           break;
@@ -708,7 +714,8 @@ cmucam2_start:
           t_pkt.lower_bound.channel[2] = arg_list[4];
           t_pkt.upper_bound.channel[2] = arg_list[5];
         }
-        cmucam2_track_color (&t_pkt, poll_mode, line_mode,auto_led,&servo_settings,buf_mode, 0);
+        cmucam2_track_color (&t_pkt, poll_mode, line_mode, auto_led,
+                             &servo_settings, buf_mode, 0);
         break;
 
       case TRACK_WINDOW:
@@ -730,7 +737,7 @@ cmucam2_start:
           y1 = cc3_g_pixbuf_frame.y1 - cc3_g_pixbuf_frame.width / 4;
           cc3_pixbuf_frame_set_roi (x0, y0, x1, y1);
           // call get mean
-          cmucam2_get_mean (&s_pkt, 1, line_mode,buf_mode, 1);
+          cmucam2_get_mean (&s_pkt, 1, line_mode, buf_mode, 1);
           // set window back to full size
           x0 = 0;
           x1 = cc3_g_pixbuf_frame.raw_width;
@@ -774,7 +781,8 @@ cmucam2_start:
           if (tmp > 240)
             tmp = 240;
           t_pkt.upper_bound.channel[2] = tmp;
-          cmucam2_track_color (&t_pkt, poll_mode, line_mode, auto_led,&servo_settings,buf_mode, 0);
+          cmucam2_track_color (&t_pkt, poll_mode, line_mode, auto_led,
+                               &servo_settings, buf_mode, 0);
         }
         demo_mode = false;
         break;
@@ -787,7 +795,7 @@ cmucam2_start:
         }
 
         print_ACK ();
-        cmucam2_get_mean (&s_pkt, poll_mode, line_mode,buf_mode, 0);
+        cmucam2_get_mean (&s_pkt, poll_mode, line_mode, buf_mode, 0);
         break;
 
 
@@ -804,7 +812,7 @@ cmucam2_start:
 
 
       case SET_SERVO:
-        if (n != 2 || arg_list[0]>4) {
+        if (n != 2 || arg_list[0] > 4) {
           error = true;
           break;
         }
@@ -812,8 +820,10 @@ cmucam2_start:
         print_ACK ();
         cc3_gpio_set_mode (arg_list[0], CC3_GPIO_MODE_SERVO);
         cc3_gpio_set_servo_position (arg_list[0], arg_list[1]);
-	if(arg_list[0]==0) servo_settings.x=arg_list[1];
-	if(arg_list[0]==1) servo_settings.y=arg_list[1];
+        if (arg_list[0] == 0)
+          servo_settings.x = arg_list[1];
+        if (arg_list[0] == 1)
+          servo_settings.y = arg_list[1];
         break;
 
       case GET_SERVO:
@@ -823,7 +833,7 @@ cmucam2_start:
         }
 
         print_ACK ();
-        printf("%d\r", cc3_gpio_get_servo_position(arg_list[0]));
+        printf ("%d\r", cc3_gpio_get_servo_position (arg_list[0]));
         break;
 
       case GET_INPUT:
@@ -833,10 +843,10 @@ cmucam2_start:
         }
 
         print_ACK ();
-        printf("%d\r",  cc3_gpio_get_value(arg_list[0])|
-			(cc3_gpio_get_value(arg_list[1])<<1)|
-			(cc3_gpio_get_value(arg_list[2])<<2)|
-			(cc3_gpio_get_value(arg_list[3])<<3)  );
+        printf ("%d\r", cc3_gpio_get_value (arg_list[0]) |
+                (cc3_gpio_get_value (arg_list[1]) << 1) |
+                (cc3_gpio_get_value (arg_list[2]) << 2) |
+                (cc3_gpio_get_value (arg_list[3]) << 3));
         break;
 
 
@@ -856,10 +866,11 @@ cmucam2_start:
           break;
         }
         print_ACK ();
-        if (cc3_button_get_and_reset_trigger()) {
-          printf("1\r");
-        } else {
-          printf("0\r");
+        if (cc3_button_get_and_reset_trigger ()) {
+          printf ("1\r");
+        }
+        else {
+          printf ("0\r");
         }
         break;
 
@@ -924,7 +935,8 @@ void cmucam2_send_image_direct (bool auto_led)
       // avoid confusion from FIFO corruptions
       if (p < 16) {
         p = 16;
-      } else if (p > 240) {
+      }
+      else if (p > 240) {
         p = 240;
       }
       putchar (p);
@@ -938,8 +950,8 @@ void cmucam2_send_image_direct (bool auto_led)
 
 
 
-void cmucam2_get_histogram (cc3_histogram_pkt_t * h_pkt, bool poll_mode, bool buf_mode,
-                            bool quiet)
+void cmucam2_get_histogram (cc3_histogram_pkt_t * h_pkt, bool poll_mode,
+                            bool buf_mode, bool quiet)
 {
   cc3_image_t img;
   img.channels = 3;
@@ -947,26 +959,26 @@ void cmucam2_get_histogram (cc3_histogram_pkt_t * h_pkt, bool poll_mode, bool bu
   img.height = 1;               // image will hold just 1 row for scanline processing
   img.pix = malloc (3 * img.width);
   h_pkt->hist = malloc (h_pkt->bins * sizeof (uint32_t));
-  if(img.pix==NULL || h_pkt->hist==NULL )
-	{
-	printf( "INTERNAL ERROR\r" );
-	return;
-	}
+  if (img.pix == NULL || h_pkt->hist == NULL) {
+    printf ("INTERNAL ERROR\r");
+    return;
+  }
   do {
-    if(!buf_mode) cc3_pixbuf_load ();
-    else cc3_pixbuf_rewind();
+    if (!buf_mode)
+      cc3_pixbuf_load ();
+    else
+      cc3_pixbuf_rewind ();
     if (cc3_histogram_scanline_start (h_pkt) != 0) {
       while (cc3_pixbuf_read_rows (img.pix, 1)) {
         cc3_histogram_scanline (&img, h_pkt);
       }
       cc3_histogram_scanline_finish (h_pkt);
       while (!cc3_uart_has_data (0)) {
-        if (fgetc (stdin) == '\r')
-	{
+        if (fgetc (stdin) == '\r') {
           free (img.pix);
           free (h_pkt->hist);
           return;
-	}
+        }
       }
       if (!quiet)
         cmucam2_write_h_packet (h_pkt);
@@ -983,23 +995,27 @@ void cmucam2_get_histogram (cc3_histogram_pkt_t * h_pkt, bool poll_mode, bool bu
 
 }
 
-void cmucam2_load_frame(cc3_frame_diff_pkt_t *pkt,bool buf_mode)
+void cmucam2_load_frame (cc3_frame_diff_pkt_t * pkt, bool buf_mode)
 {
- cc3_image_t img;
+  cc3_image_t img;
   img.channels = 3;
   img.width = cc3_g_pixbuf_frame.width;
   img.height = 1;               // image will hold just 1 row for scanline processing
   img.pix = malloc (3 * img.width);
 
-    if(!buf_mode) cc3_pixbuf_load ();
-    else cc3_pixbuf_rewind();
+  if (!buf_mode)
+    cc3_pixbuf_load ();
+  else
+    cc3_pixbuf_rewind ();
 
-    if (cc3_frame_diff_scanline_start (pkt) != 0) {
-      while (cc3_pixbuf_read_rows (img.pix, 1)) {
-        cc3_frame_diff_scanline (&img, pkt);
-      }
-      cc3_frame_diff_scanline_finish (pkt);
-    } else printf( "frame diff start error\r" );
+  if (cc3_frame_diff_scanline_start (pkt) != 0) {
+    while (cc3_pixbuf_read_rows (img.pix, 1)) {
+      cc3_frame_diff_scanline (&img, pkt);
+    }
+    cc3_frame_diff_scanline_finish (pkt);
+  }
+  else
+    printf ("frame diff start error\r");
 
   free (img.pix);
 
@@ -1007,7 +1023,8 @@ void cmucam2_load_frame(cc3_frame_diff_pkt_t *pkt,bool buf_mode)
 }
 
 void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
-                       bool poll_mode, bool line_mode,bool buf_mode, bool quiet)
+                       bool poll_mode, bool line_mode, bool buf_mode,
+                       bool quiet)
 {
   cc3_image_t img;
   img.channels = 3;
@@ -1015,8 +1032,10 @@ void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
   img.height = 1;               // image will hold just 1 row for scanline processing
   img.pix = malloc (3 * img.width);
   do {
-    if(!buf_mode) cc3_pixbuf_load ();
-    else cc3_pixbuf_rewind();
+    if (!buf_mode)
+      cc3_pixbuf_load ();
+    else
+      cc3_pixbuf_rewind ();
     if (cc3_color_info_scanline_start (s_pkt) != 0) {
       while (cc3_pixbuf_read_rows (img.pix, 1)) {
         cc3_color_info_scanline (&img, s_pkt);
@@ -1040,11 +1059,13 @@ void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
 }
 
 void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
-			  bool poll_mode,
-                          bool line_mode, bool auto_led,cmucam2_servo_t *servo_settings,bool buf_mode, bool quiet)
+                          bool poll_mode,
+                          bool line_mode, bool auto_led,
+                          cmucam2_servo_t * servo_settings, bool buf_mode,
+                          bool quiet)
 {
   cc3_image_t img;
-  uint16_t x_mid,y_mid;
+  uint16_t x_mid, y_mid;
 
   img.channels = 3;
   img.width = cc3_g_pixbuf_frame.width;
@@ -1054,20 +1075,22 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
     return;
   }
 
-  x_mid=cc3_g_pixbuf_frame.x0 + (cc3_g_pixbuf_frame.width/2);
-  y_mid=cc3_g_pixbuf_frame.y0 + (cc3_g_pixbuf_frame.height/2);
+  x_mid = cc3_g_pixbuf_frame.x0 + (cc3_g_pixbuf_frame.width / 2);
+  y_mid = cc3_g_pixbuf_frame.y0 + (cc3_g_pixbuf_frame.height / 2);
 
-  
+
   do {
-    if(!buf_mode) cc3_pixbuf_load ();
-    else cc3_pixbuf_rewind();
+    if (!buf_mode)
+      cc3_pixbuf_load ();
+    else
+      cc3_pixbuf_rewind ();
     if (cc3_track_color_scanline_start (t_pkt) != 0) {
       uint8_t lm_width, lm_height;
       uint8_t *lm;
       lm_width = 0;
       lm_height = 0;
       if (line_mode) {
-	// FIXME: This doesn't make sense
+        // FIXME: This doesn't make sense
         lm = &t_pkt->binary_scanline;
         lm_width = img.width / 8;
         if (img.width % 8 != 0)
@@ -1124,50 +1147,63 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
           cc3_led_set_off (0);
       }
 
-      if( t_pkt->int_density>5) {
-       if(servo_settings->x_control ) 
-	      	{
-		int8_t t_step;
-		t_step=0;
-		if(t_pkt->centroid_x>x_mid+servo_settings->pan_range_far) t_step=servo_settings->pan_step;
-		else if(t_pkt->centroid_x>x_mid+servo_settings->pan_range_near) t_step=(servo_settings->pan_step/2);
+      if (t_pkt->int_density > 5) {
+        if (servo_settings->x_control) {
+          int8_t t_step;
+          t_step = 0;
+          if (t_pkt->centroid_x > x_mid + servo_settings->pan_range_far)
+            t_step = servo_settings->pan_step;
+          else if (t_pkt->centroid_x > x_mid + servo_settings->pan_range_near)
+            t_step = (servo_settings->pan_step / 2);
 
-		if(t_pkt->centroid_x<x_mid-servo_settings->pan_range_far) t_step=-servo_settings->pan_step;
-		else if(t_pkt->centroid_x<x_mid-servo_settings->pan_range_near) t_step=-(servo_settings->pan_step/2);
+          if (t_pkt->centroid_x < x_mid - servo_settings->pan_range_far)
+            t_step = -servo_settings->pan_step;
+          else if (t_pkt->centroid_x < x_mid - servo_settings->pan_range_near)
+            t_step = -(servo_settings->pan_step / 2);
 
-		
-		#ifdef SERVO_REVERSE_DIRECTION
-			servo_settings->x-=t_step;	
-		#else
-			servo_settings->x+=t_step;	
-		#endif
-		
-		if(servo_settings->x>SERVO_MAX) servo_settings->x=SERVO_MAX;
-		if(servo_settings->x<SERVO_MIN) servo_settings->x=SERVO_MIN;
-		cc3_gpio_set_servo_position (0, servo_settings->x);
-		}
-	if( servo_settings->y_control )
-	{
-	if(t_pkt->centroid_y>y_mid+servo_settings->tilt_range_far) servo_settings->y+=servo_settings->tilt_step;
-		else if(t_pkt->centroid_y>y_mid+servo_settings->tilt_range_near) servo_settings->y+=servo_settings->tilt_step/2;
 
-		if(t_pkt->centroid_y<y_mid-servo_settings->tilt_range_far) servo_settings->y-=servo_settings->tilt_step;
-		else if(t_pkt->centroid_y<y_mid-servo_settings->tilt_range_near) servo_settings->y-=servo_settings->tilt_step/2;
+#ifdef SERVO_REVERSE_DIRECTION
+          servo_settings->x -= t_step;
+#else
+          servo_settings->x += t_step;
+#endif
 
-		if(servo_settings->y>SERVO_MAX) servo_settings->y=SERVO_MAX;
-		if(servo_settings->y<SERVO_MIN) servo_settings->y=SERVO_MIN;
-		cc3_gpio_set_servo_position (1, servo_settings->y);
-	}	
+          if (servo_settings->x > SERVO_MAX)
+            servo_settings->x = SERVO_MAX;
+          if (servo_settings->x < SERVO_MIN)
+            servo_settings->x = SERVO_MIN;
+          cc3_gpio_set_servo_position (0, servo_settings->x);
+        }
+        if (servo_settings->y_control) {
+          if (t_pkt->centroid_y > y_mid + servo_settings->tilt_range_far)
+            servo_settings->y += servo_settings->tilt_step;
+          else if (t_pkt->centroid_y >
+                   y_mid + servo_settings->tilt_range_near)
+            servo_settings->y += servo_settings->tilt_step / 2;
+
+          if (t_pkt->centroid_y < y_mid - servo_settings->tilt_range_far)
+            servo_settings->y -= servo_settings->tilt_step;
+          else if (t_pkt->centroid_y <
+                   y_mid - servo_settings->tilt_range_near)
+            servo_settings->y -= servo_settings->tilt_step / 2;
+
+          if (servo_settings->y > SERVO_MAX)
+            servo_settings->y = SERVO_MAX;
+          if (servo_settings->y < SERVO_MIN)
+            servo_settings->y = SERVO_MIN;
+          cc3_gpio_set_servo_position (1, servo_settings->y);
+        }
       }
-      
-      if(!quiet) cmucam2_write_t_packet (t_pkt,servo_settings);
 
-    } 
-    else return;
-    while (!cc3_uart_has_data (0))
-    {
-      if(fgetc(stdin)=='\r' )
-      	break;
+      if (!quiet)
+        cmucam2_write_t_packet (t_pkt, servo_settings);
+
+    }
+    else
+      return;
+    while (!cc3_uart_has_data (0)) {
+      if (fgetc (stdin) == '\r')
+        break;
     }
   } while (!poll_mode);
   free (img.pix);
@@ -1175,9 +1211,10 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
 }
 
 
-void cmucam2_write_t_packet (cc3_track_pkt_t * pkt, cmucam2_servo_t *servo_settings)
+void cmucam2_write_t_packet (cc3_track_pkt_t * pkt,
+                             cmucam2_servo_t * servo_settings)
 {
-static bool empty_cnt=0;
+  static bool empty_cnt = 0;
 
   if (pkt->centroid_x > 255)
     pkt->centroid_x = 255;
@@ -1196,57 +1233,81 @@ static bool empty_cnt=0;
   if (pkt->int_density > 255)
     pkt->int_density = 255;
 
-  if (pkt->num_pixels == 0)
-  {
-    if(packet_filter_flag==0)
-     {
-	printf( "T" );
-        if((t_pkt_mask & 0x01) !=0) printf( " 0");
-        if((t_pkt_mask & 0x02) !=0) printf( " 0");
-        if((t_pkt_mask & 0x04) !=0) printf( " 0");
-        if((t_pkt_mask & 0x08) !=0) printf( " 0");
-        if((t_pkt_mask & 0x10) !=0) printf( " 0");
-        if((t_pkt_mask & 0x20) !=0) printf( " 0");
-        if((t_pkt_mask & 0x40) !=0) printf( " 0");
-        if((t_pkt_mask & 0x80) !=0) printf( " 0");
-     }
-    if(packet_filter_flag==1 && empty_cnt==0)
-    {
-	printf( "T" );
-        if((t_pkt_mask & 0x01) !=0) printf( " 0");
-        if((t_pkt_mask & 0x02) !=0) printf( " 0");
-        if((t_pkt_mask & 0x04) !=0) printf( " 0");
-        if((t_pkt_mask & 0x08) !=0) printf( " 0");
-        if((t_pkt_mask & 0x10) !=0) printf( " 0");
-        if((t_pkt_mask & 0x20) !=0) printf( " 0");
-        if((t_pkt_mask & 0x40) !=0) printf( " 0");
-        if((t_pkt_mask & 0x80) !=0) printf( " 0");
+  if (pkt->num_pixels == 0) {
+    if (packet_filter_flag == 0) {
+      printf ("T");
+      if ((t_pkt_mask & 0x01) != 0)
+        printf (" 0");
+      if ((t_pkt_mask & 0x02) != 0)
+        printf (" 0");
+      if ((t_pkt_mask & 0x04) != 0)
+        printf (" 0");
+      if ((t_pkt_mask & 0x08) != 0)
+        printf (" 0");
+      if ((t_pkt_mask & 0x10) != 0)
+        printf (" 0");
+      if ((t_pkt_mask & 0x20) != 0)
+        printf (" 0");
+      if ((t_pkt_mask & 0x40) != 0)
+        printf (" 0");
+      if ((t_pkt_mask & 0x80) != 0)
+        printf (" 0");
+    }
+    if (packet_filter_flag == 1 && empty_cnt == 0) {
+      printf ("T");
+      if ((t_pkt_mask & 0x01) != 0)
+        printf (" 0");
+      if ((t_pkt_mask & 0x02) != 0)
+        printf (" 0");
+      if ((t_pkt_mask & 0x04) != 0)
+        printf (" 0");
+      if ((t_pkt_mask & 0x08) != 0)
+        printf (" 0");
+      if ((t_pkt_mask & 0x10) != 0)
+        printf (" 0");
+      if ((t_pkt_mask & 0x20) != 0)
+        printf (" 0");
+      if ((t_pkt_mask & 0x40) != 0)
+        printf (" 0");
+      if ((t_pkt_mask & 0x80) != 0)
+        printf (" 0");
     }
   }
-  else
-  {
-    empty_cnt=0;
-    printf( "T" );
-    if((t_pkt_mask & 0x01) !=0) printf( " %d",pkt->centroid_x );
-    if((t_pkt_mask & 0x02) !=0) printf( " %d",pkt->centroid_y );
-    if((t_pkt_mask & 0x04) !=0) printf( " %d",pkt->x0);
-    if((t_pkt_mask & 0x08) !=0) printf( " %d",pkt->y0);
-    if((t_pkt_mask & 0x10) !=0) printf( " %d",pkt->x1);
-    if((t_pkt_mask & 0x20) !=0) printf( " %d",pkt->y1);
-    if((t_pkt_mask & 0x40) !=0) printf( " %d",pkt->num_pixels);
-    if((t_pkt_mask & 0x80) !=0) printf( " %d",pkt->int_density);
+  else {
+    empty_cnt = 0;
+    printf ("T");
+    if ((t_pkt_mask & 0x01) != 0)
+      printf (" %d", pkt->centroid_x);
+    if ((t_pkt_mask & 0x02) != 0)
+      printf (" %d", pkt->centroid_y);
+    if ((t_pkt_mask & 0x04) != 0)
+      printf (" %d", pkt->x0);
+    if ((t_pkt_mask & 0x08) != 0)
+      printf (" %d", pkt->y0);
+    if ((t_pkt_mask & 0x10) != 0)
+      printf (" %d", pkt->x1);
+    if ((t_pkt_mask & 0x20) != 0)
+      printf (" %d", pkt->y1);
+    if ((t_pkt_mask & 0x40) != 0)
+      printf (" %d", pkt->num_pixels);
+    if ((t_pkt_mask & 0x80) != 0)
+      printf (" %d", pkt->int_density);
     //printf ("T %d %d %d %d %d %d %d %d", pkt->centroid_x, pkt->centroid_y,
-      //      pkt->x0, pkt->y0, pkt->x1, pkt->y1, pkt->num_pixels,
-        //    pkt->int_density);
+    //      pkt->x0, pkt->y0, pkt->x1, pkt->y1, pkt->num_pixels,
+    //    pkt->int_density);
   }
-  if(servo_settings->x_report) printf( " %d",servo_settings->x );
-  if(servo_settings->y_report) printf( " %d",servo_settings->y );
-  if(packet_filter_flag==0) printf( "\r" );
-  if(packet_filter_flag==1)
-    {
-	if(empty_cnt==0) printf ("\r");
-  	if (pkt->num_pixels == 0) empty_cnt=1;
-    }
+  if (servo_settings->x_report)
+    printf (" %d", servo_settings->x);
+  if (servo_settings->y_report)
+    printf (" %d", servo_settings->y);
+  if (packet_filter_flag == 0)
+    printf ("\r");
+  if (packet_filter_flag == 1) {
+    if (empty_cnt == 0)
+      printf ("\r");
+    if (pkt->num_pixels == 0)
+      empty_cnt = 1;
+  }
 }
 
 void cmucam2_write_h_packet (cc3_histogram_pkt_t * pkt)
@@ -1268,14 +1329,20 @@ void cmucam2_write_h_packet (cc3_histogram_pkt_t * pkt)
 void cmucam2_write_s_packet (cc3_color_info_pkt_t * pkt)
 {
 
-  printf( "S" );
-  if((s_pkt_mask & 0x01) !=0) printf( " %d",pkt->mean.channel[0]);
-  if((s_pkt_mask & 0x02) !=0) printf( " %d",pkt->mean.channel[1]);
-  if((s_pkt_mask & 0x04) !=0) printf( " %d",pkt->mean.channel[2]);
-  if((s_pkt_mask & 0x08) !=0) printf( " %d",pkt->deviation.channel[0]);
-  if((s_pkt_mask & 0x10) !=0) printf( " %d",pkt->deviation.channel[1]);
-  if((s_pkt_mask & 0x20) !=0) printf( " %d",pkt->deviation.channel[2]);
-  printf( "\r" );
+  printf ("S");
+  if ((s_pkt_mask & 0x01) != 0)
+    printf (" %d", pkt->mean.channel[0]);
+  if ((s_pkt_mask & 0x02) != 0)
+    printf (" %d", pkt->mean.channel[1]);
+  if ((s_pkt_mask & 0x04) != 0)
+    printf (" %d", pkt->mean.channel[2]);
+  if ((s_pkt_mask & 0x08) != 0)
+    printf (" %d", pkt->deviation.channel[0]);
+  if ((s_pkt_mask & 0x10) != 0)
+    printf (" %d", pkt->deviation.channel[1]);
+  if ((s_pkt_mask & 0x20) != 0)
+    printf (" %d", pkt->deviation.channel[2]);
+  printf ("\r");
 
 }
 
