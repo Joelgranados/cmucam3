@@ -196,9 +196,9 @@ static void cmucam2_write_t_packet (cc3_track_pkt_t * pkt,
 static void cmucam2_write_h_packet (cc3_histogram_pkt_t * pkt);
 static void cmucam2_send_image_direct (bool auto_led);
 
-bool packet_filter_flag;
-uint8_t t_pkt_mask;
-uint8_t s_pkt_mask;
+static bool packet_filter_flag;
+static uint8_t t_pkt_mask;
+static uint8_t s_pkt_mask;
 
 int main (void)
 {
