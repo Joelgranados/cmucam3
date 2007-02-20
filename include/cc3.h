@@ -264,22 +264,15 @@ bool cc3_pixbuf_frame_set_coi (cc3_channel_t chan);
 void cc3_pixbuf_frame_reset (void);
 
 /**
- * Activate an LED.
+ * Activate or deactivate an LED.
  *
  * \note Sometimes a LED is shared with GPIO or other functions.
  *
- * @param[in] led The LED to illuminate.
+ * @param[in] led The LED to act on.
+ * @param[in] state Set to \a true to turn the LED on, \a false
+ * to turn the LED off.
  */
-void cc3_led_set_on (uint8_t led);
-
-/**
- * Deactivate an LED.
- *
- * \note Sometimes a LED is shared with GPIO or other functions.
- *
- * @param[in] led The LED to extinguish.
- */
-void cc3_led_set_off (uint8_t led);
+void cc3_led_set_state (uint8_t led, bool state);
 
 /**
  * Set the power state of the camera and reset #cc3_g_pixbuf_frame. Used to

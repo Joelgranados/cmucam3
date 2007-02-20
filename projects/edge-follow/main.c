@@ -47,8 +47,8 @@ int main (void)
   //cc3_pixbuf_frame_set_coi (CC3_CHANNEL_GREEN);
   cc3_pixbuf_frame_set_coi (CC3_CHANNEL_ALL);
 
-  cc3_led_set_off (1);
-  cc3_led_set_off (2);
+  cc3_led_set_state (1, false);
+  cc3_led_set_state (2, false);
 
   // load into pixbuf to initialize cc3_g_pixbuf_frame
   cc3_pixbuf_load();

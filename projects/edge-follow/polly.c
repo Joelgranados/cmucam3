@@ -56,9 +56,9 @@ int polly( polly_config_t config, cc3_image_t *img, cc3_image_t *mask )
 
 
 #ifdef MMC_DEBUG
-	cc3_led_set_on(2);
-	 while(!cc3_button_get_state());
-	cc3_led_set_off(2);
+  cc3_led_set_state(2, true);
+  while(!cc3_button_get_state());
+  cc3_led_set_state(2, false);
 #endif  
 
     // clear polly working image
@@ -468,7 +468,7 @@ void matrix_to_pgm (cc3_image_t * img)
     if(fp==NULL || pgm_cnt>200 )
     {
 	printf( "PGM Can't open file\n" );
-	cc3_led_set_on(3);
+	cc3_led_set_state(3, true);
 	while(1);
     }
   
@@ -517,7 +517,7 @@ void write_raw_fifo_ppm()
     if(f==NULL || ppm_cnt>200 )
     {
 	printf( "PPM Can't open file\n" );
-	cc3_led_set_on(3);
+	cc3_led_set_state(3, true);
 	while(1);
     }
 

@@ -220,7 +220,7 @@ int main (void)
   val = setvbuf (stdout, NULL, _IONBF, 0);
 
   if (!cc3_camera_init ()) {
-    cc3_led_set_on (0);
+    cc3_led_set_state (0, true);
     exit (1);
   }
 
@@ -245,7 +245,7 @@ int main (void)
       servo_settings.x_report = true;
       servo_settings.y_report = true;
       // Debounce Switch
-      cc3_led_set_off (0);
+      cc3_led_set_state (0, false);
       cc3_timer_wait_ms (500);
       break;
     }
@@ -302,9 +302,9 @@ cmucam2_start:
   if (demo_mode) {
     // Wait for second button press as target lock
     while (1) {
-      cc3_led_set_on (0);
+      cc3_led_set_state (0, true);
       cc3_timer_wait_ms (100);
-      cc3_led_set_off (0);
+      cc3_led_set_state (0, false);
       cc3_timer_wait_ms (100);
       if (cc3_button_get_state () == 1)
         break;
@@ -377,9 +377,9 @@ cmucam2_start:
         print_ACK ();
         auto_led = false;
         if (arg_list[0] == 0)
-          cc3_led_set_off (0);
+          cc3_led_set_state (0, false);
         if (arg_list[0] == 1)
-          cc3_led_set_on (0);
+          cc3_led_set_state (0, true);
         if (arg_list[0] == 2)
           auto_led = true;
         break;
@@ -919,9 +919,9 @@ void cmucam2_send_image_direct (bool auto_led)
     putchar (2);
     if (auto_led) {
       if (y % 4 == 0)
-        cc3_led_set_on (0);
+        cc3_led_set_state (0, true);
       else
-        cc3_led_set_off (0);
+        cc3_led_set_state (0, false);
     }
     cc3_pixbuf_read_rows (row, 1);
     for (x = 0; x < size_x * num_channels; x++) {
@@ -939,7 +939,7 @@ void cmucam2_send_image_direct (bool auto_led)
   }
   putchar (3);
 
-  cc3_led_set_off (0);
+  cc3_led_set_state (0, false);
   free (row);
 }
 
@@ -1137,9 +1137,9 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
       }
       if (auto_led) {
         if (t_pkt->int_density > 2)
-          cc3_led_set_on (0);
+          cc3_led_set_state (0, true);
         else
-          cc3_led_set_off (0);
+          cc3_led_set_state (0, false);
       }
 
       if (t_pkt->int_density > 5) {

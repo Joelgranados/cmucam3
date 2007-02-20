@@ -35,13 +35,13 @@ int main (void)
 
   printf ("Hello World...\n");
 
-  cc3_led_set_off (0);
-  cc3_led_set_off (1);
-  cc3_led_set_off (2);
+  cc3_led_set_state (0, false);
+  cc3_led_set_state (1, false);
+  cc3_led_set_state (2, false);
 
   // sample wait command in ms
   cc3_timer_wait_ms (1000);
-  cc3_led_set_on (0);
+  cc3_led_set_state (0, true);
 
 
   // sample showing how to write to the MMC card
@@ -67,7 +67,7 @@ int main (void)
   printf ("push button on camera back to continue\n");
   start_time = cc3_timer_get_current_ms ();
   while (!cc3_button_get_state ());
-  cc3_led_set_on (1);
+  cc3_led_set_state (1, true);
   // sample showing how to use timer
   printf ("It took you %dms to press the button\n",
           cc3_timer_get_current_ms () - start_time);
@@ -93,21 +93,21 @@ int main (void)
     cc3_pixel_t my_pix;
 
     if (val & 0x1)
-      cc3_led_set_on (0);
+      cc3_led_set_state (0, true);
     else
-      cc3_led_set_off (0);
+      cc3_led_set_state (0, false);
     if (val & 0x2)
-      cc3_led_set_on (1);
+      cc3_led_set_state (1, true);
     else
-      cc3_led_set_off (1);
+      cc3_led_set_state (1, false);
     if (val & 0x3)
-      cc3_led_set_on (2);
+      cc3_led_set_state (2, true);
     else
-      cc3_led_set_off (2);
+      cc3_led_set_state (2, false);
     if (val & 0x4)
-      cc3_led_set_on (3);
+      cc3_led_set_state (3, true);
     else
-      cc3_led_set_off (3);
+      cc3_led_set_state (3, false);
     val++;
 
     // This tells the camera to grab a new frame into the fifo and reset

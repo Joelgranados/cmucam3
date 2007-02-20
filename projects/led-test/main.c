@@ -27,26 +27,26 @@ int main (void) {
     for (i = 0; i < 8; i++) {
       if (i & 1) {
 	printf ("0");
-	cc3_led_set_on(0);
+	cc3_led_set_state(0, true);
       } else {
 	printf ("_");
-	cc3_led_set_off(0);
+	cc3_led_set_state(0, false);
       }
 
       if (i & 2) {
 	printf ("1");
-	cc3_led_set_on(1);
+	cc3_led_set_state(1, true);
       } else {
 	printf ("_");
-	cc3_led_set_off(1);
+	cc3_led_set_state(1, false);
       }
 
       if (i & 4) {
 	printf ("2");
-	cc3_led_set_on(2);
+	cc3_led_set_state(2, true);
       } else {
 	printf ("_");
-	cc3_led_set_off(2);
+	cc3_led_set_state(2, false);
       }
 
       printf("\r\n");

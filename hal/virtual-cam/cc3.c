@@ -268,36 +268,38 @@ void cc3_pixbuf_rewind ()
 }
 
 
-void cc3_led_set_off (uint8_t select)
+void cc3_led_set_state (uint8_t select, bool state)
 {
-  switch (select) {
-  case 0:
-    printf( "led 0 off\n" );
-    break;
-  case 1:
-    printf( "led 1 off\n" );
-    break;
-  case 2:
-    printf( "led 2 off\n" );
-    break;
-  }
-
-}
-
-
-void cc3_led_set_on (uint8_t select)
-{
-
-  switch (select) {
-  case 0:
-    printf( "led 0 on\n" );
-    break;
-  case 1:
-    printf( "led 1 on\n" );
-    break;
-  case 2:
-    printf( "led 2 on\n" );
-    break;
+  if (state) {
+    switch (select) {
+    case 0:
+      printf( "led 0 on\n" );
+      break;
+    case 1:
+      printf( "led 1 on\n" );
+      break;
+    case 2:
+      printf( "led 2 on\n" );
+      break;
+    case 3:
+      printf( "led 3 on\n" );
+      break;
+    }
+  } else {
+    switch (select) {
+    case 0:
+      printf( "led 0 off\n" );
+      break;
+    case 1:
+      printf( "led 1 off\n" );
+      break;
+    case 2:
+      printf( "led 2 off\n" );
+      break;
+    case 3:
+      printf( "led 3 off\n" );
+      break;
+    }
   }
 }
 

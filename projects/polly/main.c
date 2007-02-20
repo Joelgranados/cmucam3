@@ -42,9 +42,9 @@ int main (void)
   cc3_pixbuf_frame_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 2);
   cc3_pixbuf_frame_set_coi (CC3_CHANNEL_GREEN);
 
-  cc3_led_set_off (0);
-  cc3_led_set_off (1);
-  cc3_led_set_off (2);
+  cc3_led_set_state (0, false);
+  cc3_led_set_state (1, false);
+  cc3_led_set_state (2, false);
 
   // sample wait command in ms 
   cc3_timer_wait_ms (1000);

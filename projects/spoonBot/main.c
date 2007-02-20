@@ -13,7 +13,7 @@ int main (void)
     cc3_camera_init ();
 
     printf ("Starting up...\n");
-    cc3_led_set_on (false);
+    cc3_led_set_state (0, true);
 
 
     cc3_gpio_set_mode(0, CC3_GPIO_MODE_SERVO);

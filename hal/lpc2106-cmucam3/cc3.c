@@ -207,36 +207,32 @@ void cc3_pixbuf_rewind ()
 }
 
 
-void cc3_led_set_off (uint8_t select)
+void cc3_led_set_state (uint8_t select, bool state)
 {
-  switch (select) {
-  case 0:
-    REG (GPIO_IOCLR) = _CC3_LED_0;
-    break;
-  case 1:
-    REG (GPIO_IOCLR) = _CC3_LED_1;
-    break;
-  case 2:
-    REG (GPIO_IOCLR) = _CC3_LED_2;
-    break;
-  }
-
-}
-
-
-void cc3_led_set_on (uint8_t select)
-{
-
-  switch (select) {
-  case 0:
-    REG (GPIO_IOSET) = _CC3_LED_0;
-    break;
-  case 1:
-    REG (GPIO_IOSET) = _CC3_LED_1;
-    break;
-  case 2:
-    REG (GPIO_IOSET) = _CC3_LED_2;
-    break;
+  if (state) {
+    switch (select) {
+    case 0:
+      REG (GPIO_IOSET) = _CC3_LED_0;
+      break;
+    case 1:
+      REG (GPIO_IOSET) = _CC3_LED_1;
+      break;
+    case 2:
+      REG (GPIO_IOSET) = _CC3_LED_2;
+      break;
+    }
+  } else {
+    switch (select) {
+    case 0:
+      REG (GPIO_IOCLR) = _CC3_LED_0;
+      break;
+    case 1:
+      REG (GPIO_IOCLR) = _CC3_LED_1;
+      break;
+    case 2:
+      REG (GPIO_IOCLR) = _CC3_LED_2;
+      break;
+    }
   }
 }
 

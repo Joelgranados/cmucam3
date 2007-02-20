@@ -33,13 +33,13 @@ int main(void) {
   // init jpeg
   init_jpeg();
 
-  cc3_led_set_on(1);
+  cc3_led_set_state(1, true);
   i = 0;
   while(true) {
     char filename[16];
-    cc3_led_set_off(1);
+    cc3_led_set_state(1, false);
     while(!cc3_button_get_state());
-    cc3_led_set_on(1);
+    cc3_led_set_state(1, true);
   
    // Check if files exist, if they do then skip over them 
     do { 
@@ -61,7 +61,7 @@ int main(void) {
     f = fopen(filename, "w");
     if(f==NULL || i>200 )
     {
-	cc3_led_set_on(3);
+      cc3_led_set_state(3, true);
 	printf( "Error: Can't open file\r\n" );
 	while(1);
     }
