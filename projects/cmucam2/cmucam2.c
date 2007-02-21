@@ -1140,11 +1140,12 @@ void cmucam2_frame_diff (cc3_frame_diff_pkt_t * pkt,
       cc3_frame_diff_scanline_finish (pkt);
 
       while (!cc3_uart_has_data (0)) {
-        if (fgetc (stdin) == '\r')
+        if (fgetc (stdin) == '\r') {
           cc3_pixbuf_frame_set_coi (old_coi);
-        free (pkt->current_template);
-        free (img.pix);
-        return;
+          free (pkt->current_template);
+          free (img.pix);
+          return;
+	}
       }
       if (!quiet) {
         t_pkt.x0 = pkt->x0 + 1;
@@ -1204,8 +1205,10 @@ void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
       cc3_color_info_scanline_finish (s_pkt);
       while (!cc3_uart_has_data (0)) {
         if (fgetc (stdin) == '\r')
+	{
           free (img.pix);
-        return;
+          return;
+	}
       }
       if (!quiet)
         cmucam2_write_s_packet (s_pkt);
@@ -1274,9 +1277,10 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
         if (line_mode) {
           // keep this check here if you don't want the CMUcam2 GUI to hang after exiting a command in line mode
           while (!cc3_uart_has_data (0)) {
-            if (fgetc (stdin) == '\r')
+            if (fgetc (stdin) == '\r') {
               free (img.pix);
-            return;
+              return;
+	      }
           }
           for (int j = 0; j < lm_width; j++) {
             if (lm[j] == 0xAA) {
@@ -1292,9 +1296,10 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
       }
       // keep this check here if you don't want the CMUcam2 GUI to hang after exiting a command in line mode
       while (!cc3_uart_has_data (0)) {
-        if (fgetc (stdin) == '\r')
+        if (fgetc (stdin) == '\r') {
           free (img.pix);
-        return;
+          return;
+	 }
       }
       cc3_track_color_scanline_finish (t_pkt);
       if (line_mode) {
