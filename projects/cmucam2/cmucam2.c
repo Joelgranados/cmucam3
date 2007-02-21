@@ -281,12 +281,14 @@ cmucam2_start:
   fd_pkt.template_height = 8;
   t_pkt.track_invert = false;
   t_pkt.noise_filter = 0;
-  t_pkt.lower_bound.channel[0] = 16;
-  t_pkt.upper_bound.channel[0] = 240;
-  t_pkt.lower_bound.channel[1] = 16;
-  t_pkt.upper_bound.channel[1] = 240;
-  t_pkt.lower_bound.channel[2] = 16;
-  t_pkt.upper_bound.channel[2] = 240;
+
+  // set to 0 since cmucam2 appears to initialize to this
+  t_pkt.lower_bound.channel[0] = 0;
+  t_pkt.upper_bound.channel[0] = 0;
+  t_pkt.lower_bound.channel[1] = 0;
+  t_pkt.upper_bound.channel[1] = 0;
+  t_pkt.lower_bound.channel[2] = 0;
+  t_pkt.upper_bound.channel[2] = 0;
 
   raw_mode_output = false;
   raw_mode_no_confirmations = false;
@@ -1112,6 +1114,8 @@ void cmucam2_frame_diff (cc3_frame_diff_pkt_t * pkt,
   cc3_image_t img;
   uint8_t old_coi;
 
+  bool prev_packet_empty = true;
+
   old_coi = cc3_g_pixbuf_frame.coi;
   cc3_pixbuf_frame_set_coi (pkt->coi);
   img.channels = 1;
@@ -1158,9 +1162,16 @@ void cmucam2_frame_diff (cc3_frame_diff_pkt_t * pkt,
             cc3_led_set_state (0, false);
         }
 
-        cmucam2_write_t_packet (&t_pkt, NULL);
+        if (!(packet_filter_flag &&
+              t_pkt.num_pixels == 0 &&
+              prev_packet_empty)) {
+          cmucam2_write_t_packet (&t_pkt, NULL);
+        }
+        prev_packet_empty = t_pkt.num_pixels == 0;
       }
     }
+
+
     if (!cc3_uart_has_data (0)) {
       if (fgetc (stdin) == '\r')
         break;
@@ -1216,6 +1227,8 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
 {
   cc3_image_t img;
   uint16_t x_mid, y_mid;
+
+  bool prev_packet_empty = true;
 
   img.channels = 3;
   img.width = cc3_g_pixbuf_frame.width;
@@ -1345,12 +1358,18 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
         }
       }
 
-      if (!quiet)
-        cmucam2_write_t_packet (t_pkt, servo_settings);
-
+      if (!quiet) {
+        if (!(packet_filter_flag &&
+              t_pkt->num_pixels == 0 &&
+              prev_packet_empty)) {
+          cmucam2_write_t_packet (t_pkt, servo_settings);
+        }
+      }
+      prev_packet_empty = t_pkt->num_pixels == 0;
     }
     else
       return;
+
     while (!cc3_uart_has_data (0)) {
       if (fgetc (stdin) == '\r')
         break;
@@ -1360,12 +1379,11 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
   return;
 }
 
-
 void cmucam2_write_t_packet (cc3_track_pkt_t * pkt,
                              cmucam2_servo_t * servo_settings)
 {
-  static bool empty_cnt = 0;
 
+  // cap at 255
   if (pkt->centroid_x > 255)
     pkt->centroid_x = 255;
   if (pkt->centroid_y > 255)
@@ -1383,82 +1401,63 @@ void cmucam2_write_t_packet (cc3_track_pkt_t * pkt,
   if (pkt->int_density > 255)
     pkt->int_density = 255;
 
+  // values to print
+  uint8_t p[8];
+
   if (pkt->num_pixels == 0) {
-    if (packet_filter_flag == 0) {
-      printf ("T");
-      if ((t_pkt_mask & 0x01) != 0)
-        printf (" 0");
-      if ((t_pkt_mask & 0x02) != 0)
-        printf (" 0");
-      if ((t_pkt_mask & 0x04) != 0)
-        printf (" 0");
-      if ((t_pkt_mask & 0x08) != 0)
-        printf (" 0");
-      if ((t_pkt_mask & 0x10) != 0)
-        printf (" 0");
-      if ((t_pkt_mask & 0x20) != 0)
-        printf (" 0");
-      if ((t_pkt_mask & 0x40) != 0)
-        printf (" 0");
-      if ((t_pkt_mask & 0x80) != 0)
-        printf (" 0");
-    }
-    if (packet_filter_flag == 1 && empty_cnt == 0) {
-      printf ("T");
-      if ((t_pkt_mask & 0x01) != 0)
-        printf (" 0");
-      if ((t_pkt_mask & 0x02) != 0)
-        printf (" 0");
-      if ((t_pkt_mask & 0x04) != 0)
-        printf (" 0");
-      if ((t_pkt_mask & 0x08) != 0)
-        printf (" 0");
-      if ((t_pkt_mask & 0x10) != 0)
-        printf (" 0");
-      if ((t_pkt_mask & 0x20) != 0)
-        printf (" 0");
-      if ((t_pkt_mask & 0x40) != 0)
-        printf (" 0");
-      if ((t_pkt_mask & 0x80) != 0)
-        printf (" 0");
-    }
+    p[0] = p[1] = p[2] = p[3] = p[4] = p[5] = p[6] = p[7] = 0;
+  } else {
+    p[0] = pkt->centroid_x;
+    p[1] = pkt->centroid_y;
+    p[2] = pkt->x0;
+    p[3] = pkt->y0;
+    p[4] = pkt->x1;
+    p[5] = pkt->y1;
+    p[6] = pkt->num_pixels;
+    p[7] = pkt->int_density;
   }
-  else {
-    empty_cnt = 0;
-    printf ("T");
-    if ((t_pkt_mask & 0x01) != 0)
-      printf (" %d", pkt->centroid_x);
-    if ((t_pkt_mask & 0x02) != 0)
-      printf (" %d", pkt->centroid_y);
-    if ((t_pkt_mask & 0x04) != 0)
-      printf (" %d", pkt->x0);
-    if ((t_pkt_mask & 0x08) != 0)
-      printf (" %d", pkt->y0);
-    if ((t_pkt_mask & 0x10) != 0)
-      printf (" %d", pkt->x1);
-    if ((t_pkt_mask & 0x20) != 0)
-      printf (" %d", pkt->y1);
-    if ((t_pkt_mask & 0x40) != 0)
-      printf (" %d", pkt->num_pixels);
-    if ((t_pkt_mask & 0x80) != 0)
-      printf (" %d", pkt->int_density);
-    //printf ("T %d %d %d %d %d %d %d %d", pkt->centroid_x, pkt->centroid_y,
-    //      pkt->x0, pkt->y0, pkt->x1, pkt->y1, pkt->num_pixels,
-    //    pkt->int_density);
+
+  uint8_t mask = t_pkt_mask;
+  if (raw_mode_output) {
+    putchar(255);
   }
+  printf("T");
+
+  // print out fields using mask
+  for (int i = 0; i < 8; i++) {
+    if (mask & 0x1) {
+      if (raw_mode_output) {
+        raw_print(p[i]);
+      } else {
+        printf(" %d", p[i]);
+      }
+    }
+    mask >>= 1;
+  }
+
+  // print servo settings?
   if (servo_settings != NULL) {
-    if (servo_settings->x_report)
-      printf (" %d", servo_settings->x);
-    if (servo_settings->y_report)
-      printf (" %d", servo_settings->y);
+    uint8_t sx = servo_settings->x;
+    uint8_t sy = servo_settings->y;
+
+    if (servo_settings->x_report) {
+      if (raw_mode_output) {
+        raw_print(sx);
+      } else {
+        printf(" %d", sx);
+      }
+    }
+    if (servo_settings->y_report) {
+      if (raw_mode_output) {
+        raw_print(sy);
+      } else {
+        printf(" %d", sy);
+      }
+    }
   }
-  if (packet_filter_flag == 0)
-    printf ("\r");
-  if (packet_filter_flag == 1) {
-    if (empty_cnt == 0)
-      printf ("\r");
-    if (pkt->num_pixels == 0)
-      empty_cnt = 1;
+
+  if (!raw_mode_output) {
+    printf("\r");
   }
 }
 
