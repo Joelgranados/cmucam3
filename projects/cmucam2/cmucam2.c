@@ -118,11 +118,9 @@ static const char cmucam2_cmds[CMUCAM2_CMDS_COUNT][3] = {
 
   /* Servo Commands */
   [SET_SERVO] = "SV",
-  //  SP servo parameters
   [GET_SERVO] = "GS",
   [SERVO_OUTPUT] = "SO",
   [SERVO_MASK] = "SM",
-  // SP servo parameters
   [SERVO_PARAMETERS] = "SP",
 
   /* Image Windowing Commands */
@@ -153,7 +151,6 @@ static const char cmucam2_cmds[CMUCAM2_CMDS_COUNT][3] = {
   /* Histogram Commands */
   [GET_HISTOGRAM] = "GH",
   [CONF_HISTOGRAM] = "HC",
-  //  HC histogram config
   //  HT histogram track
 
   /* Frame Differencing Commands */
