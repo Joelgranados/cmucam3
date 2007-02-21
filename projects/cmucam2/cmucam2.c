@@ -52,7 +52,6 @@ typedef struct {
 
 
 typedef enum {
-  RETURN,
   RESET,
   TRACK_COLOR,
   SEND_FRAME,
@@ -90,12 +89,15 @@ typedef enum {
   GET_BUTTON,
   FRAME_DIFF_CHANNEL,
   LOAD_FRAME,
+  RAW_MODE,
   HIRES_DIFF,
-  CMUCAM2_CMDS_COUNT            // Must be last entry so array sizes are correct
+
+  RETURN,                   // Must be second to last
+  CMUCAM2_CMDS_COUNT        // Must be last entry so array sizes are correct
 } cmucam2_command_t;
 
 static const char cmucam2_cmds[CMUCAM2_CMDS_COUNT][3] = {
-  [RETURN] = "**",
+  [RETURN] = "",
 
   /* Buffer Commands */
   [BUF_MODE] = "BM",
@@ -110,7 +112,7 @@ static const char cmucam2_cmds[CMUCAM2_CMDS_COUNT][3] = {
   //  DM delay mode
   [POLL_MODE] = "PM",
   //  PS packet skip
-  //  RM raw mode
+  [RAW_MODE] = "RM",
   [PACKET_FILTER] = "PF",
   [OUTPUT_MASK] = "OM",
 
@@ -187,10 +189,11 @@ static void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
                                  bool line_mode, bool auto_led,
                                  cmucam2_servo_t * servo_settings,
                                  bool buf_mode, bool quiet);
-void cmucam2_frame_diff (cc3_frame_diff_pkt_t * pkt,
-                         bool poll_mode, bool line_mode, bool buf_mode,
-                         bool auto_led, bool quiet);
-static int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list);
+static void cmucam2_frame_diff (cc3_frame_diff_pkt_t * pkt,
+                                bool poll_mode, bool line_mode, bool buf_mode,
+                                bool auto_led, bool quiet);
+static int32_t cmucam2_get_command (cmucam2_command_t *cmd,
+                                    uint32_t arg_list[]);
 static void print_ACK (void);
 static void print_NCK (void);
 static void print_prompt (void);
@@ -200,15 +203,22 @@ static void cmucam2_write_t_packet (cc3_track_pkt_t * pkt,
 static void cmucam2_write_h_packet (cc3_histogram_pkt_t * pkt);
 static void cmucam2_send_image_direct (bool auto_led);
 
+static void raw_print(uint8_t val);
+
 static bool packet_filter_flag;
 static uint8_t t_pkt_mask;
 static uint8_t s_pkt_mask;
 
+static bool raw_mode_output;
+static bool raw_mode_no_confirmations;
+static bool raw_mode_input;
+
 int main (void)
 {
-  int32_t command;
+  cmucam2_command_t command;
   int32_t val, n;
-  uint32_t arg_list[MAX_ARGS], start_time;
+  uint32_t arg_list[MAX_ARGS];
+  uint32_t start_time;
   bool error, poll_mode, line_mode, auto_led, demo_mode, buf_mode;
   cc3_track_pkt_t t_pkt;
   cc3_color_info_pkt_t s_pkt;
@@ -216,7 +226,7 @@ int main (void)
   cc3_frame_diff_pkt_t fd_pkt;
   cmucam2_servo_t servo_settings;
 
-  cc3_filesystem_init ();
+  //cc3_filesystem_init ();
 
   cc3_uart_init (0,
                  SERIAL_BAUD_RATE,
@@ -278,6 +288,9 @@ cmucam2_start:
   t_pkt.lower_bound.channel[2] = 16;
   t_pkt.upper_bound.channel[2] = 240;
 
+  raw_mode_output = false;
+  raw_mode_no_confirmations = false;
+  raw_mode_input = false;
 
   servo_settings.x = SERVO_MID;
   servo_settings.y = SERVO_MID;
@@ -372,7 +385,8 @@ cmucam2_start:
         }
 
         print_ACK ();
-        printf ("%s\r", VERSION_BANNER);
+        // no different in raw mode
+        printf ("%s", VERSION_BANNER);
         break;
 
       case LED_0:
@@ -435,8 +449,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         servo_settings.pan_range_far = arg_list[0];
         servo_settings.pan_range_near = arg_list[1];
         servo_settings.pan_step = arg_list[2];
@@ -450,8 +464,8 @@ cmucam2_start:
           error = true;
           break;
         }
-        else
-          print_ACK ();
+
+        print_ACK ();
         servo_settings.x_control = !!(arg_list[0] & 0x1);
         servo_settings.y_control = !!(arg_list[0] & 0x2);
         servo_settings.x_report = !!(arg_list[0] & 0x4);
@@ -485,6 +499,7 @@ cmucam2_start:
         fd_pkt.load_frame = 1;  // load a new frame
         cmucam2_load_frame (&fd_pkt, buf_mode);
         break;
+
       case HIRES_DIFF:
         if (n != 1 || arg_list[0] > 1) {
           error = true;
@@ -526,7 +541,7 @@ cmucam2_start:
 
 
       case CONF_HISTOGRAM:
-        if (n != 1 || arg_list < 1) {
+        if (n != 1 || arg_list[0] < 1) {
           error = true;
           break;
         }
@@ -583,10 +598,7 @@ cmucam2_start:
         }
 
         print_ACK ();
-        //init_jpeg();
-        // cc3_set_resolution(CC3_RES_HIGH);
-        //cc3_pixbuf_frame_set_subsample (CC3_SUBSAMPLE_NEAREST, 1, 1);
-
+        // ignore raw mode
         cc3_jpeg_send_simple ();
         printf ("JPG_END\r");
         break;
@@ -611,6 +623,17 @@ cmucam2_start:
         cc3_pixbuf_frame_set_coi (old_coi);
         break;
 
+      case RAW_MODE:
+        if (n != 1) {
+          error = true;
+          break;
+        }
+
+        raw_mode_output = arg_list[0] & 1;
+        raw_mode_no_confirmations = arg_list[0] & 2;
+        raw_mode_input = arg_list[0] & 4;
+        print_ACK (); // last because ACK may be supressed
+        break;
 
       case CAMERA_REG:
         if (n % 2 != 0 || n < 2) {
@@ -666,10 +689,20 @@ cmucam2_start:
         }
 
         print_ACK ();
-        printf ("%d %d %d %d %d %d\r", t_pkt.lower_bound.channel[0],
-                t_pkt.lower_bound.channel[1], t_pkt.lower_bound.channel[2],
-                t_pkt.upper_bound.channel[0], t_pkt.upper_bound.channel[1],
-                t_pkt.upper_bound.channel[2]);
+        if (raw_mode_output) {
+          putchar(255);
+          raw_print(t_pkt.lower_bound.channel[0]);
+          raw_print(t_pkt.lower_bound.channel[1]);
+          raw_print(t_pkt.lower_bound.channel[2]);
+          raw_print(t_pkt.upper_bound.channel[0]);
+          raw_print(t_pkt.upper_bound.channel[1]);
+          raw_print(t_pkt.upper_bound.channel[2]);
+        } else {
+          printf ("%d %d %d %d %d %d\r", t_pkt.lower_bound.channel[0],
+                  t_pkt.lower_bound.channel[1], t_pkt.lower_bound.channel[2],
+                  t_pkt.upper_bound.channel[0], t_pkt.upper_bound.channel[1],
+                  t_pkt.upper_bound.channel[2]);
+        }
         break;
 
       case GET_WINDOW:
@@ -679,9 +712,17 @@ cmucam2_start:
         }
 
         print_ACK ();
-        printf ("%d %d %d %d\r", cc3_g_pixbuf_frame.x0 / 2,
-                cc3_g_pixbuf_frame.y0, cc3_g_pixbuf_frame.x1 / 2,
-                cc3_g_pixbuf_frame.y1);
+        if (raw_mode_output) {
+          putchar(255);
+          raw_print(cc3_g_pixbuf_frame.x0 / 2);
+          raw_print(cc3_g_pixbuf_frame.y0);
+          raw_print(cc3_g_pixbuf_frame.x1 / 2);
+          raw_print(cc3_g_pixbuf_frame.y1);
+        } else {
+          printf ("%d %d %d %d\r", cc3_g_pixbuf_frame.x0 / 2,
+                  cc3_g_pixbuf_frame.y0, cc3_g_pixbuf_frame.x1 / 2,
+                  cc3_g_pixbuf_frame.y1);
+        }
         break;
 
       case DOWN_SAMPLE:
@@ -845,8 +886,17 @@ cmucam2_start:
         }
 
         print_ACK ();
-        printf ("%d\r", cc3_gpio_get_servo_position (arg_list[0]));
-        break;
+
+        {
+          uint8_t servo = cc3_gpio_get_servo_position (arg_list[0]);
+          if (raw_mode_output) {
+            putchar(255);
+            raw_print(servo);
+          } else {
+            printf ("%d\r", servo);
+          }
+          break;
+        }
 
       case GET_INPUT:
         if (n != 0) {
@@ -855,10 +905,19 @@ cmucam2_start:
         }
 
         print_ACK ();
-        printf ("%d\r", cc3_gpio_get_value (arg_list[0]) |
-                (cc3_gpio_get_value (arg_list[1]) << 1) |
-                (cc3_gpio_get_value (arg_list[2]) << 2) |
-                (cc3_gpio_get_value (arg_list[3]) << 3));
+        {
+          uint8_t input =
+            (cc3_gpio_get_value (arg_list[0])) |
+            (cc3_gpio_get_value (arg_list[1]) << 1) |
+            (cc3_gpio_get_value (arg_list[2]) << 2) |
+            (cc3_gpio_get_value (arg_list[3]) << 3);
+          if (raw_mode_output) {
+            putchar(255);
+            raw_print(input);
+          } else {
+            printf ("%d\r", input);
+          }
+        }
         break;
 
 
@@ -877,12 +936,17 @@ cmucam2_start:
           error = true;
           break;
         }
+
         print_ACK ();
-        if (cc3_button_get_and_reset_trigger ()) {
-          printf ("1\r");
-        }
-        else {
-          printf ("0\r");
+
+        {
+          int button = cc3_button_get_and_reset_trigger() ? 1 : 0;
+          if (raw_mode_output) {
+            putchar(255);
+            raw_print(button);
+          } else {
+            printf("%d\r", button);
+          }
         }
         break;
 
@@ -1436,12 +1500,14 @@ void cmucam2_write_s_packet (cc3_color_info_pkt_t * pkt)
 
 void print_ACK ()
 {
-  printf ("ACK\r");
+  if (!raw_mode_no_confirmations)
+    printf ("ACK\r");
 }
 
 void print_NCK ()
 {
-  printf ("NCK\r");
+  if (!raw_mode_no_confirmations)
+    printf ("NCK\r");
 }
 
 void print_prompt ()
@@ -1454,8 +1520,7 @@ void print_cr ()
   printf ("\r");
 }
 
-//int32_t cmucam2_get_command(cmucam2_command_t *cmd, int32_t *arg_list)
-int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list)
+int32_t cmucam2_get_command (cmucam2_command_t *cmd, uint32_t *arg_list)
 {
   char line_buf[MAX_LINE];
   char c;
@@ -1465,7 +1530,7 @@ int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list)
 
   fail = 0;
   length = 0;
-  *cmd = 0;
+  *cmd = RETURN;
   c = 0;
   while (c != '\r') {
     c = fgetc (stdin);
@@ -1482,8 +1547,7 @@ int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list)
   line_buf[length] = '\0';
 
   if (line_buf[0] == '\r' || line_buf[0] == '\n') {
-    *cmd = RETURN;
-    return 0;
+    return 0;   // cmd is RETURN above
   }
 
   token = strtok (line_buf, " \r\n");
@@ -1521,4 +1585,15 @@ int32_t cmucam2_get_command (int32_t * cmd, int32_t * arg_list)
   }
 
   return -1;
+}
+
+
+void
+raw_print (uint8_t val)
+{
+  if (val == 255) {
+    putchar(254);  // avoid confusion
+  } else {
+    putchar(val);
+  }
 }
