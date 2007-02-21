@@ -1456,9 +1456,7 @@ void cmucam2_write_t_packet (cc3_track_pkt_t * pkt,
     }
   }
 
-  if (!raw_mode_output) {
-    printf("\r");
-  }
+  print_cr();
 }
 
 void cmucam2_write_h_packet (cc3_histogram_pkt_t * pkt)
@@ -1467,34 +1465,57 @@ void cmucam2_write_h_packet (cc3_histogram_pkt_t * pkt)
   uint32_t total_pix;
 
   total_pix = cc3_g_pixbuf_frame.width * cc3_g_pixbuf_frame.height;
+
+  if (raw_mode_output) {
+    putchar(255);
+  }
   printf ("H");
+
   for (i = 0; i < pkt->bins; i++) {
     pkt->hist[i] = (pkt->hist[i] * 256) / total_pix;
     if (pkt->hist[i] > 255)
       pkt->hist[i] = 255;
-    printf (" %d", pkt->hist[i]);
+
+    if (raw_mode_output) {
+      raw_print(pkt->hist[i]);
+    } else {
+      printf (" %d", pkt->hist[i]);
+    }
   }
-  printf ("\r");
+
+  print_cr();
 }
 
 void cmucam2_write_s_packet (cc3_color_info_pkt_t * pkt)
 {
+  uint8_t pkt2[6];
+  uint8_t mask = s_pkt_mask;
+
+  if (raw_mode_output) {
+    putchar(255);
+  }
+
+  pkt2[0] = pkt->mean.channel[0];
+  pkt2[1] = pkt->mean.channel[1];
+  pkt2[2] = pkt->mean.channel[2];
+  pkt2[3] = pkt->deviation.channel[0];
+  pkt2[4] = pkt->deviation.channel[1];
+  pkt2[5] = pkt->deviation.channel[2];
 
   printf ("S");
-  if ((s_pkt_mask & 0x01) != 0)
-    printf (" %d", pkt->mean.channel[0]);
-  if ((s_pkt_mask & 0x02) != 0)
-    printf (" %d", pkt->mean.channel[1]);
-  if ((s_pkt_mask & 0x04) != 0)
-    printf (" %d", pkt->mean.channel[2]);
-  if ((s_pkt_mask & 0x08) != 0)
-    printf (" %d", pkt->deviation.channel[0]);
-  if ((s_pkt_mask & 0x10) != 0)
-    printf (" %d", pkt->deviation.channel[1]);
-  if ((s_pkt_mask & 0x20) != 0)
-    printf (" %d", pkt->deviation.channel[2]);
-  printf ("\r");
 
+  for (int i = 0; i < 6; i++) {
+    if (mask & 0x1) {
+      if (raw_mode_output) {
+        putchar(pkt2[i]);
+      } else {
+        printf(" %d", pkt2[i]);
+      }
+    }
+    mask >>= 1;
+  }
+
+  print_cr();
 }
 
 void print_ACK ()
@@ -1516,7 +1537,9 @@ void print_prompt ()
 
 void print_cr ()
 {
-  printf ("\r");
+  if (!raw_mode_output) {
+    printf ("\r");
+  }
 }
 
 int32_t cmucam2_get_command (cmucam2_command_t *cmd, uint32_t *arg_list)
