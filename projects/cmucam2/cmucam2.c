@@ -1549,61 +1549,76 @@ int32_t cmucam2_get_command (cmucam2_command_t *cmd, uint32_t *arg_list)
   char line_buf[MAX_LINE];
   char c;
   char *token;
-  int32_t fail, length, argc;
+  bool fail = false;
+  int32_t length, argc;
   uint32_t i;
 
-  fail = 0;
   length = 0;
-  *cmd = RETURN;
   c = 0;
   while (c != '\r') {
     c = fgetc (stdin);
+
     if (length < (MAX_LINE - 1)) {
       line_buf[length] = c;
       length++;
+    } else {
+      // too long
+      return -1;
     }
-    else
-      fail = 1;
   }
-  // wait until a return and then fail
-  if (fail == 1)
-    return -1;
+  // null terminate
   line_buf[length] = '\0';
 
+   // check for empty command
   if (line_buf[0] == '\r' || line_buf[0] == '\n') {
-    return 0;   // cmd is RETURN above
+    *cmd = RETURN;
+    return 0;
   }
 
+  // start looking for command
   token = strtok (line_buf, " \r\n");
 
-  if (token == NULL)
+  if (token == NULL) {
+    // no command ?
     return -1;
-  for (i = 0; i < strlen (token); i++)
+  }
+
+  // get name of the command
+  for (i = 0; i < strlen (token); i++) {
     token[i] = toupper (token[i]);
-  fail = 1;
+  }
+
+  // do lookup of command
+  fail = true;
   for (i = 0; i < CMUCAM2_CMDS_COUNT; i++) {
     if (strcmp (token, cmucam2_cmds[i]) == 0) {
-      fail = 0;
+      fail = false;
       *cmd = i;
       break;
     }
-
   }
-  if (fail == 1)
+  if (fail) {
     return -1;
+  }
+
+  // now get the arguments
   argc = 0;
   while (true) {
-    /* extract string from string sequence */
+    // extract string from string sequence
     token = strtok (NULL, " \r\n");
-    /* check if there is nothing else to extract */
+    // check if there is nothing else to extract
     if (token == NULL) {
       // printf("Tokenizing complete\n");
       return argc;
     }
+
+    // make sure the argument is fully numeric
     for (i = 0; i < strlen (token); i++) {
       if (!isdigit (token[i]))
         return -1;
     }
+
+    // we have a valid token, add it
     arg_list[argc] = atoi (token);
     argc++;
   }
