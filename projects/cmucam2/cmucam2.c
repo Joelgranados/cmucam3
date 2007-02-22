@@ -33,8 +33,8 @@
 // Define a jitter guard such that more than SERVO_GUARD pixels are required
 // for the servo to move.
 
-static const int MAX_ARGS = 10;
-static const int MAX_LINE = 128;
+static const unsigned int MAX_ARGS = 10;
+static const unsigned int MAX_LINE = 128;
 
 static const char VERSION_BANNER[] = "CMUcam2 v1.00 c6";
 
@@ -191,6 +191,8 @@ static void cmucam2_frame_diff (cc3_frame_diff_pkt_t * pkt,
                                 bool auto_led, bool quiet);
 static int32_t cmucam2_get_command (cmucam2_command_t *cmd,
                                     uint32_t arg_list[]);
+static int32_t cmucam2_get_command_raw (cmucam2_command_t *cmd,
+                                        uint32_t arg_list[]);
 static void print_ACK (void);
 static void print_NCK (void);
 static void print_prompt (void);
@@ -340,7 +342,11 @@ cmucam2_start:
       command = TRACK_WINDOW;
     }
     else
-      n = cmucam2_get_command (&command, arg_list);
+      if (raw_mode_input) {
+        n = cmucam2_get_command_raw (&command, arg_list);
+      } else {
+        n = cmucam2_get_command (&command, arg_list);
+      }
     if (n != -1) {
       switch (command) {
 
@@ -1049,7 +1055,7 @@ void cmucam2_get_histogram (cc3_histogram_pkt_t * h_pkt, bool poll_mode,
       }
       cc3_histogram_scanline_finish (h_pkt);
       while (!cc3_uart_has_data (0)) {
-        if (fgetc (stdin) == '\r') {
+        if (getchar() == '\r') {
           free (img.pix);
           free (h_pkt->hist);
           return;
@@ -1059,7 +1065,7 @@ void cmucam2_get_histogram (cc3_histogram_pkt_t * h_pkt, bool poll_mode,
         cmucam2_write_h_packet (h_pkt);
     }
     if (!cc3_uart_has_data (0)) {
-      if (fgetc (stdin) == '\r')
+      if (getchar() == '\r')
         break;
     }
   } while (!poll_mode);
@@ -1137,7 +1143,7 @@ void cmucam2_frame_diff (cc3_frame_diff_pkt_t * pkt,
       cc3_frame_diff_scanline_finish (pkt);
 
       while (!cc3_uart_has_data (0)) {
-        if (fgetc (stdin) == '\r') {
+        if (getchar() == '\r') {
           cc3_pixbuf_frame_set_coi (old_coi);
           free (pkt->current_template);
           free (img.pix);
@@ -1171,7 +1177,7 @@ void cmucam2_frame_diff (cc3_frame_diff_pkt_t * pkt,
 
 
     if (!cc3_uart_has_data (0)) {
-      if (fgetc (stdin) == '\r')
+      if (getchar() == '\r')
         break;
     }
   } while (!poll_mode);
@@ -1201,7 +1207,7 @@ void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
       }
       cc3_color_info_scanline_finish (s_pkt);
       while (!cc3_uart_has_data (0)) {
-        if (fgetc (stdin) == '\r')
+        if (getchar() == '\r')
 	{
           free (img.pix);
           return;
@@ -1211,7 +1217,7 @@ void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
         cmucam2_write_s_packet (s_pkt);
     }
     if (!cc3_uart_has_data (0)) {
-      if (fgetc (stdin) == '\r')
+      if (getchar() == '\r')
         break;
     }
   } while (!poll_mode);
@@ -1274,7 +1280,7 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
         if (line_mode) {
           // keep this check here if you don't want the CMUcam2 GUI to hang after exiting a command in line mode
           while (!cc3_uart_has_data (0)) {
-            if (fgetc (stdin) == '\r') {
+            if (getchar() == '\r') {
               free (img.pix);
               return;
 	      }
@@ -1293,7 +1299,7 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
       }
       // keep this check here if you don't want the CMUcam2 GUI to hang after exiting a command in line mode
       while (!cc3_uart_has_data (0)) {
-        if (fgetc (stdin) == '\r') {
+        if (getchar() == '\r') {
           free (img.pix);
           return;
 	 }
@@ -1373,7 +1379,7 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
       return;
 
     while (!cc3_uart_has_data (0)) {
-      if (fgetc (stdin) == '\r')
+      if (getchar() == '\r')
         break;
     }
   } while (!poll_mode);
@@ -1547,22 +1553,22 @@ void print_cr ()
 int32_t cmucam2_get_command (cmucam2_command_t *cmd, uint32_t *arg_list)
 {
   char line_buf[MAX_LINE];
-  char c;
+  int c;
   char *token;
   bool fail = false;
-  int32_t length, argc;
+  uint32_t length, argc;
   uint32_t i;
 
   length = 0;
   c = 0;
   while (c != '\r') {
-    c = fgetc (stdin);
+    c = getchar();
 
-    if (length < (MAX_LINE - 1)) {
+    if (length < (MAX_LINE - 1) && c != EOF) {
       line_buf[length] = c;
       length++;
     } else {
-      // too long
+      // too long or EOF
       return -1;
     }
   }
@@ -1624,6 +1630,63 @@ int32_t cmucam2_get_command (cmucam2_command_t *cmd, uint32_t *arg_list)
   }
 
   return -1;
+}
+
+int32_t cmucam2_get_command_raw (cmucam2_command_t *cmd, uint32_t *arg_list)
+{
+  bool fail;
+  int c;
+  unsigned int i;
+  uint32_t argc;
+
+  char cmd_str[3];
+  cmd_str[2] = '\0';
+
+  // read characters
+  for (i = 0; i < 2; i++) {
+    c = getchar();
+    if (c == EOF) {
+      return -1;
+    }
+
+    cmd_str[i] = c;
+  }
+
+  // do lookup of command
+  fail = true;
+  for (i = 0; i < CMUCAM2_CMDS_COUNT; i++) {
+    if (strcmp (cmd_str, cmucam2_cmds[i]) == 0) {
+      fail = false;
+      *cmd = i;
+      break;
+    }
+  }
+  if (fail) {
+    return -1;
+  }
+
+  // read argc
+  c = getchar();
+  if (c == EOF) {
+    return -1;
+  }
+  argc = c;
+  if (argc > MAX_ARGS) {
+    return -1;
+  }
+
+  // read args
+  for (i = 0; i < argc; i++) {
+    c = getchar();
+    if (c == EOF) {
+      return -1;
+    }
+
+    arg_list[i] = toupper(c);
+  }
+
+  // done
+  return argc;
 }
 
 
