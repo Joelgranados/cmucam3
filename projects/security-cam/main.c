@@ -165,7 +165,6 @@ static void save_curr_frame (int width)
 }
 
 
-/* simple hello world, showing features and compiling*/
 int main (void)
 {
   cc3_filesystem_init ();
