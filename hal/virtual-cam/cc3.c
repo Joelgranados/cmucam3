@@ -158,7 +158,7 @@ void cc3_pixbuf_load ()
    if(i>=VIRTUAL_FIFO_SIZE)
 	{
 	  printf( "*Virtual-Camera Error: FIFO ran out of data during frame load.\n" );
-	  exit(0);
+          abort();
 	}
    } while(val!=EOF);
    
@@ -175,7 +175,7 @@ void _cc3_fifo_read_inc (void)
   	virtual_fifo_index++;
   else {
 	  printf( "Virtual Cam Error: FIFO ran out during read.\n" );
-	  exit(0);
+          abort();
 	}
 }
 
