@@ -4,31 +4,18 @@
 #ifndef SURVCAM_H
 #define SURVCAM_H
 
-/* -------------- data -------------------*/
-
-/* Constants */
-static const uint8_t CC3_IMG_HEIGHT = 120;
-static const uint8_t CC3_IMG_WIDTH = CC3_LO_RES_WIDTH;
-
-/* Global variables to store the frames*/
-static uint8_t cc3_prev_img[120][CC3_LO_RES_WIDTH];
-static uint8_t cc3_curr_img[120][CC3_LO_RES_WIDTH];
-
-/* Global thresholds */
-static uint8_t CC3_GLOBAL_THRESH1 = 10;
-static uint16_t CC3_GLOBAL_THRESH2 = 0.2*CC3_LO_RES_WIDTH*132;
 /* ----------- functions -----------------*/
 
 /* function to copy the image from the camera to the variable */
-void copy_frame_prev(void);
+static void copy_frame_prev(int width);
 
 /* function to copy the frame from the camera and simultaneously compute the fame difference with the prev image */
-void copy_frame_n_compute_frame_diff(void);
+static void copy_frame_n_compute_frame_diff(int width);
 
 /* function to threshld the frane difference */
-int8_t threshold_frame_diff(void);
+static int8_t threshold_frame_diff(int width);
 
 /* function to save the current frame to MMC */
-void save_curr_frame(void);
+static void save_curr_frame(int width);
 
 #endif

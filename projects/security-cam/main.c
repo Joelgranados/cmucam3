@@ -24,6 +24,18 @@ Notes:
 #include <cc3_ilp.h>
 #include "security_cam.h"
 
+/* Constants */
+static const uint8_t IMG_HEIGHT = 120;
+
+/* Global variables to store the frames*/
+static uint8_t *prev_img;
+static uint8_t *curr_img;
+
+/* Global thresholds */
+static uint8_t GLOBAL_THRESH1 = 10;
+static uint16_t GLOBAL_THRESH2;  // computed from width
+
+
 // keep track of no. of frames saved
 static uint16_t num_saved_frames = 0;
 
@@ -31,31 +43,31 @@ static uint16_t num_saved_frames = 0;
 static uint16_t num_captured_frames = 0;
 
 /* array to store rows while transfering b/w fifo and ii */
-static uint8_t image_row[CC3_LO_RES_WIDTH * 3];
+static uint8_t *image_row;
 
-cc3_image_t buffer_img_row;
-
-FILE *fin;
+static cc3_image_t buffer_img_row;
 
 /* function to copy the image from the camera to the variable */
-void copy_frame_prev ()
+static void copy_frame_prev (int width)
 {
   cc3_pixel_t pix_temp;
 
   // copy from camera memory, row by row
   uint8_t num_rows_read_from_fifo = 0;
-  while (num_rows_read_from_fifo < CC3_IMG_HEIGHT) {
+  while (num_rows_read_from_fifo < IMG_HEIGHT) {
     cc3_pixbuf_read_rows (buffer_img_row.pix, buffer_img_row.height);
 
-    for (uint8_t col_idx = 0; col_idx < CC3_IMG_WIDTH; col_idx++) {
+    for (uint8_t col_idx = 0; col_idx < width; col_idx++) {
       // get a pixel from the img row memory
       cc3_get_pixel (&buffer_img_row, col_idx, 0, &pix_temp);
 
       // copy the pixel intensity (gray scale value) into the image data structure
-      cc3_curr_img[num_rows_read_from_fifo][col_idx] = pix_temp.channel[1];     //green channel ~ gray
+      curr_img[num_rows_read_from_fifo * width + col_idx] =
+        pix_temp.channel[1];     //green channel ~ gray
 
       // copy the pixel intensity (gray scale value) into the image data structure
-      cc3_prev_img[num_rows_read_from_fifo][col_idx] = pix_temp.channel[1];     //green channel ~ gray
+      prev_img[num_rows_read_from_fifo * width + col_idx] =
+        pix_temp.channel[1];     //green channel ~ gray
     }
 
     // increment the row counter
@@ -64,26 +76,27 @@ void copy_frame_prev ()
 }
 
 /* function to copy the frame from the camera and simultaneously compute the fame difference with the prev image */
-void copy_frame_n_compute_frame_diff ()
+static void copy_frame_n_compute_frame_diff (int width)
 {
   cc3_pixel_t pix_temp;
 
   // copy from camera memory, row by row
   uint8_t num_rows_read_from_fifo = 0;
   while ((cc3_pixbuf_read_rows (buffer_img_row.pix, buffer_img_row.height)) &
-         (num_rows_read_from_fifo < CC3_IMG_HEIGHT)) {
-    // printf("iter: %d \n\r", num_rows_read_from_fifo);
-    for (uint8_t col_idx = 0; col_idx < CC3_IMG_WIDTH; col_idx++) {
+         (num_rows_read_from_fifo < IMG_HEIGHT)) {
+    // printf("iter: %d \r\n", num_rows_read_from_fifo);
+    for (uint8_t col_idx = 0; col_idx < width; col_idx++) {
       // get a pixel from the img row memory
       cc3_get_pixel (&buffer_img_row, col_idx, 0, &pix_temp);
 
       // compute frame diff before storing the new pixel value
-      cc3_prev_img[num_rows_read_from_fifo][col_idx] =
+      prev_img[num_rows_read_from_fifo * width + col_idx] =
         abs (pix_temp.channel[1] -
-             cc3_curr_img[num_rows_read_from_fifo][col_idx]);
+             curr_img[num_rows_read_from_fifo * width + col_idx]);
 
       // copy the pixel intensity (gray scale value) into the image data structure
-      cc3_curr_img[num_rows_read_from_fifo][col_idx] = pix_temp.channel[1];     //green channel ~ gray
+      curr_img[num_rows_read_from_fifo * width + col_idx] =
+        pix_temp.channel[1];     //green channel ~ gray
     }
 
     // increment the counter for no. of rows read from fifo
@@ -92,20 +105,20 @@ void copy_frame_n_compute_frame_diff ()
 }
 
 /* function to threshld the frane difference*/
-int8_t threshold_frame_diff ()
+static int8_t threshold_frame_diff (int width)
 {
   uint16_t num_changed_pixels = 0;
-  for (uint8_t row_idx = 0; row_idx < CC3_IMG_HEIGHT; row_idx++)
-    for (uint8_t col_idx = 0; col_idx < CC3_IMG_WIDTH; col_idx++) {
-      if (cc3_prev_img[row_idx][col_idx] > CC3_GLOBAL_THRESH1)
-        if ((cc3_curr_img[row_idx][col_idx] >
-             40) & (cc3_curr_img[row_idx][col_idx] < 210)) {
+  for (uint8_t row_idx = 0; row_idx < IMG_HEIGHT; row_idx++)
+    for (uint8_t col_idx = 0; col_idx < width; col_idx++) {
+      if (prev_img[row_idx * width + col_idx] > GLOBAL_THRESH1)
+        if ((curr_img[row_idx * width + col_idx] >
+             40) & (curr_img[row_idx * width + col_idx] < 210)) {
           num_changed_pixels++;
         }
     }
 
   // save the frame is this number exceeds the threshold
-  if (num_changed_pixels > CC3_GLOBAL_THRESH2)
+  if (num_changed_pixels > GLOBAL_THRESH2)
     return 1;
   else
     return 0;
@@ -113,7 +126,7 @@ int8_t threshold_frame_diff ()
 
 
 /* function to save the current frame to MMC */
-void save_curr_frame ()
+static void save_curr_frame (int width)
 {
   // name of the curr image
   char img_name[50];
@@ -121,21 +134,27 @@ void save_curr_frame ()
   FILE *fp;
 
   // open a file
-  sprintf (img_name, "%s%04d%s", "c:/img", num_captured_frames, ".pgm");
-  printf ("% Image Saved: s \n\r", img_name);
+#ifdef VIRTUAL_CAM
+  sprintf (img_name, "img%04d.pgm", num_captured_frames);
+#else
+  sprintf (img_name, "c:/img%04d.pgm", num_captured_frames);
+#endif
+  printf ("Image Saved: %s \r\n", img_name);
 
   fp = fopen (img_name, "w");
   if (fp == NULL) {
-    printf ("%s %s\n\r", "Error Opening: ", img_name);
+    printf ("Error opening '%s'\r\n", img_name);
+    perror("fopen");
+    return;
   }
 
   // store the header
-  fprintf (fp, "P2\n%d %d\n255\n", CC3_IMG_WIDTH, CC3_IMG_HEIGHT);
+  fprintf (fp, "P2\n%d %d\n255\n", width, IMG_HEIGHT);
 
   // store the image data
-  for (uint8_t row_idx = 0; row_idx < CC3_IMG_HEIGHT; row_idx++) {
-    for (uint8_t col_idx = 0; col_idx < CC3_IMG_WIDTH; col_idx++) {
-      fprintf (fp, "%d ", cc3_curr_img[row_idx][col_idx]);      // prev img contains frame diff
+  for (uint8_t row_idx = 0; row_idx < IMG_HEIGHT; row_idx++) {
+    for (uint8_t col_idx = 0; col_idx < width; col_idx++) {
+      fprintf (fp, "%d ", curr_img[row_idx * width + col_idx]);      // prev img contains frame diff
     }
 
     fprintf (fp, "\n");
@@ -149,39 +168,52 @@ void save_curr_frame ()
 /* simple hello world, showing features and compiling*/
 int main (void)
 {
-  uint32_t start_time;
-
   cc3_filesystem_init ();
+
   // configure uarts
   cc3_uart_init (0, CC3_UART_RATE_115200, CC3_UART_MODE_8N1,
                  CC3_UART_BINMODE_BINARY);
 
   cc3_camera_init ();
 
-  cc3_set_colorspace (CC3_RGB);
-  cc3_set_resolution (CC3_LOW_RES);
-  cc3_set_auto_white_balance (true);
-  cc3_set_auto_exposure (true);
+  cc3_camera_set_colorspace (CC3_COLORSPACE_RGB);
+  cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_LOW);
+  cc3_camera_set_auto_white_balance (true);
+  cc3_camera_set_auto_exposure (true);
 
-  printf ("Surveillance Camera...\n\r");
+  // do things based on width
+  const int width = cc3_g_pixbuf_frame.width;
+  GLOBAL_THRESH2 = 0.2 * width * 132;
+  prev_img = malloc(IMG_HEIGHT * width);
+  curr_img = malloc(IMG_HEIGHT * width);
+  image_row = cc3_malloc_rows(1);
+
+  if (prev_img == NULL || curr_img == NULL || image_row == NULL) {
+    printf("fatal error with malloc!\r\n");
+    return -1;
+  }
+
+
+  printf ("Surveillance Camera...\r\n");
 
   // decalring buffer to read image from fifo
   buffer_img_row.channels = 3;
-  buffer_img_row.width = CC3_IMG_WIDTH;
+  buffer_img_row.width = width;
   buffer_img_row.height = 1;
-  buffer_img_row.pix = &image_row;
+  buffer_img_row.pix = image_row;
 
-  // sample wait command in ms
-  cc3_wait_ms (1000);
-  cc3_clr_led (0);
-  cc3_clr_led (1);
-  cc3_clr_led (2);
+  // wait for stable
+  cc3_timer_wait_ms (1000);
+  cc3_led_set_state (0, false);
+  cc3_led_set_state (1, false);
+  cc3_led_set_state (2, false);
+  cc3_led_set_state (3, false);
 
-  cc3_set_led (0);              // indicate that the camera is ready
+  cc3_led_set_state (0, true);           // indicate that the camera is ready
 
   // Grab the first frame and copy it as it is to the cc3_prev_img
   cc3_pixbuf_load ();
-  copy_frame_prev ();
+  copy_frame_prev (width);
 
   /* Start the while loop */
   while (1) {
@@ -189,30 +221,28 @@ int main (void)
     cc3_pixbuf_load ();
 
     // compute the frame diff (and store the new frame)
-    copy_frame_n_compute_frame_diff ();
+    copy_frame_n_compute_frame_diff (width);
 
     //save the frame if enough pixels have changed
-    if (threshold_frame_diff () == 1) {
-      cc3_set_led (1);          //blink the led as an indication
+    if (threshold_frame_diff (width) == 1) {
+      cc3_led_set_state (1, true);          //blink the led as an indication
 
-      save_curr_frame ();       // save the frame
+      save_curr_frame (width);       // save the frame
 
       // increment the counter for no. of saved frames
       num_saved_frames++;
 
       // wait for 1 sec before continuin with frame difference
-      start_time = cc3_timer ();
-      while ((cc3_timer () - start_time) < 1000) {;
-      }
+      cc3_timer_wait_ms(1000);
 
       // load a new frame
       cc3_pixbuf_load ();
 
       // only copy the new frame and not compute frame difference
-      copy_frame_prev ();
+      copy_frame_prev (width);
     }
 
-    cc3_clr_led (1);
+    cc3_led_set_state (1, false);
 
     // increment the total image captured counter
     num_captured_frames++;
@@ -220,7 +250,9 @@ int main (void)
   }
 
   // free the allocated memory
-  free (buffer_img_row.pix);
+  free (prev_img);
+  free (curr_img);
+  free (image_row);
 
   // return
   return 0;
