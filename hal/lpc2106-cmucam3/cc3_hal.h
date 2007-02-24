@@ -48,12 +48,12 @@ typedef enum {
  * This structure manages the internal record keeping that can get mapped into camera registers.
  */
 typedef struct {
-    _cc3_camera_type_t camera_type;
     int16_t brightness;
     int16_t contrast;
     uint8_t colorspace;
     uint8_t clock_divider;
     uint8_t resolution;
+    _cc3_camera_type_t camera_type;
     bool auto_exposure;
     bool auto_white_balance;
     bool power_state;

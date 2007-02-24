@@ -37,7 +37,7 @@ endif
 #endif
 
 LIBS+=
-override CFLAGS+=-I$(HALDIR)/../../include -Os -pipe -funit-at-a-time \
+override CFLAGS+=-I$(HALDIR)/../../include -O2 -pipe -funit-at-a-time \
 	-Wall -Wstrict-prototypes -Wcast-align -Wcast-qual \
 	-Wimplicit -Wmissing-declarations -Wmissing-prototypes \
 	-Wnested-externs -Wpointer-arith -Wswitch -Wno-redundant-decls \
