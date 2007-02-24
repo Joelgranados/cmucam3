@@ -56,7 +56,6 @@
 	.section .init, "ax"
 
         .code 32
-        .align 2
 
         .global _boot
         .func   _boot

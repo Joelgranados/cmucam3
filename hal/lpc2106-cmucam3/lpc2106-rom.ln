@@ -30,11 +30,12 @@ MEMORY
 /* Section Definitions */
 SECTIONS
 {
-  /* first section is .text which is used for code */
+  /* .text in ROM which is used for code */
   .text :
   {
     KEEP(*(.init))             /* Startup code from .init-section */
-    *(.text .text.*)           /* remaining code */
+    *(.text)
+    *(.text.*)
     *(.gnu.linkonce.t.*)
     *(.glue_7)
     *(.glue_7t)
@@ -42,55 +43,56 @@ SECTIONS
     *(.gnu.linkonce.r.*)
     *(.rodata)                 /* read-only data (constants) */
     *(.rodata*)
+
+    _etext = . ;
+    PROVIDE (etext = .);
   } > ROM
 
-  . = ALIGN(4);
 
-  _etext = . ;
-  PROVIDE (etext = .);
+  /* first in RAM is the stack, which grows down (ultimately past RAM where
+     it can trigger a data abort on overflow) */
+  .stack :
+  {
+    . += STACK_SIZE;
+    _stack = .;
+  } > RAM
 
-  /* .data section which is used for initialized data */
+
+  /* .data section which is used for initialized data
+     (takes space in both ROM and RAM) */
   .data :
   {
     _data = .;
     *(.data)
     *(.data.*)
     *(.gnu.linkonce.d*)
-    . = ALIGN(4);
     *(.fastrun)
+
+    _edata = . ;
+    PROVIDE (edata = .);
   } > RAM  AT > ROM
 
-  . = ALIGN(4);
-  _edata = . ;
-  PROVIDE (edata = .);
 
-  /* .bss section which is used for uninitialized data */
+  /* .bss section which is used for uninitialized data (just in RAM) */
   .bss (NOLOAD) :
   {
     __bss_start = . ;
     __bss_start__ = . ;
     *(.bss)
+    *(.bss.*)
     *(.gnu.linkonce.b*)
     *(COMMON)
-    . = ALIGN(4);
+
+    __bss_end__ = . ;
+    PROVIDE (__bss_end = .);
   } > RAM
 
-  . = ALIGN(4);
-  __bss_end__ = . ;
-  PROVIDE (__bss_end = .);
 
-  __stack_limit = . ;
-  PROVIDE (__stack_limit = .);
-
-  .stack ALIGN(256) :
-  {
-    . += STACK_SIZE;
-    PROVIDE (_stack = .);
-  } > RAM
-
+  /* now, mark the end of static memory */
   _end = . ;
   PROVIDE (end = .);
 
+  /* mark the end of the heap */
   _heap_end = ORIGIN(RAM) + LENGTH(RAM);
   PROVIDE (heap_end = ORIGIN(RAM) + LENGTH(RAM));
 
