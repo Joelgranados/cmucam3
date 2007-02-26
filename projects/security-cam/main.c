@@ -81,7 +81,7 @@ int main (void)
 
   img_cnt = 0;
   while (true) {
-    char filename[16];
+    char filename[32];
 
 
     // Wait some time for the change to go away and for the image to stabalize
@@ -115,7 +115,7 @@ int main (void)
       tmp = fd_pkt.previous_template;
       fd_pkt.previous_template = fd_pkt.current_template;
       fd_pkt.current_template = tmp;
-      printf ("diff: %d\r\n", fd_pkt.num_pixels);
+      printf ("diff from last frame: %d\r\n", fd_pkt.num_pixels);
     } while (fd_pkt.num_pixels < pixel_change_threshold);
 
     printf ("Changed detected, write jpg!\r\n");
