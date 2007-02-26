@@ -1,258 +1,222 @@
-/* ///////////////////////////////////////////////////////////////////
-Surveillance Camera using CMUCam3
-
-Created By:
-Dhiraj Goel
-ECE, CMU
-Aug, 2006
-
-Notes:
-1. Uses low resolution images (176x144)
-2. Fixed 2 stage thresholding
-3. No filtering till now - can use median filtering to avoid speckle noise
-
-////////////////////////////////////////////////////////////////////// */
-
-
-#include <math.h>
-#include <stdbool.h>
 #include <stdio.h>
-#include <time.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <cc3.h>
-#include <cc3_ilp.h>
-#include "security_cam.h"
+#include <jpeglib.h>
+#include <cc3_frame_diff.h>
 
-/* Constants */
-static const uint8_t IMG_HEIGHT = 120;
-
-/* Global variables to store the frames*/
-static uint8_t *prev_img;
-static uint8_t *curr_img;
-
-/* Global thresholds */
-static uint8_t GLOBAL_THRESH1 = 10;
-static uint16_t GLOBAL_THRESH2;  // computed from width
+#define NUM_PIX_CHANGE_THRESH     10
+#define PIX_CHANGE_THRESH	  20
 
 
-// keep track of no. of frames saved
-static uint16_t num_saved_frames = 0;
-
-// keep track of no. of frames captured by the camera (but not necessarily saved)
-static uint16_t num_captured_frames = 0;
-
-/* array to store rows while transfering b/w fifo and ii */
-static uint8_t *image_row;
-
-static cc3_image_t buffer_img_row;
-
-/* function to copy the image from the camera to the variable */
-static void copy_frame_prev (int width)
-{
-  cc3_pixel_t pix_temp;
-
-  // copy from camera memory, row by row
-  uint8_t num_rows_read_from_fifo = 0;
-  while (num_rows_read_from_fifo < IMG_HEIGHT) {
-    cc3_pixbuf_read_rows (buffer_img_row.pix, buffer_img_row.height);
-
-    for (uint8_t col_idx = 0; col_idx < width; col_idx++) {
-      // get a pixel from the img row memory
-      cc3_get_pixel (&buffer_img_row, col_idx, 0, &pix_temp);
-
-      // copy the pixel intensity (gray scale value) into the image data structure
-      curr_img[num_rows_read_from_fifo * width + col_idx] =
-        pix_temp.channel[1];     //green channel ~ gray
-
-      // copy the pixel intensity (gray scale value) into the image data structure
-      prev_img[num_rows_read_from_fifo * width + col_idx] =
-        pix_temp.channel[1];     //green channel ~ gray
-    }
-
-    // increment the row counter
-    num_rows_read_from_fifo++;
-  }
-}
-
-/* function to copy the frame from the camera and simultaneously compute the fame difference with the prev image */
-static void copy_frame_n_compute_frame_diff (int width)
-{
-  cc3_pixel_t pix_temp;
-
-  // copy from camera memory, row by row
-  uint8_t num_rows_read_from_fifo = 0;
-  while ((cc3_pixbuf_read_rows (buffer_img_row.pix, buffer_img_row.height)) &
-         (num_rows_read_from_fifo < IMG_HEIGHT)) {
-    // printf("iter: %d \r\n", num_rows_read_from_fifo);
-    for (uint8_t col_idx = 0; col_idx < width; col_idx++) {
-      // get a pixel from the img row memory
-      cc3_get_pixel (&buffer_img_row, col_idx, 0, &pix_temp);
-
-      // compute frame diff before storing the new pixel value
-      prev_img[num_rows_read_from_fifo * width + col_idx] =
-        abs (pix_temp.channel[1] -
-             curr_img[num_rows_read_from_fifo * width + col_idx]);
-
-      // copy the pixel intensity (gray scale value) into the image data structure
-      curr_img[num_rows_read_from_fifo * width + col_idx] =
-        pix_temp.channel[1];     //green channel ~ gray
-    }
-
-    // increment the counter for no. of rows read from fifo
-    num_rows_read_from_fifo++;
-  }
-}
-
-/* function to threshld the frane difference*/
-static int8_t threshold_frame_diff (int width)
-{
-  uint16_t num_changed_pixels = 0;
-  for (uint8_t row_idx = 0; row_idx < IMG_HEIGHT; row_idx++)
-    for (uint8_t col_idx = 0; col_idx < width; col_idx++) {
-      if (prev_img[row_idx * width + col_idx] > GLOBAL_THRESH1)
-        if ((curr_img[row_idx * width + col_idx] >
-             40) & (curr_img[row_idx * width + col_idx] < 210)) {
-          num_changed_pixels++;
-        }
-    }
-
-  // save the frame is this number exceeds the threshold
-  if (num_changed_pixels > GLOBAL_THRESH2)
-    return 1;
-  else
-    return 0;
-}
-
-
-/* function to save the current frame to MMC */
-static void save_curr_frame (int width)
-{
-  // name of the curr image
-  char img_name[50];
-
-  FILE *fp;
-
-  // open a file
-#ifdef VIRTUAL_CAM
-  sprintf (img_name, "img%04d.pgm", num_captured_frames);
-#else
-  sprintf (img_name, "c:/img%04d.pgm", num_captured_frames);
-#endif
-  printf ("Image Saved: %s \r\n", img_name);
-
-  fp = fopen (img_name, "w");
-  if (fp == NULL) {
-    printf ("Error opening '%s'\r\n", img_name);
-    perror("fopen");
-    return;
-  }
-
-  // store the header
-  fprintf (fp, "P2\n%d %d\n255\n", width, IMG_HEIGHT);
-
-  // store the image data
-  for (uint8_t row_idx = 0; row_idx < IMG_HEIGHT; row_idx++) {
-    for (uint8_t col_idx = 0; col_idx < width; col_idx++) {
-      fprintf (fp, "%d ", curr_img[row_idx * width + col_idx]);      // prev img contains frame diff
-    }
-
-    fprintf (fp, "\n");
-  }
-
-  // close the file
-  fclose (fp);
-}
-
+static void capture_current_jpeg (FILE * f);
+static void init_jpeg (void);
+static void destroy_jpeg (void);
 
 int main (void)
 {
-  cc3_filesystem_init ();
+  uint32_t img_cnt;
+  void *tmp;
+  FILE *f;
+  cc3_frame_diff_pkt_t fd_pkt;
+  cc3_image_t img;
+  uint32_t pixel_change_threshold;
 
-  // configure uarts
-  cc3_uart_init (0, CC3_UART_RATE_115200, CC3_UART_MODE_8N1,
-                 CC3_UART_BINMODE_BINARY);
+  pixel_change_threshold = NUM_PIX_CHANGE_THRESH;
+
+
+
+
+  cc3_uart_init (0,
+                 CC3_UART_RATE_115200,
+                 CC3_UART_MODE_8N1, CC3_UART_BINMODE_TEXT);
 
   cc3_camera_init ();
 
-  cc3_camera_set_colorspace (CC3_COLORSPACE_RGB);
-  cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_LOW);
-  cc3_camera_set_auto_white_balance (true);
-  cc3_camera_set_auto_exposure (true);
+  cc3_filesystem_init ();
 
-  // do things based on width
-  const int width = cc3_g_pixbuf_frame.width;
-  GLOBAL_THRESH2 = 0.2 * width * 132;
-  prev_img = malloc(IMG_HEIGHT * width);
-  curr_img = malloc(IMG_HEIGHT * width);
-  image_row = cc3_malloc_rows(1);
-
-  if (prev_img == NULL || curr_img == NULL || image_row == NULL) {
-    printf("fatal error with malloc!\r\n");
-    return -1;
-  }
-
-
-  printf ("Surveillance Camera...\r\n");
-
-  // decalring buffer to read image from fifo
-  buffer_img_row.channels = 3;
-  buffer_img_row.width = width;
-  buffer_img_row.height = 1;
-  buffer_img_row.pix = image_row;
-
-  // wait for stable
+  //cc3_set_colorspace(CC3_COLORSPACE_YCRCB);
+  cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_HIGH);
+  // cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 2);
   cc3_timer_wait_ms (1000);
-  cc3_led_set_state (0, false);
-  cc3_led_set_state (1, false);
-  cc3_led_set_state (2, false);
-  cc3_led_set_state (3, false);
 
-  cc3_led_set_state (0, true);           // indicate that the camera is ready
-
-  // Grab the first frame and copy it as it is to the cc3_prev_img
+  // init pixbuf with width and height
   cc3_pixbuf_load ();
-  copy_frame_prev (width);
 
-  /* Start the while loop */
-  while (1) {
-    // load a new frame
+  // init jpeg
+  init_jpeg ();
+
+  cc3_led_set_state (1, true);
+
+  cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_LOW);
+
+  fd_pkt.coi = 1;
+  cc3_pixbuf_frame_set_coi (fd_pkt.coi);
+  fd_pkt.template_width = 16;
+  fd_pkt.template_height = 16;
+  fd_pkt.previous_template =
+    malloc (fd_pkt.template_width * fd_pkt.template_height *
+            sizeof (uint32_t));
+
+  if (fd_pkt.previous_template == NULL)
+    printf ("Malloc FD startup error!\r");
+
+  fd_pkt.current_template =
+    malloc (fd_pkt.template_width * fd_pkt.template_height *
+            sizeof (uint32_t));
+
+  if (fd_pkt.current_template == NULL)
+    printf ("Malloc FD startup error!\r");
+
+  fd_pkt.total_x = cc3_g_pixbuf_frame.width;
+  fd_pkt.total_y = cc3_g_pixbuf_frame.height;
+  fd_pkt.load_frame = 1;        // load a new frame
+  fd_pkt.threshold = PIX_CHANGE_THRESH;
+
+  img.channels = 1;
+  img.width = cc3_g_pixbuf_frame.width;
+  img.height = 1;               // image will hold just 1 row for scanline processing
+  img.pix = malloc (img.width);
+
+
+
+  img_cnt = 0;
+  while (true) {
+    char filename[16];
+
+
+    // Wait some time for the change to go away and for the image to stabalize
+    cc3_timer_wait_ms (2000);
+
     cc3_pixbuf_load ();
-
-    // compute the frame diff (and store the new frame)
-    copy_frame_n_compute_frame_diff (width);
-
-    //save the frame if enough pixels have changed
-    if (threshold_frame_diff (width) == 1) {
-      cc3_led_set_state (1, true);          //blink the led as an indication
-
-      save_curr_frame (width);       // save the frame
-
-      // increment the counter for no. of saved frames
-      num_saved_frames++;
-
-      // wait for 1 sec before continuin with frame difference
-      cc3_timer_wait_ms(1000);
-
-      // load a new frame
-      cc3_pixbuf_load ();
-
-      // only copy the new frame and not compute frame difference
-      copy_frame_prev (width);
+    fd_pkt.load_frame = 1;      // load a new frame
+    if (cc3_frame_diff_scanline_start (&fd_pkt) != 0) {
+      while (cc3_pixbuf_read_rows (img.pix, 1)) {
+        cc3_frame_diff_scanline (&img, &fd_pkt);
+      }
+      cc3_frame_diff_scanline_finish (&fd_pkt);
     }
+    else
+      printf ("frame diff start error\r");
 
-    cc3_led_set_state (1, false);
+    fd_pkt.load_frame = 0;      // load a new frame
+    do {
 
-    // increment the total image captured counter
-    num_captured_frames++;
+      cc3_pixbuf_load ();
+      if (cc3_frame_diff_scanline_start (&fd_pkt) != 0) {
+        while (cc3_pixbuf_read_rows (img.pix, 1)) {
+          cc3_frame_diff_scanline (&img, &fd_pkt);
+        }
+        cc3_frame_diff_scanline_finish (&fd_pkt);
+      }
+      else
+        printf ("frame diff start error\r");
 
+      // swap last frame template with current 
+      tmp = fd_pkt.previous_template;
+      fd_pkt.previous_template = fd_pkt.current_template;
+      fd_pkt.current_template = tmp;
+      printf ("diff: %d\r\n", fd_pkt.num_pixels);
+    } while (fd_pkt.num_pixels < pixel_change_threshold);
+
+    printf ("Changed detected, write jpg!\r\n");
+
+    // Check if files exist, if they do then skip over them 
+    do {
+#ifdef VIRTUAL_CAM
+      snprintf (filename, 16, "img%.5d.jpg", img_cnt);
+#else
+      snprintf (filename, 16, "c:/img%.5d.jpg", img_cnt);
+#endif
+      f = fopen (filename, "r");
+      if (f != NULL) {
+        printf ("%s already exists...\n", filename);
+        img_cnt++;
+        fclose (f);
+      }
+    } while (f != NULL);
+
+    // close read only file
+    //fclose (f);
+    // print file that you are going to write to stderr
+    fprintf (stderr, "%s\r\n", filename);
+    f = fopen (filename, "w");
+    if (f == NULL || img_cnt > 200) {
+      cc3_led_set_state (3, true);
+      printf ("Error: Can't open file\r\n");
+      if (img_cnt > 200)
+        printf ("Card full\r\n");
+      while (1);
+    }
+    capture_current_jpeg (f);
+
+    fclose (f);
+    img_cnt++;
   }
 
-  // free the allocated memory
-  free (prev_img);
-  free (curr_img);
-  free (image_row);
 
-  // return
+  destroy_jpeg ();
   return 0;
+}
+
+
+
+
+static struct jpeg_compress_struct cinfo;
+static struct jpeg_error_mgr jerr;
+//static cc3_pixel_t *row;
+uint8_t *row;
+
+void init_jpeg (void)
+{
+  cinfo.err = jpeg_std_error (&jerr);
+  jpeg_create_compress (&cinfo);
+
+  // parameters for jpeg image
+  cinfo.image_width = cc3_g_pixbuf_frame.width;
+  cinfo.image_height = cc3_g_pixbuf_frame.height;
+  printf ("image width=%d image height=%d\n", cinfo.image_width,
+          cinfo.image_height);
+  cinfo.input_components = 3;
+  // cinfo.in_color_space = JCS_YCbCr;
+  cinfo.in_color_space = JCS_RGB;
+
+  // set image quality, etc.
+  jpeg_set_defaults (&cinfo);
+  jpeg_set_quality (&cinfo, 100, true);
+
+  // allocate memory for 1 row
+  row = cc3_malloc_rows (1);
+  if (row == NULL)
+    printf ("Out of memory!\n");
+}
+
+void capture_current_jpeg (FILE * f)
+{
+  JSAMPROW row_pointer[1];
+  row_pointer[0] = row;
+
+  // output is file
+  jpeg_stdio_dest (&cinfo, f);
+
+  // capture a frame to the FIFO
+  //cc3_pixbuf_load();
+  cc3_pixbuf_rewind ();
+
+  // read and compress
+  jpeg_start_compress (&cinfo, TRUE);
+  while (cinfo.next_scanline < cinfo.image_height) {
+    cc3_pixbuf_read_rows (row, 1);
+    jpeg_write_scanlines (&cinfo, row_pointer, 1);
+  }
+
+  // finish
+  jpeg_finish_compress (&cinfo);
+}
+
+
+
+void destroy_jpeg (void)
+{
+  jpeg_destroy_compress (&cinfo);
+  free (row);
 }
