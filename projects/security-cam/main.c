@@ -78,7 +78,6 @@ int main (void)
   img.pix = malloc (img.width);
 
 
-
   img_cnt = 0;
   while (true) {
     char filename[32];
