@@ -135,8 +135,6 @@ int main (void)
       }
     } while (f != NULL);
 
-    // close read only file
-    //fclose (f);
     // print file that you are going to write to stderr
     fprintf (stderr, "%s\r\n", filename);
     f = fopen (filename, "w");
