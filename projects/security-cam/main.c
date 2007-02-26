@@ -136,7 +136,7 @@ int main (void)
     } while (f != NULL);
 
     // print file that you are going to write to stderr
-    fprintf (stderr, "%s\r\n", filename);
+    fprintf (stderr, "<%s>\r\n", filename);
     f = fopen (filename, "w");
     if (f == NULL || img_cnt > 200) {
       cc3_led_set_state (3, true);
