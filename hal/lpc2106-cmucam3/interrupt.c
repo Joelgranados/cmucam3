@@ -120,20 +120,44 @@ void interrupt (void)
 //asm volatile ( "msr cpsr_c,0xDF" );  // MODE_SYS | I_BIT | F_BIT
 }
 
-
-void undefined (void)
-{
-  // blink
-  while (1) {
-    
-  }
-}
-
 void swi (void)
 {
     uart0_write ("swi!\r\n");
     // XXX: tell us something
     exit (-1);
+}
+
+
+static void panic_blink(uint8_t leds) {
+  // set LEDs to output
+  REG (GPIO_IODIR) |= _CC3_LED_0 | _CC3_LED_1 | _CC3_LED_2;
+
+  // clear LEDs
+  REG (GPIO_IOCLR) = _CC3_LED_0 | _CC3_LED_1 | _CC3_LED_2;
+
+  // blink
+  while (true) {
+    if (leds & 1) {
+      REG (GPIO_IOSET) = _CC3_LED_1;
+    }
+    if (leds & 2) {
+      REG (GPIO_IOSET) = _CC3_LED_2;
+    }
+    cc3_timer_wait_ms(500);
+
+    if (leds & 1) {
+      REG (GPIO_IOCLR) = _CC3_LED_1;
+    }
+    if (leds & 2) {
+      REG (GPIO_IOCLR) = _CC3_LED_2;
+    }
+    cc3_timer_wait_ms(500);
+  }
+}
+
+void undefined (void)
+{
+  panic_blink(1);
 }
 
 void prefetch_abort (void)
@@ -143,7 +167,8 @@ void prefetch_abort (void)
     uart0_write ("prefetch abort!\r\n");
     uart0_write_hex (prev_pc);
     // XXX: register dump
-    exit (-1);
+
+    panic_blink(2);
 }
 
 void data_abort (void)
@@ -153,5 +178,6 @@ void data_abort (void)
     uart0_write ("data abort!\r\n");
     uart0_write_hex (prev_pc);
     // XXX: register dump
-    exit (-1);
+
+    panic_blink(3);
 }
