@@ -10,7 +10,7 @@
 #include <cc3_img_writer.h>
 #include "polly.h"
 
-#define MMC_DEBUG
+//#define MMC_DEBUG
 
 
 ccr_config_t g_cc_conf;
@@ -40,20 +40,13 @@ int polly (polly_config_t config)
   cc3_pixel_t right_pix;
   cc3_pixel_t down_pix;
 
-
   // limit the recursive depth
   if (config.min_blob_size > 30)
     return 0;
 
-  cc3_camera_set_colorspace (CC3_COLORSPACE_RGB);
-  cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_LOW);
-  cc3_camera_set_auto_white_balance (true);
-  cc3_camera_set_auto_exposure (true);
-
-  cc3_pixbuf_load();
-
-  cc3_pixbuf_frame_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 2);
-  cc3_pixbuf_frame_set_coi (CC3_CHANNEL_GREEN);
+ 
+ 
+   
 
 
   // setup an image structure 
@@ -95,8 +88,10 @@ int polly (polly_config_t config)
 
 #ifdef MMC_DEBUG
   cc3_pixbuf_frame_set_coi (CC3_CHANNEL_ALL);
+  cc3_timer_wait_ms(500);
   write_raw_fifo_ppm ();
   cc3_pixbuf_frame_set_coi (CC3_CHANNEL_GREEN);
+  cc3_timer_wait_ms(500);
   cc3_pixbuf_rewind ();
 #endif
 
@@ -154,36 +149,11 @@ int polly (polly_config_t config)
   matrix_to_pgm (&polly_img);
 #endif
   generate_polly_histogram (&polly_img, config.histogram);
-
-  /*x_axis = malloc(polly_img.width);
-     for(i=0; i<polly_img.width; i++ )
-     x_axis[i]=i;
-
-
-     lreg(x_axis, config.histogram, polly_img.width,&reg_line);
-
-     printf( "a=%f\n",reg_line.a );     
-     printf( "b=%f\n",reg_line.b );     
-     printf( "r^2=%f\n",reg_line.r_sqr );     
-
-     double distance;
-     distance=reg_line.a+reg_line.b*(polly_img.width/2);
-     printf( "distance = %f\n",distance ); 
-
-     convert_histogram_to_ppm (&polly_img, config.histogram);
-
-
-     #ifdef MMC_DEBUG
-     //    matrix_to_pgm (&polly_img);
-     #endif
-     //   printf( "Frame done, time=%d\n",cc3_timer()-last_time );
-     // send a histogram packet
-     printf( "H " );
-     for(int i=5; i<polly_img.width; i+=5)
-     printf( "%d ",polly_img.height-config.histogram[i] );
-     printf( "\r" );
-   */
-
+#ifdef MMC_DEBUG
+  convert_histogram_to_ppm (&polly_img, config.histogram);
+  matrix_to_pgm (&polly_img);
+#endif
+  printf( "done!\r\n" );
   free (img.pix);               // don't forget to free!
   free (polly_img.pix);
   // free (x_axis);             
@@ -423,8 +393,8 @@ void generate_polly_histogram (cc3_image_t * img, int8_t * hist)
 
 }
 
-/*
-void convert_histogram_to_ppm (cc3_image_t * img, uint8_t * hist)
+
+void convert_histogram_to_ppm (cc3_image_t * img, int8_t * hist)
 {
   int x, y;
   int width, height;
@@ -432,7 +402,7 @@ void convert_histogram_to_ppm (cc3_image_t * img, uint8_t * hist)
 
   width = img->width;
   height = img->height;
-
+  printf( "%d %d\r\n",width, height );
   // Write the range image out    
   p.channel[0] = 0;
   for (y = 0; y < height; y++)
@@ -447,7 +417,7 @@ void convert_histogram_to_ppm (cc3_image_t * img, uint8_t * hist)
     }
   }
 }
-*/
+
 
 
 void matrix_to_pgm (cc3_image_t * img)

@@ -78,7 +78,6 @@ cc3_pixel_t p;
 
 size_x = img->width;
 size_y = img->height;
-    
     fp = fopen(filename, "w"); 
     if(fp==NULL )
     {
