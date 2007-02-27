@@ -71,7 +71,7 @@ void cc3_pixbuf_load ()
 
   unsigned int i;
 
-  if (!_cc3_g_current_camera_state.power_state) {
+  if (REG (GPIO_IOPIN) & _CC3_CAM_POWER_DOWN) {
     return;
   }
 
@@ -526,7 +526,6 @@ bool cc3_camera_init ()
   _cc3_fifo_reset ();
 
   _cc3_g_current_camera_state.camera_type = _CC3_OV6620;        // XXX add autodetect code
-  _cc3_g_current_camera_state.power_state = true;
   _cc3_g_current_camera_state.clock_divider = 0;
   _cc3_g_current_camera_state.brightness = -1;
   _cc3_g_current_camera_state.contrast = -1;
@@ -693,8 +692,11 @@ void _cc3_update_frame_bounds (cc3_frame_t *f)
 
 void cc3_camera_set_power_state (bool state)
 {
-  _cc3_g_current_camera_state.power_state = state;
-  _cc3_set_register_state ();
+  if (state) {
+    REG (GPIO_IOCLR) = _CC3_CAM_POWER_DOWN;
+  } else {
+    REG (GPIO_IOSET) = _CC3_CAM_POWER_DOWN;
+  }
 }
 
 void cc3_camera_set_colorspace (cc3_colorspace_t colorspace)
@@ -772,15 +774,6 @@ bool _cc3_set_register_state ()
   case _CC3_OV6620:
     // Set the right data bus mode
     result &= cc3_camera_set_raw_register (0x14, 0x20);
-
-    // set the power state
-    if (_cc3_g_current_camera_state.power_state) {
-      // wake up the camera
-      result &= cc3_camera_set_raw_register (0x3F, 0x02);
-    } else {
-      // sleep the camera
-      result &= cc3_camera_set_raw_register (0x3F, 0x12);
-    }
 
     // Set the resolution and update the size flags
     if (_cc3_g_current_camera_state.resolution == CC3_CAMERA_RESOLUTION_LOW) {

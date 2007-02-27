@@ -56,7 +56,6 @@ typedef struct {
     _cc3_camera_type_t camera_type;
     bool auto_exposure;
     bool auto_white_balance;
-    bool power_state;
 } _cc3_camera_state_t;
 
 // called only from startup.s
