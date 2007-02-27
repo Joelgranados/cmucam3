@@ -226,4 +226,63 @@ Public Class Form1
   
    
     
+    Private Sub vwSet_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles vwSet.Click
+        serialPort.Write("VW " & X0_textbox.Text & " " & Y0_textbox.Text & " " & X1_textbox.Text & " " & Y1_textbox.Text & vbCr)
+    End Sub
+
+   
+    Private Sub HiResRadio_CheckedChanged(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles HiResRadio.CheckedChanged
+        serialPort.Write("HR 1" & vbCr)
+    End Sub
+
+    Private Sub loResRadio_CheckedChanged(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles loResRadio.CheckedChanged
+        If (configPanel.Enabled = True) Then
+            serialPort.Write("HR 0" & vbCr)
+        End If
+
+    End Sub
+
+    Private Sub RGBRadio_CheckedChanged(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles RGBRadio.CheckedChanged
+        If (configPanel.Enabled = True) Then
+            serialPort.Write("CR 18 44" & vbCr)
+        End If
+    End Sub
+
+    Private Sub YCrCbButton_CheckedChanged(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles YCrCbButton.CheckedChanged
+        If (configPanel.Enabled = True) Then
+            serialPort.Write("CR 18 36" & vbCr)
+        End If
+
+    End Sub
+
+    Private Sub dsSetButton_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles dsSetButton.Click
+        If (configPanel.Enabled = True) Then
+            serialPort.Write("DS " & dsX.Value & " " & dsY.Value & vbCr)
+        End If
+
+    End Sub
+
+    Private Sub TrackBar1_Scroll(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles TrackBar1.Scroll
+        servo0_textbox.Clear()
+        servo0_textbox.AppendText(TrackBar1.Value)
+        serialPort.Write("SV 0 " & servo0_textbox.Text & vbCr)
+    End Sub
+
+    Private Sub TrackBar2_Scroll(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles TrackBar2.Scroll
+        servo1_textbox.Clear()
+        servo1_textbox.AppendText(TrackBar2.Value)
+        serialPort.Write("SV 1 " & servo1_textbox.Text & vbCr)
+    End Sub
+
+    Private Sub TrackBar3_Scroll(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles TrackBar3.Scroll
+        servo2_textbox.Clear()
+        servo2_textbox.AppendText(TrackBar3.Value)
+        serialPort.Write("SV 2 " & servo2_textbox.Text & vbCr)
+    End Sub
+
+    Private Sub TrackBar4_Scroll(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles TrackBar4.Scroll
+        servo3_textbox.Clear()
+        servo3_textbox.AppendText(TrackBar4.Value)
+        serialPort.Write("SV 3 " & servo3_textbox.Text & vbCr)
+    End Sub
 End Class

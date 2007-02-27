@@ -46,7 +46,35 @@ Partial Class Form1
         Me.cbbCOMPorts = New System.Windows.Forms.ComboBox
         Me.Label1 = New System.Windows.Forms.Label
         Me.TabPage2 = New System.Windows.Forms.TabPage
+        Me.ServoPanel = New System.Windows.Forms.Panel
+        Me.TrackBar4 = New System.Windows.Forms.TrackBar
+        Me.TrackBar3 = New System.Windows.Forms.TrackBar
+        Me.TrackBar2 = New System.Windows.Forms.TrackBar
+        Me.Label18 = New System.Windows.Forms.Label
+        Me.servo3_textbox = New System.Windows.Forms.TextBox
+        Me.servo2_textbox = New System.Windows.Forms.TextBox
+        Me.servo1_textbox = New System.Windows.Forms.TextBox
+        Me.servo0_textbox = New System.Windows.Forms.TextBox
+        Me.Label17 = New System.Windows.Forms.Label
+        Me.Label16 = New System.Windows.Forms.Label
+        Me.Label15 = New System.Windows.Forms.Label
+        Me.Label14 = New System.Windows.Forms.Label
+        Me.TrackBar1 = New System.Windows.Forms.TrackBar
         Me.configPanel = New System.Windows.Forms.Panel
+        Me.Label13 = New System.Windows.Forms.Label
+        Me.Label12 = New System.Windows.Forms.Label
+        Me.Label11 = New System.Windows.Forms.Label
+        Me.Label10 = New System.Windows.Forms.Label
+        Me.Y1_textbox = New System.Windows.Forms.MaskedTextBox
+        Me.X1_textbox = New System.Windows.Forms.MaskedTextBox
+        Me.Y0_textbox = New System.Windows.Forms.MaskedTextBox
+        Me.X0_textbox = New System.Windows.Forms.MaskedTextBox
+        Me.Label9 = New System.Windows.Forms.Label
+        Me.vwSet = New System.Windows.Forms.Button
+        Me.dsSetButton = New System.Windows.Forms.Button
+        Me.Label8 = New System.Windows.Forms.Label
+        Me.Label7 = New System.Windows.Forms.Label
+        Me.dsY = New System.Windows.Forms.NumericUpDown
         Me.Label6 = New System.Windows.Forms.Label
         Me.dsX = New System.Windows.Forms.NumericUpDown
         Me.Panel1 = New System.Windows.Forms.Panel
@@ -55,49 +83,21 @@ Partial Class Form1
         Me.Panel2 = New System.Windows.Forms.Panel
         Me.RGBRadio = New System.Windows.Forms.RadioButton
         Me.YCrCbButton = New System.Windows.Forms.RadioButton
-        Me.dsY = New System.Windows.Forms.NumericUpDown
-        Me.Label7 = New System.Windows.Forms.Label
-        Me.Label8 = New System.Windows.Forms.Label
-        Me.dsSetButton = New System.Windows.Forms.Button
-        Me.vwSet = New System.Windows.Forms.Button
-        Me.Label9 = New System.Windows.Forms.Label
-        Me.MaskedTextBox1 = New System.Windows.Forms.MaskedTextBox
-        Me.MaskedTextBox2 = New System.Windows.Forms.MaskedTextBox
-        Me.MaskedTextBox3 = New System.Windows.Forms.MaskedTextBox
-        Me.MaskedTextBox4 = New System.Windows.Forms.MaskedTextBox
-        Me.Label10 = New System.Windows.Forms.Label
-        Me.Label11 = New System.Windows.Forms.Label
-        Me.Label12 = New System.Windows.Forms.Label
-        Me.Label13 = New System.Windows.Forms.Label
-        Me.TrackBar1 = New System.Windows.Forms.TrackBar
-        Me.ServoPanel = New System.Windows.Forms.Panel
-        Me.Label14 = New System.Windows.Forms.Label
-        Me.Label15 = New System.Windows.Forms.Label
-        Me.Label16 = New System.Windows.Forms.Label
-        Me.Label17 = New System.Windows.Forms.Label
-        Me.TextBox1 = New System.Windows.Forms.TextBox
-        Me.TextBox2 = New System.Windows.Forms.TextBox
-        Me.TextBox3 = New System.Windows.Forms.TextBox
-        Me.TextBox4 = New System.Windows.Forms.TextBox
-        Me.Label18 = New System.Windows.Forms.Label
-        Me.TrackBar2 = New System.Windows.Forms.TrackBar
-        Me.TrackBar3 = New System.Windows.Forms.TrackBar
-        Me.TrackBar4 = New System.Windows.Forms.TrackBar
         Me.TabControl1.SuspendLayout()
         Me.TabPage1.SuspendLayout()
         Me.Panel3.SuspendLayout()
         CType(Me.PictureBox1, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.TabPage2.SuspendLayout()
+        Me.ServoPanel.SuspendLayout()
+        CType(Me.TrackBar4, System.ComponentModel.ISupportInitialize).BeginInit()
+        CType(Me.TrackBar3, System.ComponentModel.ISupportInitialize).BeginInit()
+        CType(Me.TrackBar2, System.ComponentModel.ISupportInitialize).BeginInit()
+        CType(Me.TrackBar1, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.configPanel.SuspendLayout()
+        CType(Me.dsY, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.dsX, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.Panel1.SuspendLayout()
         Me.Panel2.SuspendLayout()
-        CType(Me.dsY, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.TrackBar1, System.ComponentModel.ISupportInitialize).BeginInit()
-        Me.ServoPanel.SuspendLayout()
-        CType(Me.TrackBar2, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.TrackBar3, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.TrackBar4, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
         'Timer1
@@ -363,16 +363,154 @@ Partial Class Form1
         Me.TabPage2.Text = "Settings"
         Me.TabPage2.UseVisualStyleBackColor = True
         '
+        'ServoPanel
+        '
+        Me.ServoPanel.Controls.Add(Me.TrackBar4)
+        Me.ServoPanel.Controls.Add(Me.TrackBar3)
+        Me.ServoPanel.Controls.Add(Me.TrackBar2)
+        Me.ServoPanel.Controls.Add(Me.Label18)
+        Me.ServoPanel.Controls.Add(Me.servo3_textbox)
+        Me.ServoPanel.Controls.Add(Me.servo2_textbox)
+        Me.ServoPanel.Controls.Add(Me.servo1_textbox)
+        Me.ServoPanel.Controls.Add(Me.servo0_textbox)
+        Me.ServoPanel.Controls.Add(Me.Label17)
+        Me.ServoPanel.Controls.Add(Me.Label16)
+        Me.ServoPanel.Controls.Add(Me.Label15)
+        Me.ServoPanel.Controls.Add(Me.Label14)
+        Me.ServoPanel.Controls.Add(Me.TrackBar1)
+        Me.ServoPanel.Enabled = False
+        Me.ServoPanel.Location = New System.Drawing.Point(478, 133)
+        Me.ServoPanel.Name = "ServoPanel"
+        Me.ServoPanel.Size = New System.Drawing.Size(277, 200)
+        Me.ServoPanel.TabIndex = 7
+        '
+        'TrackBar4
+        '
+        Me.TrackBar4.Location = New System.Drawing.Point(28, 156)
+        Me.TrackBar4.Maximum = 255
+        Me.TrackBar4.Name = "TrackBar4"
+        Me.TrackBar4.Size = New System.Drawing.Size(170, 42)
+        Me.TrackBar4.TabIndex = 22
+        Me.TrackBar4.TickFrequency = 8
+        Me.TrackBar4.Value = 128
+        '
+        'TrackBar3
+        '
+        Me.TrackBar3.Location = New System.Drawing.Point(28, 117)
+        Me.TrackBar3.Maximum = 255
+        Me.TrackBar3.Name = "TrackBar3"
+        Me.TrackBar3.Size = New System.Drawing.Size(170, 42)
+        Me.TrackBar3.TabIndex = 21
+        Me.TrackBar3.TickFrequency = 8
+        Me.TrackBar3.Value = 128
+        '
+        'TrackBar2
+        '
+        Me.TrackBar2.Location = New System.Drawing.Point(28, 79)
+        Me.TrackBar2.Maximum = 255
+        Me.TrackBar2.Name = "TrackBar2"
+        Me.TrackBar2.Size = New System.Drawing.Size(170, 42)
+        Me.TrackBar2.TabIndex = 20
+        Me.TrackBar2.TickFrequency = 8
+        Me.TrackBar2.Value = 128
+        '
+        'Label18
+        '
+        Me.Label18.AutoSize = True
+        Me.Label18.Location = New System.Drawing.Point(68, 11)
+        Me.Label18.Name = "Label18"
+        Me.Label18.Size = New System.Drawing.Size(82, 13)
+        Me.Label18.TabIndex = 19
+        Me.Label18.Text = "Servo Controller"
+        '
+        'servo3_textbox
+        '
+        Me.servo3_textbox.Location = New System.Drawing.Point(213, 156)
+        Me.servo3_textbox.Name = "servo3_textbox"
+        Me.servo3_textbox.Size = New System.Drawing.Size(42, 20)
+        Me.servo3_textbox.TabIndex = 18
+        Me.servo3_textbox.Text = "128"
+        '
+        'servo2_textbox
+        '
+        Me.servo2_textbox.Location = New System.Drawing.Point(213, 117)
+        Me.servo2_textbox.Name = "servo2_textbox"
+        Me.servo2_textbox.Size = New System.Drawing.Size(42, 20)
+        Me.servo2_textbox.TabIndex = 17
+        Me.servo2_textbox.Text = "128"
+        '
+        'servo1_textbox
+        '
+        Me.servo1_textbox.Location = New System.Drawing.Point(213, 79)
+        Me.servo1_textbox.Name = "servo1_textbox"
+        Me.servo1_textbox.Size = New System.Drawing.Size(42, 20)
+        Me.servo1_textbox.TabIndex = 16
+        Me.servo1_textbox.Text = "128"
+        '
+        'servo0_textbox
+        '
+        Me.servo0_textbox.Location = New System.Drawing.Point(213, 45)
+        Me.servo0_textbox.Name = "servo0_textbox"
+        Me.servo0_textbox.Size = New System.Drawing.Size(42, 20)
+        Me.servo0_textbox.TabIndex = 15
+        Me.servo0_textbox.Text = "128"
+        '
+        'Label17
+        '
+        Me.Label17.AutoSize = True
+        Me.Label17.Location = New System.Drawing.Point(9, 163)
+        Me.Label17.Name = "Label17"
+        Me.Label17.Size = New System.Drawing.Size(13, 13)
+        Me.Label17.TabIndex = 14
+        Me.Label17.Text = "3"
+        '
+        'Label16
+        '
+        Me.Label16.AutoSize = True
+        Me.Label16.Location = New System.Drawing.Point(9, 124)
+        Me.Label16.Name = "Label16"
+        Me.Label16.Size = New System.Drawing.Size(13, 13)
+        Me.Label16.TabIndex = 12
+        Me.Label16.Text = "2"
+        '
+        'Label15
+        '
+        Me.Label15.AutoSize = True
+        Me.Label15.Location = New System.Drawing.Point(9, 86)
+        Me.Label15.Name = "Label15"
+        Me.Label15.Size = New System.Drawing.Size(13, 13)
+        Me.Label15.TabIndex = 10
+        Me.Label15.Text = "1"
+        '
+        'Label14
+        '
+        Me.Label14.AutoSize = True
+        Me.Label14.Location = New System.Drawing.Point(9, 48)
+        Me.Label14.Name = "Label14"
+        Me.Label14.Size = New System.Drawing.Size(13, 13)
+        Me.Label14.TabIndex = 8
+        Me.Label14.Text = "0"
+        '
+        'TrackBar1
+        '
+        Me.TrackBar1.Location = New System.Drawing.Point(28, 35)
+        Me.TrackBar1.Maximum = 255
+        Me.TrackBar1.Name = "TrackBar1"
+        Me.TrackBar1.Size = New System.Drawing.Size(170, 42)
+        Me.TrackBar1.TabIndex = 7
+        Me.TrackBar1.TickFrequency = 8
+        Me.TrackBar1.Value = 128
+        '
         'configPanel
         '
         Me.configPanel.Controls.Add(Me.Label13)
         Me.configPanel.Controls.Add(Me.Label12)
         Me.configPanel.Controls.Add(Me.Label11)
         Me.configPanel.Controls.Add(Me.Label10)
-        Me.configPanel.Controls.Add(Me.MaskedTextBox4)
-        Me.configPanel.Controls.Add(Me.MaskedTextBox3)
-        Me.configPanel.Controls.Add(Me.MaskedTextBox2)
-        Me.configPanel.Controls.Add(Me.MaskedTextBox1)
+        Me.configPanel.Controls.Add(Me.Y1_textbox)
+        Me.configPanel.Controls.Add(Me.X1_textbox)
+        Me.configPanel.Controls.Add(Me.Y0_textbox)
+        Me.configPanel.Controls.Add(Me.X0_textbox)
         Me.configPanel.Controls.Add(Me.Label9)
         Me.configPanel.Controls.Add(Me.vwSet)
         Me.configPanel.Controls.Add(Me.dsSetButton)
@@ -388,6 +526,129 @@ Partial Class Form1
         Me.configPanel.Name = "configPanel"
         Me.configPanel.Size = New System.Drawing.Size(453, 301)
         Me.configPanel.TabIndex = 6
+        '
+        'Label13
+        '
+        Me.Label13.AutoSize = True
+        Me.Label13.Location = New System.Drawing.Point(302, 151)
+        Me.Label13.Name = "Label13"
+        Me.Label13.Size = New System.Drawing.Size(20, 13)
+        Me.Label13.TabIndex = 20
+        Me.Label13.Text = "Y1"
+        '
+        'Label12
+        '
+        Me.Label12.AutoSize = True
+        Me.Label12.Location = New System.Drawing.Point(227, 151)
+        Me.Label12.Name = "Label12"
+        Me.Label12.Size = New System.Drawing.Size(20, 13)
+        Me.Label12.TabIndex = 19
+        Me.Label12.Text = "X1"
+        '
+        'Label11
+        '
+        Me.Label11.AutoSize = True
+        Me.Label11.Location = New System.Drawing.Point(154, 150)
+        Me.Label11.Name = "Label11"
+        Me.Label11.Size = New System.Drawing.Size(20, 13)
+        Me.Label11.TabIndex = 18
+        Me.Label11.Text = "Y0"
+        '
+        'Label10
+        '
+        Me.Label10.AutoSize = True
+        Me.Label10.Location = New System.Drawing.Point(79, 151)
+        Me.Label10.Name = "Label10"
+        Me.Label10.Size = New System.Drawing.Size(20, 13)
+        Me.Label10.TabIndex = 17
+        Me.Label10.Text = "X0"
+        '
+        'Y1_textbox
+        '
+        Me.Y1_textbox.Location = New System.Drawing.Point(326, 148)
+        Me.Y1_textbox.Name = "Y1_textbox"
+        Me.Y1_textbox.Size = New System.Drawing.Size(43, 20)
+        Me.Y1_textbox.TabIndex = 16
+        Me.Y1_textbox.Text = "144"
+        '
+        'X1_textbox
+        '
+        Me.X1_textbox.Location = New System.Drawing.Point(253, 148)
+        Me.X1_textbox.Name = "X1_textbox"
+        Me.X1_textbox.Size = New System.Drawing.Size(43, 20)
+        Me.X1_textbox.TabIndex = 15
+        Me.X1_textbox.Text = "176"
+        '
+        'Y0_textbox
+        '
+        Me.Y0_textbox.Location = New System.Drawing.Point(174, 147)
+        Me.Y0_textbox.Name = "Y0_textbox"
+        Me.Y0_textbox.Size = New System.Drawing.Size(43, 20)
+        Me.Y0_textbox.TabIndex = 14
+        Me.Y0_textbox.Text = "0"
+        '
+        'X0_textbox
+        '
+        Me.X0_textbox.Location = New System.Drawing.Point(105, 147)
+        Me.X0_textbox.Name = "X0_textbox"
+        Me.X0_textbox.Size = New System.Drawing.Size(43, 20)
+        Me.X0_textbox.TabIndex = 7
+        Me.X0_textbox.Text = "0"
+        '
+        'Label9
+        '
+        Me.Label9.AutoSize = True
+        Me.Label9.Location = New System.Drawing.Point(11, 150)
+        Me.Label9.Name = "Label9"
+        Me.Label9.Size = New System.Drawing.Size(46, 13)
+        Me.Label9.TabIndex = 13
+        Me.Label9.Text = "Window"
+        '
+        'vwSet
+        '
+        Me.vwSet.Location = New System.Drawing.Point(386, 148)
+        Me.vwSet.Name = "vwSet"
+        Me.vwSet.Size = New System.Drawing.Size(47, 20)
+        Me.vwSet.TabIndex = 12
+        Me.vwSet.Text = "Set"
+        Me.vwSet.UseVisualStyleBackColor = True
+        '
+        'dsSetButton
+        '
+        Me.dsSetButton.Location = New System.Drawing.Point(253, 110)
+        Me.dsSetButton.Name = "dsSetButton"
+        Me.dsSetButton.Size = New System.Drawing.Size(47, 20)
+        Me.dsSetButton.TabIndex = 11
+        Me.dsSetButton.Text = "Set"
+        Me.dsSetButton.UseVisualStyleBackColor = True
+        '
+        'Label8
+        '
+        Me.Label8.AutoSize = True
+        Me.Label8.Location = New System.Drawing.Point(171, 112)
+        Me.Label8.Name = "Label8"
+        Me.Label8.Size = New System.Drawing.Size(14, 13)
+        Me.Label8.TabIndex = 10
+        Me.Label8.Text = "Y"
+        '
+        'Label7
+        '
+        Me.Label7.AutoSize = True
+        Me.Label7.Location = New System.Drawing.Point(102, 112)
+        Me.Label7.Name = "Label7"
+        Me.Label7.Size = New System.Drawing.Size(14, 13)
+        Me.Label7.TabIndex = 9
+        Me.Label7.Text = "X"
+        '
+        'dsY
+        '
+        Me.dsY.Location = New System.Drawing.Point(191, 110)
+        Me.dsY.Maximum = New Decimal(New Integer() {10, 0, 0, 0})
+        Me.dsY.Minimum = New Decimal(New Integer() {1, 0, 0, 0})
+        Me.dsY.Name = "dsY"
+        Me.dsY.Size = New System.Drawing.Size(39, 20)
+        Me.dsY.TabIndex = 8
+        Me.dsY.Value = New Decimal(New Integer() {1, 0, 0, 0})
         '
         'Label6
         '
@@ -470,267 +731,6 @@ Partial Class Form1
         Me.YCrCbButton.Text = "YCrCb"
         Me.YCrCbButton.UseVisualStyleBackColor = True
         '
-        'dsY
-        '
-        Me.dsY.Location = New System.Drawing.Point(191, 110)
-        Me.dsY.Maximum = New Decimal(New Integer() {10, 0, 0, 0})
-        Me.dsY.Minimum = New Decimal(New Integer() {1, 0, 0, 0})
-        Me.dsY.Name = "dsY"
-        Me.dsY.Size = New System.Drawing.Size(39, 20)
-        Me.dsY.TabIndex = 8
-        Me.dsY.Value = New Decimal(New Integer() {1, 0, 0, 0})
-        '
-        'Label7
-        '
-        Me.Label7.AutoSize = True
-        Me.Label7.Location = New System.Drawing.Point(102, 112)
-        Me.Label7.Name = "Label7"
-        Me.Label7.Size = New System.Drawing.Size(14, 13)
-        Me.Label7.TabIndex = 9
-        Me.Label7.Text = "X"
-        '
-        'Label8
-        '
-        Me.Label8.AutoSize = True
-        Me.Label8.Location = New System.Drawing.Point(171, 112)
-        Me.Label8.Name = "Label8"
-        Me.Label8.Size = New System.Drawing.Size(14, 13)
-        Me.Label8.TabIndex = 10
-        Me.Label8.Text = "Y"
-        '
-        'dsSetButton
-        '
-        Me.dsSetButton.Location = New System.Drawing.Point(253, 110)
-        Me.dsSetButton.Name = "dsSetButton"
-        Me.dsSetButton.Size = New System.Drawing.Size(47, 20)
-        Me.dsSetButton.TabIndex = 11
-        Me.dsSetButton.Text = "Set"
-        Me.dsSetButton.UseVisualStyleBackColor = True
-        '
-        'vwSet
-        '
-        Me.vwSet.Location = New System.Drawing.Point(386, 148)
-        Me.vwSet.Name = "vwSet"
-        Me.vwSet.Size = New System.Drawing.Size(47, 20)
-        Me.vwSet.TabIndex = 12
-        Me.vwSet.Text = "Set"
-        Me.vwSet.UseVisualStyleBackColor = True
-        '
-        'Label9
-        '
-        Me.Label9.AutoSize = True
-        Me.Label9.Location = New System.Drawing.Point(11, 150)
-        Me.Label9.Name = "Label9"
-        Me.Label9.Size = New System.Drawing.Size(46, 13)
-        Me.Label9.TabIndex = 13
-        Me.Label9.Text = "Window"
-        '
-        'MaskedTextBox1
-        '
-        Me.MaskedTextBox1.Location = New System.Drawing.Point(105, 147)
-        Me.MaskedTextBox1.Name = "MaskedTextBox1"
-        Me.MaskedTextBox1.Size = New System.Drawing.Size(43, 20)
-        Me.MaskedTextBox1.TabIndex = 7
-        Me.MaskedTextBox1.Text = "0"
-        '
-        'MaskedTextBox2
-        '
-        Me.MaskedTextBox2.Location = New System.Drawing.Point(174, 147)
-        Me.MaskedTextBox2.Name = "MaskedTextBox2"
-        Me.MaskedTextBox2.Size = New System.Drawing.Size(43, 20)
-        Me.MaskedTextBox2.TabIndex = 14
-        Me.MaskedTextBox2.Text = "0"
-        '
-        'MaskedTextBox3
-        '
-        Me.MaskedTextBox3.Location = New System.Drawing.Point(253, 148)
-        Me.MaskedTextBox3.Name = "MaskedTextBox3"
-        Me.MaskedTextBox3.Size = New System.Drawing.Size(43, 20)
-        Me.MaskedTextBox3.TabIndex = 15
-        Me.MaskedTextBox3.Text = "176"
-        '
-        'MaskedTextBox4
-        '
-        Me.MaskedTextBox4.Location = New System.Drawing.Point(326, 148)
-        Me.MaskedTextBox4.Name = "MaskedTextBox4"
-        Me.MaskedTextBox4.Size = New System.Drawing.Size(43, 20)
-        Me.MaskedTextBox4.TabIndex = 16
-        Me.MaskedTextBox4.Text = "144"
-        '
-        'Label10
-        '
-        Me.Label10.AutoSize = True
-        Me.Label10.Location = New System.Drawing.Point(79, 151)
-        Me.Label10.Name = "Label10"
-        Me.Label10.Size = New System.Drawing.Size(20, 13)
-        Me.Label10.TabIndex = 17
-        Me.Label10.Text = "X0"
-        '
-        'Label11
-        '
-        Me.Label11.AutoSize = True
-        Me.Label11.Location = New System.Drawing.Point(154, 150)
-        Me.Label11.Name = "Label11"
-        Me.Label11.Size = New System.Drawing.Size(20, 13)
-        Me.Label11.TabIndex = 18
-        Me.Label11.Text = "Y0"
-        '
-        'Label12
-        '
-        Me.Label12.AutoSize = True
-        Me.Label12.Location = New System.Drawing.Point(227, 151)
-        Me.Label12.Name = "Label12"
-        Me.Label12.Size = New System.Drawing.Size(20, 13)
-        Me.Label12.TabIndex = 19
-        Me.Label12.Text = "X1"
-        '
-        'Label13
-        '
-        Me.Label13.AutoSize = True
-        Me.Label13.Location = New System.Drawing.Point(302, 151)
-        Me.Label13.Name = "Label13"
-        Me.Label13.Size = New System.Drawing.Size(20, 13)
-        Me.Label13.TabIndex = 20
-        Me.Label13.Text = "Y1"
-        '
-        'TrackBar1
-        '
-        Me.TrackBar1.Location = New System.Drawing.Point(28, 35)
-        Me.TrackBar1.Maximum = 255
-        Me.TrackBar1.Name = "TrackBar1"
-        Me.TrackBar1.Size = New System.Drawing.Size(170, 42)
-        Me.TrackBar1.TabIndex = 7
-        Me.TrackBar1.TickFrequency = 8
-        Me.TrackBar1.Value = 128
-        '
-        'ServoPanel
-        '
-        Me.ServoPanel.Controls.Add(Me.TrackBar4)
-        Me.ServoPanel.Controls.Add(Me.TrackBar3)
-        Me.ServoPanel.Controls.Add(Me.TrackBar2)
-        Me.ServoPanel.Controls.Add(Me.Label18)
-        Me.ServoPanel.Controls.Add(Me.TextBox4)
-        Me.ServoPanel.Controls.Add(Me.TextBox3)
-        Me.ServoPanel.Controls.Add(Me.TextBox2)
-        Me.ServoPanel.Controls.Add(Me.TextBox1)
-        Me.ServoPanel.Controls.Add(Me.Label17)
-        Me.ServoPanel.Controls.Add(Me.Label16)
-        Me.ServoPanel.Controls.Add(Me.Label15)
-        Me.ServoPanel.Controls.Add(Me.Label14)
-        Me.ServoPanel.Controls.Add(Me.TrackBar1)
-        Me.ServoPanel.Enabled = False
-        Me.ServoPanel.Location = New System.Drawing.Point(478, 133)
-        Me.ServoPanel.Name = "ServoPanel"
-        Me.ServoPanel.Size = New System.Drawing.Size(277, 200)
-        Me.ServoPanel.TabIndex = 7
-        '
-        'Label14
-        '
-        Me.Label14.AutoSize = True
-        Me.Label14.Location = New System.Drawing.Point(9, 48)
-        Me.Label14.Name = "Label14"
-        Me.Label14.Size = New System.Drawing.Size(13, 13)
-        Me.Label14.TabIndex = 8
-        Me.Label14.Text = "0"
-        '
-        'Label15
-        '
-        Me.Label15.AutoSize = True
-        Me.Label15.Location = New System.Drawing.Point(9, 86)
-        Me.Label15.Name = "Label15"
-        Me.Label15.Size = New System.Drawing.Size(13, 13)
-        Me.Label15.TabIndex = 10
-        Me.Label15.Text = "1"
-        '
-        'Label16
-        '
-        Me.Label16.AutoSize = True
-        Me.Label16.Location = New System.Drawing.Point(9, 124)
-        Me.Label16.Name = "Label16"
-        Me.Label16.Size = New System.Drawing.Size(13, 13)
-        Me.Label16.TabIndex = 12
-        Me.Label16.Text = "2"
-        '
-        'Label17
-        '
-        Me.Label17.AutoSize = True
-        Me.Label17.Location = New System.Drawing.Point(9, 163)
-        Me.Label17.Name = "Label17"
-        Me.Label17.Size = New System.Drawing.Size(13, 13)
-        Me.Label17.TabIndex = 14
-        Me.Label17.Text = "3"
-        '
-        'TextBox1
-        '
-        Me.TextBox1.Location = New System.Drawing.Point(213, 45)
-        Me.TextBox1.Name = "TextBox1"
-        Me.TextBox1.Size = New System.Drawing.Size(42, 20)
-        Me.TextBox1.TabIndex = 15
-        Me.TextBox1.Text = "128"
-        '
-        'TextBox2
-        '
-        Me.TextBox2.Location = New System.Drawing.Point(213, 79)
-        Me.TextBox2.Name = "TextBox2"
-        Me.TextBox2.Size = New System.Drawing.Size(42, 20)
-        Me.TextBox2.TabIndex = 16
-        Me.TextBox2.Text = "128"
-        '
-        'TextBox3
-        '
-        Me.TextBox3.Location = New System.Drawing.Point(213, 117)
-        Me.TextBox3.Name = "TextBox3"
-        Me.TextBox3.Size = New System.Drawing.Size(42, 20)
-        Me.TextBox3.TabIndex = 17
-        Me.TextBox3.Text = "128"
-        '
-        'TextBox4
-        '
-        Me.TextBox4.Location = New System.Drawing.Point(213, 156)
-        Me.TextBox4.Name = "TextBox4"
-        Me.TextBox4.Size = New System.Drawing.Size(42, 20)
-        Me.TextBox4.TabIndex = 18
-        Me.TextBox4.Text = "128"
-        '
-        'Label18
-        '
-        Me.Label18.AutoSize = True
-        Me.Label18.Location = New System.Drawing.Point(68, 11)
-        Me.Label18.Name = "Label18"
-        Me.Label18.Size = New System.Drawing.Size(82, 13)
-        Me.Label18.TabIndex = 19
-        Me.Label18.Text = "Servo Controller"
-        '
-        'TrackBar2
-        '
-        Me.TrackBar2.Location = New System.Drawing.Point(28, 79)
-        Me.TrackBar2.Maximum = 255
-        Me.TrackBar2.Name = "TrackBar2"
-        Me.TrackBar2.Size = New System.Drawing.Size(170, 42)
-        Me.TrackBar2.TabIndex = 20
-        Me.TrackBar2.TickFrequency = 8
-        Me.TrackBar2.Value = 128
-        '
-        'TrackBar3
-        '
-        Me.TrackBar3.Location = New System.Drawing.Point(28, 117)
-        Me.TrackBar3.Maximum = 255
-        Me.TrackBar3.Name = "TrackBar3"
-        Me.TrackBar3.Size = New System.Drawing.Size(170, 42)
-        Me.TrackBar3.TabIndex = 21
-        Me.TrackBar3.TickFrequency = 8
-        Me.TrackBar3.Value = 128
-        '
-        'TrackBar4
-        '
-        Me.TrackBar4.Location = New System.Drawing.Point(28, 156)
-        Me.TrackBar4.Maximum = 255
-        Me.TrackBar4.Name = "TrackBar4"
-        Me.TrackBar4.Size = New System.Drawing.Size(170, 42)
-        Me.TrackBar4.TabIndex = 22
-        Me.TrackBar4.TickFrequency = 8
-        Me.TrackBar4.Value = 128
-        '
         'Form1
         '
         Me.AcceptButton = Me.btnSend
@@ -748,20 +748,20 @@ Partial Class Form1
         Me.Panel3.PerformLayout()
         CType(Me.PictureBox1, System.ComponentModel.ISupportInitialize).EndInit()
         Me.TabPage2.ResumeLayout(False)
+        Me.ServoPanel.ResumeLayout(False)
+        Me.ServoPanel.PerformLayout()
+        CType(Me.TrackBar4, System.ComponentModel.ISupportInitialize).EndInit()
+        CType(Me.TrackBar3, System.ComponentModel.ISupportInitialize).EndInit()
+        CType(Me.TrackBar2, System.ComponentModel.ISupportInitialize).EndInit()
+        CType(Me.TrackBar1, System.ComponentModel.ISupportInitialize).EndInit()
         Me.configPanel.ResumeLayout(False)
         Me.configPanel.PerformLayout()
+        CType(Me.dsY, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.dsX, System.ComponentModel.ISupportInitialize).EndInit()
         Me.Panel1.ResumeLayout(False)
         Me.Panel1.PerformLayout()
         Me.Panel2.ResumeLayout(False)
         Me.Panel2.PerformLayout()
-        CType(Me.dsY, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.TrackBar1, System.ComponentModel.ISupportInitialize).EndInit()
-        Me.ServoPanel.ResumeLayout(False)
-        Me.ServoPanel.PerformLayout()
-        CType(Me.TrackBar2, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.TrackBar3, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.TrackBar4, System.ComponentModel.ISupportInitialize).EndInit()
         Me.ResumeLayout(False)
 
     End Sub
@@ -801,10 +801,10 @@ Partial Class Form1
     Friend WithEvents Label6 As System.Windows.Forms.Label
     Friend WithEvents dsX As System.Windows.Forms.NumericUpDown
     Friend WithEvents Label10 As System.Windows.Forms.Label
-    Friend WithEvents MaskedTextBox4 As System.Windows.Forms.MaskedTextBox
-    Friend WithEvents MaskedTextBox3 As System.Windows.Forms.MaskedTextBox
-    Friend WithEvents MaskedTextBox2 As System.Windows.Forms.MaskedTextBox
-    Friend WithEvents MaskedTextBox1 As System.Windows.Forms.MaskedTextBox
+    Friend WithEvents Y1_textbox As System.Windows.Forms.MaskedTextBox
+    Friend WithEvents X1_textbox As System.Windows.Forms.MaskedTextBox
+    Friend WithEvents Y0_textbox As System.Windows.Forms.MaskedTextBox
+    Friend WithEvents X0_textbox As System.Windows.Forms.MaskedTextBox
     Friend WithEvents Label9 As System.Windows.Forms.Label
     Friend WithEvents vwSet As System.Windows.Forms.Button
     Friend WithEvents dsSetButton As System.Windows.Forms.Button
@@ -815,8 +815,8 @@ Partial Class Form1
     Friend WithEvents Label12 As System.Windows.Forms.Label
     Friend WithEvents Label11 As System.Windows.Forms.Label
     Friend WithEvents ServoPanel As System.Windows.Forms.Panel
-    Friend WithEvents TextBox2 As System.Windows.Forms.TextBox
-    Friend WithEvents TextBox1 As System.Windows.Forms.TextBox
+    Friend WithEvents servo1_textbox As System.Windows.Forms.TextBox
+    Friend WithEvents servo0_textbox As System.Windows.Forms.TextBox
     Friend WithEvents Label17 As System.Windows.Forms.Label
     Friend WithEvents Label16 As System.Windows.Forms.Label
     Friend WithEvents Label15 As System.Windows.Forms.Label
@@ -826,7 +826,7 @@ Partial Class Form1
     Friend WithEvents TrackBar3 As System.Windows.Forms.TrackBar
     Friend WithEvents TrackBar2 As System.Windows.Forms.TrackBar
     Friend WithEvents Label18 As System.Windows.Forms.Label
-    Friend WithEvents TextBox4 As System.Windows.Forms.TextBox
-    Friend WithEvents TextBox3 As System.Windows.Forms.TextBox
+    Friend WithEvents servo3_textbox As System.Windows.Forms.TextBox
+    Friend WithEvents servo2_textbox As System.Windows.Forms.TextBox
 
 End Class
