@@ -1,5 +1,5 @@
 SUBDIRS=cmucam2 hello-world jpeg-cam benchmark edge-follow polly \
-	led-test png-grab spoonBot ppm-grab eeprom-test
+	led-test png-grab spoonBot ppm-grab eeprom-test security-cam
 
 # Build rules
 all:
