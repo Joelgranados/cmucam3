@@ -742,7 +742,7 @@ bool cc3_button_get_state (void)
     return false;
   }
 
-  // otherwise, it has been pressed, but it's in GPIO mode
+  // otherwise, it has been pressed, and it's in GPIO mode
   return !(REG (GPIO_IOPIN) & _CC3_BUTTON);
 }
 

@@ -35,6 +35,8 @@
 #include "cc3.h"
 #include "mmc_hardware.h"
 
+#include "interrupt.h"
+
 #include <time.h>
 #include "rdcf2.h"
 
@@ -186,7 +188,7 @@ static void spi0_init (void)
 static void selectMMC (void)
 {                               // select SPI target and light the LED.
   //printf("selectMMC\r\n");
-
+  disable_button_interrupt();      // button is multiplexed with CS
   REG (GPIO_IODIR) |= _CC3_MMC_CS;      // switch chip select to output
   REG (GPIO_IOCLR) = _CC3_MMC_CS;       // chip select (neg true)
 }
@@ -197,6 +199,9 @@ static void unselectMMC (void)
 
   REG (GPIO_IOSET) = _CC3_MMC_CS;       // chip select (neg true)
   REG (GPIO_IODIR) &= ~_CC3_MMC_CS;     // switch chip select to input
+  if (!_cc3_button_trigger) {
+    enable_button_interrupt();    // button is multiplexed with CS
+  }
 }
 
 static void spiPutByte (uint8_t inBuf)
