@@ -26,6 +26,7 @@
 
 #include "LPC2100.h"
 #include "devices.h"
+//#include "serial.h"
 
 #include <errno.h>
 #undef errno
@@ -349,6 +350,7 @@ void *_sbrk(int nbytes)
   //uart0_write_hex((unsigned int) base);
 
   if (base + nbytes >= (char *) heap_end) {
+    //uart0_write(" ENOMEM!\r\n");
     errno = ENOMEM;
     return (void *) -1;
   }
