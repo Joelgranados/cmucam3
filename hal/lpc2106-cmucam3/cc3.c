@@ -694,10 +694,10 @@ void cc3_camera_set_power_state (bool state)
 {
   if (state) {
     REG (GPIO_IOCLR) = _CC3_CAM_POWER_DOWN;
-    _cc3_set_register_state();   // restore registers
   } else {
     REG (GPIO_IOSET) = _CC3_CAM_POWER_DOWN;
   }
+  _cc3_set_register_state();   // restore registers and clear pixbuf_frame
 }
 
 void cc3_camera_set_colorspace (cc3_colorspace_t colorspace)
