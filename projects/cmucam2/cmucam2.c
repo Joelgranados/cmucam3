@@ -14,7 +14,8 @@
 #include <cc3_math.h>
 
 // Uncomment line below to reverse servo direction for auto-servo and demo mode 
-#define SERVO_REVERSE_DIRECTION
+#define SERVO_REVERSE_DIRECTION_PAN
+#define SERVO_REVERSE_DIRECTION_TILT
 
 //#define SERIAL_BAUD_RATE  CC3_UART_RATE_230400
 #define SERIAL_BAUD_RATE  CC3_UART_RATE_115200
@@ -295,12 +296,12 @@ cmucam2_start:
 
   servo_settings.x = SERVO_MID;
   servo_settings.y = SERVO_MID;
-  servo_settings.pan_range_far = 16;
-  servo_settings.pan_range_near = 8;
-  servo_settings.pan_step = 10;
-  servo_settings.tilt_range_far = 30;
-  servo_settings.tilt_range_near = 15;
-  servo_settings.tilt_step = 10;
+  servo_settings.pan_range_far = 32;
+  servo_settings.pan_range_near = 20;
+  servo_settings.pan_step = 20;
+  servo_settings.tilt_range_far = 32;
+  servo_settings.tilt_range_near = 20;
+  servo_settings.tilt_step = 20;
 
 
   cc3_camera_set_power_state (true);
@@ -321,6 +322,10 @@ cmucam2_start:
   cc3_pixbuf_frame_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 1);
 
   if (demo_mode) {
+        cc3_led_set_state (0, true);
+        cc3_timer_wait_ms (5000);
+	cc3_camera_set_auto_exposure (false);
+	cc3_camera_set_auto_white_balance (false);
     // Wait for second button press as target lock
     while (1) {
       cc3_led_set_state (0, true);
@@ -328,11 +333,7 @@ cmucam2_start:
       cc3_led_set_state (0, false);
       cc3_timer_wait_ms (100);
       if (cc3_button_get_state () == 1)
-      {
-	cc3_camera_set_auto_exposure (false);
-	cc3_camera_set_auto_white_balance (false);
         break;
-      }
     }
 
   }
@@ -1237,6 +1238,7 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
 {
   cc3_image_t img;
   uint16_t x_mid, y_mid;
+  int8_t t_step;
 
   bool prev_packet_empty = true;
 
@@ -1324,7 +1326,6 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
 
       if (t_pkt->int_density > 5 && servo_settings != NULL) {
         if (servo_settings->x_control) {
-          int8_t t_step;
           t_step = 0;
           if (t_pkt->centroid_x > x_mid + servo_settings->pan_range_far)
             t_step = servo_settings->pan_step;
@@ -1337,12 +1338,12 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
             t_step = -(servo_settings->pan_step / 2);
 
 
-#ifdef SERVO_REVERSE_DIRECTION
+#ifdef SERVO_REVERSE_DIRECTION_PAN
           servo_settings->x -= t_step;
 #else
           servo_settings->x += t_step;
 #endif
-
+	t_step=0;
           if (servo_settings->x > SERVO_MAX)
             servo_settings->x = SERVO_MAX;
           if (servo_settings->x < SERVO_MIN)
@@ -1351,16 +1352,22 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
         }
         if (servo_settings->y_control) {
           if (t_pkt->centroid_y > y_mid + servo_settings->tilt_range_far)
-            servo_settings->y += servo_settings->tilt_step;
+            t_step = servo_settings->tilt_step;
           else if (t_pkt->centroid_y >
                    y_mid + servo_settings->tilt_range_near)
-            servo_settings->y += servo_settings->tilt_step / 2;
+            t_step = servo_settings->tilt_step / 2;
 
           if (t_pkt->centroid_y < y_mid - servo_settings->tilt_range_far)
-            servo_settings->y -= servo_settings->tilt_step;
+            t_step = -(servo_settings->tilt_step);
           else if (t_pkt->centroid_y <
                    y_mid - servo_settings->tilt_range_near)
-            servo_settings->y -= servo_settings->tilt_step / 2;
+            t_step = -(servo_settings->tilt_step / 2);
+
+#ifdef SERVO_REVERSE_DIRECTION_TILT
+          servo_settings->y -= t_step;
+#else
+          servo_settings->y += t_step;
+#endif
 
           if (servo_settings->y > SERVO_MAX)
             servo_settings->y = SERVO_MAX;
