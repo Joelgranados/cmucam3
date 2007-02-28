@@ -14,7 +14,7 @@
 #include <cc3_math.h>
 
 // Uncomment line below to reverse servo direction for auto-servo and demo mode 
-//#define SERVO_REVERSE_DIRECTION
+#define SERVO_REVERSE_DIRECTION
 
 //#define SERIAL_BAUD_RATE  CC3_UART_RATE_230400
 #define SERIAL_BAUD_RATE  CC3_UART_RATE_115200
@@ -328,7 +328,11 @@ cmucam2_start:
       cc3_led_set_state (0, false);
       cc3_timer_wait_ms (100);
       if (cc3_button_get_state () == 1)
+      {
+	cc3_camera_set_auto_exposure (false);
+	cc3_camera_set_auto_white_balance (false);
         break;
+      }
     }
 
   }
