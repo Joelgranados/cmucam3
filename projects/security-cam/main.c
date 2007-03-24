@@ -4,7 +4,11 @@
 #include <jpeglib.h>
 #include <cc3_frame_diff.h>
 
+// How many pixels should change in a frame to be seen as motion
+// Remember, the frame is downsampled to 16x16
 #define NUM_PIX_CHANGE_THRESH     10
+
+// How much the color of a single pixel should change to be detected 
 #define PIX_CHANGE_THRESH	  20
 
 
@@ -36,6 +40,8 @@ int main (void)
 
   //cc3_set_colorspace(CC3_COLORSPACE_YCRCB);
   cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_HIGH);
+  // Set camera to low-res for faster frame differencing
+  // cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_LOW);
   // cc3_pixbuf_set_subsample (CC3_SUBSAMPLE_NEAREST, 2, 2);
   cc3_timer_wait_ms (1000);
 
@@ -47,7 +53,7 @@ int main (void)
 
   cc3_led_set_state (1, true);
 
-  cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_LOW);
+  
 
   fd_pkt.coi = 1;
   cc3_pixbuf_frame_set_coi (fd_pkt.coi);
@@ -144,7 +150,12 @@ int main (void)
         printf ("Card full\r\n");
       while (1);
     }
+    // Switch to full color for stored images
+    cc3_pixbuf_frame_set_coi (CC3_CHANNEL_ALL);
+    // Save the jpeg
     capture_current_jpeg (f);
+    // Switch back to a single COI for the frame diff
+    cc3_pixbuf_frame_set_coi (fd_pkt.coi);
 
     fclose (f);
     img_cnt++;
