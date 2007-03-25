@@ -61,6 +61,9 @@ typedef enum {
   CC3_CHANNEL_Y = 0,       /**< Y channel in YCrCb images */
   CC3_CHANNEL_CR = 1,      /**< Cr channel in YCrCb images */
   CC3_CHANNEL_CB = 2,      /**< Cb channel in YCrCb images */
+  CC3_CHANNEL_HUE = 0,       /**< Hue channel in HSV images */
+  CC3_CHANNEL_SAT = 1,      /**< Sat channel in HSV images */
+  CC3_CHANNEL_VAL = 2,      /**< Val channel in HSV images */
   CC3_CHANNEL_ALL          /**< All channels in an image */
 } cc3_channel_t;
 

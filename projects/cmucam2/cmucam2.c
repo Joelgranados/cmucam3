@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <cc3_jpg.h>
 #include <cc3_math.h>
+#include <cc3_hsv.h>
 
 // Uncomment line below to reverse servo direction for auto-servo and demo mode 
 #define SERVO_REVERSE_DIRECTION_PAN
@@ -33,6 +34,9 @@
 #define SERVO_MAX 255
 // Define a jitter guard such that more than SERVO_GUARD pixels are required
 // for the servo to move.
+
+#define DEFAULT_COLOR 0
+#define HSV_COLOR     1
 
 static const unsigned int MAX_ARGS = 10;
 static const unsigned int MAX_LINE = 128;
@@ -91,6 +95,7 @@ typedef enum {
   FRAME_DIFF_CHANNEL,
   LOAD_FRAME,
   RAW_MODE,
+  COLOR_SPACE,
   HIRES_DIFF,
 
   RETURN,                       // Must be second to last
@@ -170,26 +175,28 @@ static const char cmucam2_cmds[CMUCAM2_CMDS_COUNT][3] = {
   //  SL sleep
   [RESET] = "RS",
   [GET_VERSION] = "GV",
+  
+  [COLOR_SPACE] = "CS",
 
   /* CMUcam3 New Commands */
   [SEND_JPEG] = "SJ",
 };
 
 
-static void cmucam2_load_frame (cc3_frame_diff_pkt_t * pkt, bool buf_mode);
+static void cmucam2_load_frame (cc3_frame_diff_pkt_t * pkt, bool buf_mode, uint8_t sw_color_space);
 static void cmucam2_get_histogram (cc3_histogram_pkt_t * h_pkt,
-                                   bool poll_mode, bool buf_mode, bool quiet);
+                                   bool poll_mode, bool buf_mode, uint8_t sw_color_space, bool quiet);
 static void cmucam2_get_mean (cc3_color_info_pkt_t * t_pkt, bool poll_mode,
-                              bool line_mode, bool buf_mode, bool quiet);
+                              bool line_mode, bool buf_mode, uint8_t sw_color_space, bool quiet);
 static void cmucam2_write_s_packet (cc3_color_info_pkt_t * pkt);
 static void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
                                  bool poll_mode,
                                  bool line_mode, bool auto_led,
                                  cmucam2_servo_t * servo_settings,
-                                 bool buf_mode, bool quiet);
+                                 bool buf_mode, uint8_t sw_color_space, bool quiet);
 static void cmucam2_frame_diff (cc3_frame_diff_pkt_t * pkt,
                                 bool poll_mode, bool line_mode, bool buf_mode,
-                                bool auto_led, bool quiet);
+                                bool auto_led, uint8_t sw_color_space, bool quiet);
 static int32_t cmucam2_get_command (cmucam2_command_t * cmd,
                                     uint32_t arg_list[]);
 static int32_t cmucam2_get_command_raw (cmucam2_command_t * cmd,
@@ -201,7 +208,7 @@ static void print_cr (void);
 static void cmucam2_write_t_packet (cc3_track_pkt_t * pkt,
                                     cmucam2_servo_t * servo_settings);
 static void cmucam2_write_h_packet (cc3_histogram_pkt_t * pkt);
-static void cmucam2_send_image_direct (bool auto_led);
+static void cmucam2_send_image_direct (bool auto_led,uint8_t sw_color_space);
 
 static void raw_print (uint8_t val);
 
@@ -219,6 +226,7 @@ int main (void)
   int32_t val, n;
   uint32_t arg_list[MAX_ARGS];
   uint32_t start_time;
+  uint8_t sw_color_space;
   bool error, poll_mode, line_mode, auto_led, demo_mode, buf_mode;
   cc3_track_pkt_t t_pkt;
   cc3_color_info_pkt_t s_pkt;
@@ -268,6 +276,7 @@ int main (void)
 
 
 cmucam2_start:
+  sw_color_space=DEFAULT_COLOR;
   auto_led = true;
   poll_mode = false;
   line_mode = false;
@@ -507,7 +516,7 @@ cmucam2_start:
         fd_pkt.total_x = cc3_g_pixbuf_frame.width;
         fd_pkt.total_y = cc3_g_pixbuf_frame.height;
         fd_pkt.load_frame = 1;  // load a new frame
-        cmucam2_load_frame (&fd_pkt, buf_mode);
+        cmucam2_load_frame (&fd_pkt, buf_mode, sw_color_space);
         break;
 
       case HIRES_DIFF:
@@ -536,7 +545,7 @@ cmucam2_start:
         fd_pkt.load_frame = 0;
         fd_pkt.total_x = cc3_g_pixbuf_frame.width;
         fd_pkt.total_y = cc3_g_pixbuf_frame.height;
-        cmucam2_frame_diff (&fd_pkt, poll_mode, line_mode, buf_mode, auto_led,
+        cmucam2_frame_diff (&fd_pkt, poll_mode, line_mode, buf_mode, auto_led, sw_color_space,
                             0);
         break;
 
@@ -572,6 +581,16 @@ cmucam2_start:
           t_pkt.track_invert = 0;
         else
           t_pkt.track_invert = 1;
+        break;
+
+      case COLOR_SPACE:
+        if (n != 1) {
+          error = true;
+          break;
+        }
+
+        print_ACK ();
+        sw_color_space= arg_list[0];
         break;
 
       case NOISE_FILTER:
@@ -629,7 +648,7 @@ cmucam2_start:
         }
 
         print_ACK ();
-        cmucam2_send_image_direct (auto_led);
+        cmucam2_send_image_direct (auto_led,sw_color_space);
         cc3_pixbuf_frame_set_coi (old_coi);
         break;
 
@@ -780,7 +799,7 @@ cmucam2_start:
           t_pkt.upper_bound.channel[2] = arg_list[5];
         }
         cmucam2_track_color (&t_pkt, poll_mode, line_mode, auto_led,
-                             &servo_settings, buf_mode, 0);
+                             &servo_settings, buf_mode, sw_color_space, 0);
         break;
 
       case TRACK_WINDOW:
@@ -802,7 +821,7 @@ cmucam2_start:
           y1 = cc3_g_pixbuf_frame.y1 - cc3_g_pixbuf_frame.width / 4;
           cc3_pixbuf_frame_set_roi (x0, y0, x1, y1);
           // call get mean
-          cmucam2_get_mean (&s_pkt, 1, line_mode, buf_mode, 1);
+          cmucam2_get_mean (&s_pkt, 1, line_mode, buf_mode,sw_color_space, 1);
           // set window back to full size
           x0 = 0;
           x1 = cc3_g_pixbuf_frame.raw_width;
@@ -847,7 +866,7 @@ cmucam2_start:
             tmp = 240;
           t_pkt.upper_bound.channel[2] = tmp;
           cmucam2_track_color (&t_pkt, poll_mode, line_mode, auto_led,
-                               &servo_settings, buf_mode, 0);
+                               &servo_settings, buf_mode,sw_color_space, 0);
         }
         demo_mode = false;
         break;
@@ -860,7 +879,7 @@ cmucam2_start:
         }
 
         print_ACK ();
-        cmucam2_get_mean (&s_pkt, poll_mode, line_mode, buf_mode, 0);
+        cmucam2_get_mean (&s_pkt, poll_mode, line_mode, buf_mode,sw_color_space, 0);
         break;
 
 
@@ -872,7 +891,7 @@ cmucam2_start:
 
         print_ACK ();
         h_pkt.channel = arg_list[0];
-        cmucam2_get_histogram (&h_pkt, poll_mode, buf_mode, 0);
+        cmucam2_get_histogram (&h_pkt, poll_mode, buf_mode,sw_color_space, 0);
         break;
 
 
@@ -993,7 +1012,7 @@ cmucam2_start:
 }
 
 
-void cmucam2_send_image_direct (bool auto_led)
+void cmucam2_send_image_direct (bool auto_led, uint8_t sw_color_space)
 {
   cc3_pixbuf_load ();
 
@@ -1020,6 +1039,7 @@ void cmucam2_send_image_direct (bool auto_led)
         cc3_led_set_state (0, false);
     }
     cc3_pixbuf_read_rows (row, 1);
+    if(sw_color_space==HSV_COLOR && num_channels==CC3_CHANNEL_ALL )  cc3_rgb2hsv_row(row,size_x);
     for (x = 0; x < size_x * num_channels; x++) {
       uint8_t p = row[x];
 
@@ -1042,7 +1062,7 @@ void cmucam2_send_image_direct (bool auto_led)
 
 
 void cmucam2_get_histogram (cc3_histogram_pkt_t * h_pkt, bool poll_mode,
-                            bool buf_mode, bool quiet)
+                            bool buf_mode, uint8_t sw_color_space, bool quiet)
 {
   cc3_image_t img;
   img.channels = 3;
@@ -1061,6 +1081,7 @@ void cmucam2_get_histogram (cc3_histogram_pkt_t * h_pkt, bool poll_mode,
       cc3_pixbuf_rewind ();
     if (cc3_histogram_scanline_start (h_pkt) != 0) {
       while (cc3_pixbuf_read_rows (img.pix, 1)) {
+        if(sw_color_space==HSV_COLOR  && img.channels==CC3_CHANNEL_ALL)  cc3_rgb2hsv_row(img.pix,img.width);
         cc3_histogram_scanline (&img, h_pkt);
       }
       cc3_histogram_scanline_finish (h_pkt);
@@ -1086,7 +1107,7 @@ void cmucam2_get_histogram (cc3_histogram_pkt_t * h_pkt, bool poll_mode,
 
 }
 
-void cmucam2_load_frame (cc3_frame_diff_pkt_t * pkt, bool buf_mode)
+void cmucam2_load_frame (cc3_frame_diff_pkt_t * pkt, bool buf_mode, uint8_t sw_color_space)
 {
   cc3_image_t img;
   uint8_t old_coi;
@@ -1106,6 +1127,7 @@ void cmucam2_load_frame (cc3_frame_diff_pkt_t * pkt, bool buf_mode)
 
   if (cc3_frame_diff_scanline_start (pkt) != 0) {
     while (cc3_pixbuf_read_rows (img.pix, 1)) {
+      if(sw_color_space==HSV_COLOR  && img.channels==CC3_CHANNEL_ALL)  cc3_rgb2hsv_row(img.pix,img.width);
       cc3_frame_diff_scanline (&img, pkt);
     }
     cc3_frame_diff_scanline_finish (pkt);
@@ -1120,8 +1142,8 @@ void cmucam2_load_frame (cc3_frame_diff_pkt_t * pkt, bool buf_mode)
 }
 
 void cmucam2_frame_diff (cc3_frame_diff_pkt_t * pkt,
-                         bool poll_mode, bool line_mode, bool buf_mode,
-                         bool auto_led, bool quiet)
+                         bool poll_mode, bool line_mode, bool buf_mode, 
+                         bool auto_led, uint8_t sw_color_space, bool quiet)
 {
   cc3_track_pkt_t t_pkt;
   cc3_image_t img;
@@ -1148,6 +1170,7 @@ void cmucam2_frame_diff (cc3_frame_diff_pkt_t * pkt,
     if (cc3_frame_diff_scanline_start (pkt) != 0) {
 
       while (cc3_pixbuf_read_rows (img.pix, 1)) {
+	if(sw_color_space==HSV_COLOR && img.channels==CC3_CHANNEL_ALL)  cc3_rgb2hsv_row(img.pix,img.width);
         cc3_frame_diff_scanline (&img, pkt);
       }
       cc3_frame_diff_scanline_finish (pkt);
@@ -1197,7 +1220,7 @@ void cmucam2_frame_diff (cc3_frame_diff_pkt_t * pkt,
 }
 
 void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
-                       bool poll_mode, bool line_mode, bool buf_mode,
+                       bool poll_mode, bool line_mode, bool buf_mode, uint8_t sw_color_space,
                        bool quiet)
 {
   cc3_image_t img;
@@ -1212,6 +1235,7 @@ void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
       cc3_pixbuf_rewind ();
     if (cc3_color_info_scanline_start (s_pkt) != 0) {
       while (cc3_pixbuf_read_rows (img.pix, 1)) {
+	if(sw_color_space==HSV_COLOR && img.channels==CC3_CHANNEL_ALL)  cc3_rgb2hsv_row(img.pix,img.width);
         cc3_color_info_scanline (&img, s_pkt);
       }
       cc3_color_info_scanline_finish (s_pkt);
@@ -1236,7 +1260,7 @@ void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
 void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
                           bool poll_mode,
                           bool line_mode, bool auto_led,
-                          cmucam2_servo_t * servo_settings, bool buf_mode,
+                          cmucam2_servo_t * servo_settings, bool buf_mode, uint8_t sw_color_space,
                           bool quiet)
 {
   cc3_image_t img;
@@ -1285,6 +1309,7 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
           putchar (lm_height);
       }
       while (cc3_pixbuf_read_rows (img.pix, 1)) {
+	if(sw_color_space==HSV_COLOR && img.channels==CC3_CHANNEL_ALL)  cc3_rgb2hsv_row(img.pix,img.width);
         cc3_track_color_scanline (&img, t_pkt);
         if (line_mode) {
           // keep this check here if you don't want the CMUcam2 GUI to hang after exiting a command in line mode

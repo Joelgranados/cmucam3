@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <cc3_hsv.h>
 #include "cc3.h"
 
 
@@ -110,6 +111,7 @@ void capture_ppm(FILE *f)
   time = cc3_timer_get_current_ms();
   for (y = 0; y < size_y; y++) {
     cc3_pixbuf_read_rows(row, 1);
+    cc3_rgb2hsv_row(row,size_x);  // This line will convert the row to HSV
     for (x = 0; x < size_x * 3U; x++) {
       uint8_t p = row[x];
       if (fputc(p, f) == EOF) {
