@@ -24,7 +24,7 @@
 #include "cc3_ilp.h"
 
 
-inline void cc3_rgb2hsv(cc3_pixel_t *pix);
-void cc3_rgb2hsv_row(cc3_pixel_t *pix, uint16_t size);
+inline void cc3_rgb2hsv (cc3_pixel_t * pix);
+void cc3_rgb2hsv_row (cc3_pixel_t * pix, uint16_t size);
 
 #endif
