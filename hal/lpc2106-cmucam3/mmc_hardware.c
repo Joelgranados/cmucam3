@@ -393,10 +393,13 @@ bool _cc3_mmc_block_read (uint32_t sector, uint8_t * buf)
 ******************************************************/
 static uint8_t getWriteResultCode (void)
 {
-  int count = 60000l;
+  unsigned int count = 100000;
   uint8_t result = 0;
-  while (result == 0 && --count)
+  while (result == 0 && count>0)
+  {
     result = spiGetByte ();
+    count--;
+  }
   return result;
 }
 
@@ -434,6 +437,7 @@ bool _cc3_mmc_block_write (uint32_t sector, const uint8_t * buf)
     // dummy the CRC.
     spiPutByte (0xff);
     spiPutByte (0xff);
+    
     // next we see if all went well.
     result = spiGetByte ();
     if ((result & 0xf) != StatusDataAccepted) {
