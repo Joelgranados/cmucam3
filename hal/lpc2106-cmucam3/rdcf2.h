@@ -46,15 +46,14 @@
 // try using the IOCTL_MMC_FLUSH_DIRS on a timer instead.
 //#define RDCF_FLUSH_DIR_AFTER_WRITE
 //#define _BIG_ENDIAN
-//#define RDCF_SLASH_CHAR			'\\'
+//#define RDCF_SLASH_CHAR                       '\\'
 #define RDCF_SLASH_CHAR			'/'
 
 /******************************************************
  * end of user defines, change nothing below.
  ******************************************************/
 
-struct rdcf_date_and_time
-{
+struct rdcf_date_and_time {
   uint8_t second;
   uint8_t minute;
   uint8_t hour;
@@ -63,8 +62,7 @@ struct rdcf_date_and_time
   uint16_t year;
 };
 
-struct rdcf_file_information
-{
+struct rdcf_file_information {
   uint8_t spec[13];
   uint8_t attribute;
 #define RDCF_READ_ONLY  0x01
@@ -82,9 +80,8 @@ struct rdcf_file_information
 
 #define NAME_SIZE       8
 #define EXTENSION_SIZE  3
-struct directory
-{
-  uint8_t name_extension[NAME_SIZE+EXTENSION_SIZE];
+struct directory {
+  uint8_t name_extension[NAME_SIZE + EXTENSION_SIZE];
   uint8_t attribute;
   uint8_t reserved[10];
   uint16_t time;
@@ -94,20 +91,19 @@ struct directory
 };
 
 union IO_BUFFER {
-  struct directory dir[RDCF_SECTOR_SIZE / sizeof(struct directory)];
-  uint16_t fat[RDCF_SECTOR_SIZE/2];
+  struct directory dir[RDCF_SECTOR_SIZE / sizeof (struct directory)];
+  uint16_t fat[RDCF_SECTOR_SIZE / 2];
   uint8_t buf[RDCF_SECTOR_SIZE];
 };
 
 /* FCB (File Control Block) */
 
-struct rdcf
-{
+struct rdcf {
   /* values that must be initialized by the calling program */
-  union  IO_BUFFER buffer;
+  union IO_BUFFER buffer;
   // hardware access.
-  bool (*ReadSector)(uint32_t sector, uint8_t * buf);
-  bool (*WriteSector)(uint32_t sector, const uint8_t * buf);
+    bool (*ReadSector) (uint32_t sector, uint8_t * buf);
+    bool (*WriteSector) (uint32_t sector, const uint8_t * buf);
   /* file information */
   struct rdcf_file_information file;
   /* result codes */
@@ -178,23 +174,24 @@ extern DRIVE_DESCRIPTION DriveDesc;
 
 /* prototypes for functions defined in RDCF */
 
-int rdcf_open(struct rdcf *, const char *, unsigned);
-int rdcf_close(struct rdcf *);
-int rdcf_write(struct rdcf *, const void *, int);
-int rdcf_read(struct rdcf *, void *, int);
-int rdcf_seek(struct rdcf *, uint32_t);
-int rdcf_flush_directory(struct rdcf *);
-int rdcf_delete(struct rdcf *, const char *);
-int rdcf_rename(struct rdcf *, const char *, const char *);
+int rdcf_open (struct rdcf *, const char *, unsigned);
+int rdcf_close (struct rdcf *);
+int rdcf_write (struct rdcf *, const void *, int);
+int rdcf_read (struct rdcf *, void *, int);
+int rdcf_seek (struct rdcf *, uint32_t);
+int rdcf_flush_directory (struct rdcf *);
+int rdcf_delete (struct rdcf *, const char *);
+int rdcf_rename (struct rdcf *, const char *, const char *);
 
 #if 0
-int rdcf_directory(struct rdcf *, const char *);
-int rdcf_get_file_information(struct rdcf *, const char *, unsigned);
-int rdcf_next_file_information(struct rdcf *);
-int rdcf_date_and_time(struct rdcf *, const char *, struct rdcf_date_and_time *);
-int rdcf_attribute(struct rdcf *, const char *, unsigned);
-int rdcf_get_volume(struct rdcf *);
-long rdcf_free_space(struct rdcf *);
+int rdcf_directory (struct rdcf *, const char *);
+int rdcf_get_file_information (struct rdcf *, const char *, unsigned);
+int rdcf_next_file_information (struct rdcf *);
+int rdcf_date_and_time (struct rdcf *, const char *,
+                        struct rdcf_date_and_time *);
+int rdcf_attribute (struct rdcf *, const char *, unsigned);
+int rdcf_get_volume (struct rdcf *);
+long rdcf_free_space (struct rdcf *);
 #endif
 
 
