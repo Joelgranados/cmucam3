@@ -593,7 +593,6 @@ drive specifications.
 static const char *initialize_fcb (struct rdcf *f, const char *spec)
 {
   f->buffer_status = EMPTY;
-  f->first_possibly_empty_cluster = 2;
   read_file_system_information (f);
   return spec;
 }
@@ -620,8 +619,8 @@ static void release_FAT_entries (struct rdcf *f)
   if (j != EMPTY_CLUSTER) {
     while (j < f->last_cluster_mark && j) {
       unsigned k = FAT_entry (f, j);
-      if (j < f->first_possibly_empty_cluster) {
-        f->first_possibly_empty_cluster = j;
+      if (j < DriveDesc.FirstPossiblyEmptyCluster) {
+        DriveDesc.FirstPossiblyEmptyCluster = j;
       }
       set_FAT_entry (f, j, EMPTY_CLUSTER);
       j = k;
@@ -636,11 +635,10 @@ with the specified cluster.  It returns the new cluster number, or
 EMPTY_CLUSTER if there are no free clusters.
 -----------------------------------------------------------------------------*/
 
-static unsigned add_new_cluster (struct rdcf *f, unsigned cluster,
-                                 unsigned first_possibly_empty_cluster)
+static unsigned add_new_cluster (struct rdcf *f, unsigned cluster)
 {
   unsigned new_cluster;
-  for (new_cluster = first_possibly_empty_cluster;
+  for (new_cluster = DriveDesc.FirstPossiblyEmptyCluster;
        new_cluster <= f->maximum_cluster_number; new_cluster++) {
     if (FAT_entry (f, new_cluster) == EMPTY_CLUSTER)
       break;
@@ -679,7 +677,7 @@ static void lengthen_directory_if_necessary (struct rdcf *f)
   if (f->directory_index == NO_DIRECTORY_INDEX) {
     if (f->directory_cluster == 0)
       error_exit (f, ~ENOSPC);
-    f->directory_cluster = add_new_cluster (f, f->directory_cluster, 2);
+    f->directory_cluster = add_new_cluster (f, f->directory_cluster);
     if (f->directory_cluster == 0)
       error_exit (f, ~ENOSPC);
     f->directory_index = 0;
@@ -926,10 +924,10 @@ static int real_rdcf_write (struct rdcf *f, const uint8_t * buf, int count)
       n = rest_of_sector;
     if (f->cluster == EMPTY_CLUSTER || f->cluster >= f->last_cluster_mark) {
       unsigned new_cluster =
-        add_new_cluster (f, f->last_cluster, f->first_possibly_empty_cluster);
+        add_new_cluster (f, f->last_cluster);
       if (new_cluster == EMPTY_CLUSTER)
         break;
-      f->first_possibly_empty_cluster = new_cluster + 1;
+      DriveDesc.FirstPossiblyEmptyCluster = new_cluster + 1;
       f->cluster = f->last_cluster = new_cluster;
       if (f->file.first_cluster == EMPTY_CLUSTER)
         f->file.first_cluster = new_cluster;

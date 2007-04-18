@@ -531,6 +531,10 @@ bool _cc3_mmc_init (void)
 
   // looks good, make a note of where stuff starts at.
   CollectDataAboutDrive (IoBuffer);
+
+  // initialize free cluster cache
+  DriveDesc.FirstPossiblyEmptyCluster = 2;
+
   // pass all tests before validating drive.
   DriveDesc.IsValid = true;
 

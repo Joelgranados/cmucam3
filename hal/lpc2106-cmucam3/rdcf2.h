@@ -128,7 +128,6 @@ struct rdcf {
   uint16_t cluster;
   uint16_t last_cluster;
   uint32_t sector_in_buffer;
-  uint32_t first_possibly_empty_cluster;
   jmp_buf error;
 };
 
@@ -154,6 +153,8 @@ typedef struct {
   uint32_t DataStartSector;
   // What is the last data sector?
   uint32_t MaxDataSector;
+  // What is the first free cluster?
+  uint32_t FirstPossiblyEmptyCluster;
 } DRIVE_DESCRIPTION;
 
 extern DRIVE_DESCRIPTION DriveDesc;
