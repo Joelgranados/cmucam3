@@ -8,7 +8,7 @@
 -----------------------------------------------------------------------------*/
 
 /*
- * Copyright 2006  Anthony Rowe and Adam Goode
+ * Copyright 2006-2007  Anthony Rowe and Adam Goode
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,8 +58,9 @@
 
 enum buffer_status { EMPTY, CLEAN, DIRTY };
 
-/* additional mode bit */
+/* additional mode bits */
 
+#define APPEND     (1<<6)
 #define WRITTEN    (1<<7)
 
 /*-----------------------------------------------------------------------------
@@ -779,55 +780,92 @@ int rdcf_open (struct rdcf *f, const char *spec, unsigned mode)
   int found;
   if ((f->result = setjmp (f->error)) != 0)
     return f->result;
-  // make sure it is not open on another stream.
-  f->mode = 0;
+
+  //  printf("mode: 0x%xd\n", mode);
+
+  // does it exist already ?
   found = find_file (f, initialize_fcb (f, spec));
+
+  // is it a directory ?
   if (found && f->file.attribute & RDCF_DIRECTORY)
     error_exit (f, ~EISDIR);
-  // see how to open the file.
-  if (mode & _FTRUNC && found) {
-    // simply empty the file of clusters.
-    if (found) {
+
+  // see how to open the file
+  if (mode & O_CREAT) {
+    //    printf("O_CREAT\n");
+    bool new_file = false;
+    if (mode & O_TRUNC && found) {
+      //      printf(" O_TRUNC and found\n");
+      // TRUNC and CREATE and found -> empty the file of clusters
       check_write_access (f);
       release_FAT_entries (f);
+
+      new_file = true;
+    } else if (!found) {
+      //      printf(" not O_TRUNC, not found\n");
+      // CREATE and not found -> create a new file
+      lengthen_directory_if_necessary (f);
+
+      new_file = true;
+    }
+
+    // if found and APPEND, don't do anything to it (new_file = false)
+
+    // write back any changes we made here
+    if (new_file) {
+      //      printf(" new_file = true\n");
+      f->file.attribute = RDCF_ARCHIVE;
+      rdcf_get_date_and_time (&f->file.date_and_time);
+      f->mode |= WRITTEN;
+      f->file.first_cluster = EMPTY_CLUSTER;
+      f->file.size = 0L;
+
+      update_directory_entry (f, 0);
       flush_buffer (f);
     }
-    else
-      lengthen_directory_if_necessary (f);
-    f->file.first_cluster = EMPTY_CLUSTER;
-    f->file.size = 0L;
+  } else if (!found) {
+    //    printf("!found, !O_CREAT\n");
+    // not found, not CREATE -> error
+    error_exit (f, ~ENOENT);
   }
-  // create new dir entry if mode is not purely read: "r"
-  if (!found && (mode & 0x3)) {
-    f->file.attribute = RDCF_ARCHIVE;
-    rdcf_get_date_and_time (&f->file.date_and_time);
-    f->mode |= WRITTEN;
-    f->file.first_cluster = EMPTY_CLUSTER;
-    f->file.size = 0L;
-    update_directory_entry (f, 0);
-    flush_buffer (f);
+
+  // mark APPEND
+  if (mode & O_APPEND) {
+    f->mode |= APPEND;
   }
-  if ((mode & 0x3) == 0) {
-    // open for reading.
+
+
+  // now file is created or we have signalled an error
+  // decide the file mode
+  switch (mode & 0x3) {
+  case O_RDONLY:
+    //    printf("open for reading\n");
     f->mode |= RDCF_READ;
-    if (!found)
-      error_exit (f, ~ENOENT);
-  }
-  else {
-    // open for writing or
-    f->mode |= RDCF_WRITE;
-    // open for read write.
-    if ((mode & 0x3) == 2)
-      f->mode |= RDCF_READ;
+    break;
+
+  case O_RDWR:
+    //    printf("open for reading\n");
+    f->mode |= RDCF_READ;
+    // fallthrough to write
+
+  case O_WRONLY:
+    //    printf("open for writing\n");
     check_write_access (f);
+    f->mode |= RDCF_WRITE;
+    break;
   }
+
+  // do final setup
   f->last_cluster = EMPTY_CLUSTER;
   f->position = 0;
   f->cluster = f->file.first_cluster;
-  if (mode & _FAPPEND) {
-    // seek to end of file.
-    if ((found = rdcf_seek (f, f->file.size)) != 0)
-      return found;
+
+  // seek to end of file if O_WRONLY and O_APPEND
+  if ((mode & O_APPEND) && ((mode & 0x3) == O_WRONLY)) {
+    //    printf("O_APPEND seeking now\n");
+    int result;
+    if ((result = rdcf_seek (f, f->file.size)) != 0)
+      return result;
   }
   return 0;
 }
@@ -891,7 +929,7 @@ int rdcf_seek (struct rdcf *f, uint32_t offset)
   if ((f->result = setjmp (f->error)) != 0)
     return f->result;
   if (offset > f->file.size)
-    error_exit (f, ~ESPIPE);
+    error_exit (f, ~EINVAL);
   f->buffer_status = EMPTY;
   cluster = f->file.first_cluster;
   for (i = offset / (f->sectors_per_cluster * SECTOR_SIZE); i > 0; i--) {
@@ -910,12 +948,22 @@ static int real_rdcf_write (struct rdcf *f, const uint8_t * buf, int count)
   uint32_t size = f->file.size;
   uint32_t position = f->position;
   unsigned unwritten_bytes = count;
-  const char *buffer = buf;
+  const uint8_t *buffer = buf;
   if ((f->result = setjmp (f->error)) != 0)
     return f->result;
   f->buffer_status = EMPTY;
   if ((f->mode & RDCF_WRITE) == 0)
     error_exit (f, ~EBADFD);
+
+  if (f->mode & APPEND) {
+    //    printf("O_APPEND seeking now\n");
+    int result;
+    if ((result = rdcf_seek (f, size)) != 0)
+      return result;
+
+    position = f->position;
+  }
+
   while (unwritten_bytes > 0) {
     unsigned sector;
     unsigned n = unwritten_bytes;

@@ -225,24 +225,47 @@ static off_t mmc_lseek (int file, off_t pos, int whence)
     return -1;
   }
 
+  off_t abs_pos;
+
+  // choose
   switch (whence) {
   case SEEK_SET:
-    result = rdcf_seek (fcbs[file], pos);
-    if (result < 0) {
-      _cc3_mmc_idle();
-      errno = ~result;
-      return -1;
-    }
-    _cc3_mmc_idle();
-    return fcbs[file]->position;
-  case SEEK_CUR:               // not implemented.
-  case SEEK_END:               // not implemented.
+    abs_pos = pos;
     break;
+
+  case SEEK_CUR:
+    abs_pos = fcbs[file]->position + pos;
+    break;
+
+  case SEEK_END:
+    abs_pos = fcbs[file]->file.size + pos;
+
+  default:
+    // invalid whence
+    _cc3_mmc_idle();
+    errno = EINVAL;
+    return -1;
   }
 
+  // can't seek < 0
+  if (abs_pos < 0) {
+    _cc3_mmc_idle();
+    errno = EINVAL;
+    return -1;
+  }
+
+  // do actual seek
+  result = rdcf_seek (fcbs[file], abs_pos);
+  if (result < 0) {
+    // error from rdcf
+    _cc3_mmc_idle();
+    errno = ~result;
+    return -1;
+  }
+
+  // success!
   _cc3_mmc_idle();
-  errno = EINVAL;
-  return -1;
+  return fcbs[file]->position;
 }
 
 static int mmc_unlink (const char *name)
