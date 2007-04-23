@@ -113,16 +113,26 @@ static void rdcf_get_date_and_time (struct rdcf_date_and_time *p)
   struct timeval temp;
   time_t now;
 
-  gettimeofday (&temp, 0);
-  now = temp.tv_sec;
-  localtime_r (&now, &dateTime);
-  // time is correct.
-  p->hour = dateTime.tm_hour;
-  p->minute = dateTime.tm_min;
-  p->second = dateTime.tm_sec;
-  p->month = dateTime.tm_mon + 1;
-  p->day = dateTime.tm_mday;
-  p->year = dateTime.tm_year + 1900;
+  if (gettimeofday (&temp, 0) == 0) {
+    // time is correct
+    now = temp.tv_sec;
+    localtime_r (&now, &dateTime);
+
+    p->hour = dateTime.tm_hour;
+    p->minute = dateTime.tm_min;
+    p->second = dateTime.tm_sec;
+    p->month = dateTime.tm_mon + 1;
+    p->day = dateTime.tm_mday;
+    p->year = dateTime.tm_year + 1900;
+  } else {
+    // time is incorrect, apply "the notorious 1-1-80 00:00:00"
+    p->hour = 0;
+    p->minute = 0;
+    p->second = 0;
+    p->month = 1;
+    p->day = 1;
+    p->year = 1980;
+  }
 }
 
 /*-----------------------------------------------------------------------------
