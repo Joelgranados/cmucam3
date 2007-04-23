@@ -97,7 +97,7 @@ void init_jpeg(void) {
 
   // set image quality, etc.
   jpeg_set_defaults(&cinfo);
-  jpeg_set_quality(&cinfo, 100, true);
+  jpeg_set_quality(&cinfo, 80, true);
 
   // allocate memory for 1 row
   row = cc3_malloc_rows(1);
