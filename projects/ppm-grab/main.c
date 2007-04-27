@@ -28,9 +28,9 @@ int main(void) {
   // init
   cc3_led_set_state(0, false);
   i = 0;
-  while(!cc3_button_get_state());
   while(true) {
     char filename[16];
+  while(!cc3_button_get_state());
 
     // Check if files exist, if they do then skip over them
     do {
