@@ -48,6 +48,13 @@ SECTIONS
     PROVIDE (etext = .);
   } > ROM
 
+  __exidx_start = .;
+  .ARM.exidx :
+  {
+    *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+  } > ROM
+  __exidx_end = .;
+
 
   /* first in RAM is the stack, which grows down (ultimately past RAM where
      it can trigger a data abort on overflow) */
