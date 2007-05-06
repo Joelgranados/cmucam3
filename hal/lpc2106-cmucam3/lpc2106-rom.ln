@@ -51,7 +51,7 @@ SECTIONS
   .ARM.exidx :
   {
     *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-    _etext = . ;
+    _etext = . ;               /* IMPORTANT! used by startup.s */
   } > ROM
   __exidx_end = .;
 
