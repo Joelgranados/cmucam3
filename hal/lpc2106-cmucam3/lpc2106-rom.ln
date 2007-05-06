@@ -44,7 +44,6 @@ SECTIONS
     *(.rodata)                 /* read-only data (constants) */
     *(.rodata*)
 
-    _etext = . ;
     PROVIDE (etext = .);
   } > ROM
 
@@ -52,6 +51,7 @@ SECTIONS
   .ARM.exidx :
   {
     *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+    _etext = . ;
   } > ROM
   __exidx_end = .;
 
