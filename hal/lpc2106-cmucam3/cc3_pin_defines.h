@@ -123,12 +123,17 @@
 #define _CC3_SERVO_2 		0x00080000	
 #define _CC3_SERVO_3 		0x00100000	
 
+#define _CC3_CAM_POWER_DOWN     0x200000
+
 #define _CC3_BUTTON             0x00004000
+#define _CC3_BUTTON_PINSEL_MASK 0x30000000
+#define _CC3_BUTTON_PINSEL      0x20000000
 
 // SPI
 #define _CC3_SPI_MASK           0x0000FF00
 #define _CC3_SPI_PINSEL         0x00005500
 #define _CC3_SPI_SPIF           0x00000080
+#define _CC3_SPI_PINSEL_DISABLE 0x00000000
 
 // MMC
 #define _CC3_MMC_CS             0x00004000
