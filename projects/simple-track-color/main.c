@@ -19,7 +19,7 @@ int main(void) {
   cc3_camera_init ();
 
 
-  //cc3_set_colorspace(CC3_COLORSPACE_YCRCB);
+  //cc3_camera_set_colorspace(CC3_COLORSPACE_YCRCB);
   cc3_camera_set_resolution(CC3_CAMERA_RESOLUTION_LOW);
   //cc3_pixbuf_frame_set_subsample(CC3_SUBSAMPLE_NEAREST, 2, 2);
   
