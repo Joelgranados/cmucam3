@@ -191,7 +191,7 @@ static void cmucam2_get_mean (cc3_color_info_pkt_t * t_pkt, bool poll_mode,
 static void cmucam2_write_s_packet (cc3_color_info_pkt_t * pkt);
 static void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
                                  bool poll_mode,
-                                 bool line_mode, bool auto_led,
+                                 int8_t line_mode, bool auto_led,
                                  cmucam2_servo_t * servo_settings,
                                  bool buf_mode, uint8_t sw_color_space, bool quiet);
 static void cmucam2_frame_diff (cc3_frame_diff_pkt_t * pkt,
@@ -227,7 +227,8 @@ int main (void)
   uint32_t arg_list[MAX_ARGS];
   uint32_t start_time;
   uint8_t sw_color_space;
-  bool error, poll_mode, line_mode, auto_led, demo_mode, buf_mode;
+  bool error, poll_mode, auto_led, demo_mode, buf_mode;
+  int8_t line_mode;
   cc3_track_pkt_t t_pkt;
   cc3_color_info_pkt_t s_pkt;
   cc3_histogram_pkt_t h_pkt;
@@ -279,7 +280,7 @@ cmucam2_start:
   sw_color_space=DEFAULT_COLOR;
   auto_led = true;
   poll_mode = false;
-  line_mode = false;
+  line_mode = 0;
   buf_mode = false;
   packet_filter_flag = false;
   t_pkt_mask = 0xFF;
@@ -613,9 +614,11 @@ cmucam2_start:
         // FIXME: Make bitmasks later
         if (arg_list[0] == 0) {
           if (arg_list[1] == 1)
-            line_mode = true;
-          else
-            line_mode = false;
+            line_mode = 1;
+          else if (arg_list[1] == 2)
+		  line_mode=2;
+	  else
+            line_mode = 0;
         }
         break;
 
@@ -1259,7 +1262,7 @@ void cmucam2_get_mean (cc3_color_info_pkt_t * s_pkt,
 
 void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
                           bool poll_mode,
-                          bool line_mode, bool auto_led,
+                          int8_t line_mode, bool auto_led,
                           cmucam2_servo_t * servo_settings, bool buf_mode, uint8_t sw_color_space,
                           bool quiet)
 {
@@ -1291,7 +1294,7 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
       uint8_t *lm;
       lm_width = 0;
       lm_height = 0;
-      if (line_mode) {
+      if (line_mode==1) {
         // FIXME: This doesn't make sense
         lm = &t_pkt->binary_scanline;
         lm_width = img.width / 8;
@@ -1308,10 +1311,31 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
         if (!quiet)
           putchar (lm_height);
       }
+
+    if (line_mode==2) {
+        // FIXME: This still doesn't make sense
+        lm = &t_pkt->binary_scanline;
+        lm_width = img.width / 8;
+        if (img.width % 8 != 0)
+          lm_width++;
+        if (!quiet)
+          putchar (0xFE);
+        if (cc3_g_pixbuf_frame.height > 255)
+          lm_height = 255;
+        else
+          lm_height = cc3_g_pixbuf_frame.height;
+        //if (!quiet)
+          //putchar (img.width);
+        if (!quiet)
+          putchar (lm_height);
+      }
+
+      
       while (cc3_pixbuf_read_rows (img.pix, 1)) {
 	if(sw_color_space==HSV_COLOR && img.channels==CC3_CHANNEL_ALL)  cc3_rgb2hsv_row(img.pix,img.width);
         cc3_track_color_scanline (&img, t_pkt);
-        if (line_mode) {
+
+        if (line_mode==1) {
           // keep this check here if you don't want the CMUcam2 GUI to hang after exiting a command in line mode
           while (!cc3_uart_has_data (0)) {
             if (getchar () == '\r') {
@@ -1330,6 +1354,44 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
             }
           }
         }
+
+
+        if (line_mode==2) {
+	  uint8_t min,max,p_count,conf;
+	  uint32_t mean;
+          // keep this check here if you don't want the CMUcam2 GUI to hang after exiting a command in line mode
+          while (!cc3_uart_has_data (0)) {
+            if (getchar () == '\r') {
+              free (img.pix);
+              return;
+            }
+          }
+	  mean=0;
+	  min=255;
+	  max=0;
+	  p_count=0;
+          for (int j = 0; j < img.width; j++) {
+	 	uint8_t block, offset;
+        	block = j / 8;
+        	offset = j % 8;
+        	offset = 7 - offset;	
+                if((lm[block] & (1<<offset))!=0) 
+			{
+			// bit detected
+			if(j<min) min=j;
+			if(j>max) max=j;
+			p_count++;
+			mean+=j;
+			}
+          }
+	mean=mean/p_count;
+	conf=((max-min)*100)/p_count;
+	if (!quiet)
+		printf( "%c%c%c%c%c",(uint8_t)mean,min,max,p_count,conf);
+        }
+
+
+	
       }
       // keep this check here if you don't want the CMUcam2 GUI to hang after exiting a command in line mode
       while (!cc3_uart_has_data (0)) {
@@ -1339,12 +1401,18 @@ void cmucam2_track_color (cc3_track_pkt_t * t_pkt,
         }
       }
       cc3_track_color_scanline_finish (t_pkt);
-      if (line_mode) {
+      if (line_mode==1) {
         if (!quiet)
           putchar (0xAA);
         if (!quiet)
           putchar (0xAA);
       }
+
+     if (line_mode==2) {
+        if (!quiet)
+          putchar (0xFD);
+      }
+
       if (auto_led) {
         if (t_pkt->int_density > 2)
           cc3_led_set_state (0, true);
