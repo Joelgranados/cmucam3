@@ -53,6 +53,7 @@ int main (void)
     train_hist[i].hist = malloc (train_hist[i].bins * sizeof (uint32_t));
     simple_get_histogram (&train_hist[i]);
     printf( "Image loaded...\n" );
+    cc3_timer_wait_ms(1000);
   }
   // Turn on LED when training done
   cc3_led_set_state (0, 0);
