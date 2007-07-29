@@ -4,7 +4,7 @@
 #include <cc3_ilp.h>
 #include <cc3_histogram.h>
 
-#define TEMPLATE_IMGS     4
+#define TEMPLATE_IMGS     3
 #define DETECT_THRESH	  2000
 
 void simple_get_histogram (cc3_histogram_pkt_t * h_pkt);
@@ -40,14 +40,16 @@ int main (void)
   my_hist.bins = 24;
   my_hist.hist = malloc (my_hist.bins * sizeof (uint32_t));
 
+  cc3_led_set_state (0, 0);
   cc3_led_set_state (1, 0);
+  cc3_led_set_state (2, 0);
   // Read in the next TEMPLATE_IMGS number of images to build templates
   for (i = 0; i < TEMPLATE_IMGS; i++) {
-    cc3_led_set_state (0, 0);
+    cc3_led_set_state (i, 1);
     printf( "Press button to train image %d...\n",i );
     // Wait for button press to capture template image
     while (!cc3_button_get_state ());
-    cc3_led_set_state (0, 1);
+    cc3_led_set_state (i, 0);
     train_hist[i].channel = CC3_CHANNEL_GREEN;
     train_hist[i].bins = 24;
     train_hist[i].hist = malloc (train_hist[i].bins * sizeof (uint32_t));
@@ -55,9 +57,10 @@ int main (void)
     printf( "Image loaded...\n" );
     cc3_timer_wait_ms(1000);
   }
-  // Turn on LED when training done
+  // Turn off LEDs when training done
   cc3_led_set_state (0, 0);
-  cc3_led_set_state (1, 1);
+  cc3_led_set_state (1, 0);
+  cc3_led_set_state (2, 0);
 
   while (true) {
     uint32_t diff, min;
@@ -83,12 +86,14 @@ int main (void)
       }
     }
 
+      cc3_led_set_state (0, 0);
+      cc3_led_set_state (1, 0);
+      cc3_led_set_state (2, 0);
     if (min < DETECT_THRESH) {
-      cc3_led_set_state (0, 1);
+      cc3_led_set_state (template, 1);
       printf ("Image matched template %d with value %d\n", template, min);
     }
     else {
-      cc3_led_set_state (0, 0);
       printf ("NO IMAGE MATCHED: closest template %d with value %d\n",
               template, min);
     }
