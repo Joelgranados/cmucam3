@@ -308,24 +308,24 @@ int main (void)
    
    cc3_camera_init ();
    
-   cc3_set_colorspace(CC3_RGB);
-   cc3_set_resolution(CC3_LOW_RES);
-   cc3_set_auto_white_balance(true);
-   cc3_set_auto_exposure(true);
+   cc3_camera_set_colorspace(CC3_COLORSPACE_RGB);
+   cc3_camera_set_resolution(CC3_CAMERA_RESOLUTION_LOW);
+   cc3_camera_set_auto_white_balance(true);
+   cc3_camera_set_auto_exposure(true);
    
    printf("Face Detector...\n\r");
    
-   cc3_clr_led (0);
-   cc3_clr_led (1);
-   cc3_clr_led (2);
+   cc3_led_set_state(0,0);
+   cc3_led_set_state(1,0);
+   cc3_led_set_state(2,0);
    
    /* sample wait command in ms  */
-   cc3_wait_ms(1000);
-   cc3_set_led (0);
+   cc3_timer_wait_ms(1000);
+   cc3_led_set_state(0,1);
    
    /* setup integral image structure */
    cc3_img_tmp.channels=3; // RGB color 
-   cc3_img_tmp.width=cc3_g_current_frame.width;  // equal to Int_Img_Width
+   cc3_img_tmp.width=cc3_g_pixbuf_frame.width;  // equal to Int_Img_Width
    cc3_img_tmp.height = 1;  // image will hold just 1 row for scanline processing
    cc3_img_tmp.pix = &image_row;
    
@@ -362,7 +362,7 @@ int main (void)
 	 }
        
 
-       fprintf( fp, "P2\n%d %d\n255\n", cc3_g_current_frame.width, cc3_g_current_frame.height-top_offset-bottom_offset );
+       fprintf( fp, "P2\n%d %d\n255\n", cc3_g_pixbuf_frame.width, cc3_g_pixbuf_frame.height-top_offset-bottom_offset );
        sprintf(img_name, "%s%04d%s","c:/img",num_frames,".txt");
        fout = fopen(img_name, "w");
        if (fout == NULL)
@@ -702,12 +702,11 @@ int main (void)
 	num_frames++;
 
        	
-	cc3_clr_led (0);
-
-	cc3_set_led (2);
-	while(!cc3_read_button());
-	cc3_set_led (0);
-	cc3_clr_led (2);
+   	cc3_led_set_state(0,0);
+   	cc3_led_set_state(2,1);
+	while(!cc3_button_get_state());
+   	cc3_led_set_state(0,1);
+   	cc3_led_set_state(2,0);
 	// wait for the button to be pressed for the next frame
 	
 

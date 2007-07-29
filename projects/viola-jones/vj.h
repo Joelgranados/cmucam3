@@ -5,6 +5,8 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+#include <../../hal/lpc2106-cmucam3/cc3_hal.h>
+
 /*----------------------------------------*/
 /*          Declaring variables           */
 /*----------------------------------------*/
