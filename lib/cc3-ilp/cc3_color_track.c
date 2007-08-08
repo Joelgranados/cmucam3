@@ -101,6 +101,7 @@ uint8_t cc3_track_color (cc3_track_pkt_t * pkt)
         pkt->centroid_y += y;
       }
     }
+    pixel=row;
   }
 
   if (pkt->num_pixels > 0) {
