@@ -44,7 +44,7 @@ override CFLAGS+=-I$(HALDIR)/../../include -O2 -pipe -funit-at-a-time \
 	-Wreturn-type -Wshadow -Wstrict-prototypes -Wunused -Wextra \
 	-Werror-implicit-function-declaration \
 	-ffreestanding -std=gnu99 -g -fdata-sections -ffunction-sections \
-	-mcpu=arm7tdmi-s -fexceptions \
+	-mcpu=arm7tdmi-s -fno-exceptions \
 	-msoft-float -mthumb-interwork
 
 override LDFLAGS+=-nostartfiles -lm -T$(HALDIR)/lpc2106-rom.ln \
