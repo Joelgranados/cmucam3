@@ -1,5 +1,5 @@
 /*
-** $Id: loslib.c,v 1.19 2006/04/26 18:19:49 roberto Exp $
+** $Id: loslib.c,v 1.20 2006/09/19 13:57:08 roberto Exp $
 ** Standard Operating System library
 ** See Copyright Notice in lua.h
 */
@@ -146,11 +146,22 @@ static int os_date (lua_State *L) {
     setboolfield(L, "isdst", stm->tm_isdst);
   }
   else {
-    char b[256];
-    if (strftime(b, sizeof(b), s, stm))
-      lua_pushstring(L, b);
-    else
-      return luaL_error(L, LUA_QL("date") " format too long");
+    char cc[3];
+    luaL_Buffer b;
+    cc[0] = '%'; cc[2] = '\0';
+    luaL_buffinit(L, &b);
+    for (; *s; s++) {
+      if (*s != '%' || *(s + 1) == '\0')  /* no conversion specifier? */
+        luaL_addchar(&b, *s);
+      else {
+        size_t reslen;
+        char buff[200];  /* should be big enough for any conversion result */
+        cc[1] = *(++s);
+        reslen = strftime(buff, sizeof(buff), cc, stm);
+        luaL_addlstring(&b, buff, reslen);
+      }
+    }
+    luaL_pushresult(&b);
   }
   return 1;
 }
@@ -181,13 +192,11 @@ static int os_time (lua_State *L) {
 }
 
 
-#if !defined LUA_NUMBER_INTEGRAL
 static int os_difftime (lua_State *L) {
   lua_pushnumber(L, difftime((time_t)(luaL_checknumber(L, 1)),
                              (time_t)(luaL_optnumber(L, 2, 0))));
   return 1;
 }
-#endif
 
 /* }====================================================== */
 
@@ -212,9 +221,7 @@ static int os_exit (lua_State *L) {
 static const luaL_Reg syslib[] = {
   {"clock",     os_clock},
   {"date",      os_date},
-#if !defined LUA_NUMBER_INTEGRAL
   {"difftime",  os_difftime},
-#endif
   {"execute",   os_execute},
   {"exit",      os_exit},
   {"getenv",    os_getenv},
