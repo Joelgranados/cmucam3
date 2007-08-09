@@ -16,7 +16,6 @@
 #include "lua.h"
 
 #include "lapi.h"
-#include "lcode.h"
 #include "ldebug.h"
 #include "ldo.h"
 #include "lfunc.h"
