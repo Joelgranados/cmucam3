@@ -43,6 +43,7 @@ SECTIONS
     *(.gnu.linkonce.r.*)
     *(.rodata)                 /* read-only data (constants) */
     *(.rodata*)
+    KEEP(*(.fini))
 
     PROVIDE (etext = .);
   } > ROM

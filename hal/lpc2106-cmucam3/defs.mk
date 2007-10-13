@@ -47,7 +47,7 @@ override CFLAGS+=-I$(HALDIR)/../../include -O2 -pipe -funit-at-a-time \
 	-mcpu=arm7tdmi-s -fno-exceptions \
 	-msoft-float -mthumb-interwork
 
-override LDFLAGS+=-nostartfiles -lm -T$(HALDIR)/lpc2106-rom.ln \
+override LDFLAGS+=-lm -T$(HALDIR)/lpc2106-rom.ln \
 	-mcpu=arm7tdmi-s -msoft-float
 
 HALLIB=libhal-$(HALNAME).a
