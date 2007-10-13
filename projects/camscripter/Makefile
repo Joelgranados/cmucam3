@@ -8,7 +8,7 @@ CSOURCES=scripter.c slip.c csmsg.c lualib.c
 INCLUDES=slip.h scripter.h csmsg.h lualib.h
 
 # library files
-LIBS = lua-5.1.2 jpeg-6b cc3-ilp
+LIBS = lua51 jpeg-6b cc3-ilp
 
 # the name of this project
 PROJECT=camscripter

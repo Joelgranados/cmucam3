@@ -1,14 +1,15 @@
 #ifndef LUALIB_H_
 #define LUALIB_H_
-#include "lua.h"
-#include "lauxlib.h"
-#include "lgc.h"
-#include "llex.h"
-#include "lzio.h"
-#include "lundump.h"
-#include "stdint.h"
-#include "cc3.h"
-#include "stdlib.h"
+
+#include <lua.h>
+#include <lauxlib.h>
+#include <lgc.h>
+#include <llex.h>
+#include <lzio.h>
+#include <lundump.h>
+#include <stdint.h>
+#include <cc3.h>
+#include <stdlib.h>
 #include "csmsg.h"
 
 // Temporary file used to execute LUA chunks

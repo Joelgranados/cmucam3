@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "lualib.h"
-#include "cc3.h"
+#include <cc3.h>
 #include "slip.h"
 #include "scripter.h"
-#include "string.h"
+#include <string.h>
 #include "csmsg.h"
 
 // Get rid of lua code generator and parser.
