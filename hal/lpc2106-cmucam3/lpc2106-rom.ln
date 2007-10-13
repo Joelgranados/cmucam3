@@ -1,5 +1,5 @@
 /*
- * Copyright 2006  Anthony Rowe and Adam Goode
+ * Copyright 2006--2007  Anthony Rowe and Adam Goode
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,19 @@
  * limitations under the License.
  *
  */
+
+/*
+ *  Copyright 2007 CodeSourcery.
+ *
+ * The authors hereby grant permission to use, copy, modify, distribute,
+ * and license this software and its documentation for any purpose, provided
+ * that existing copyright notices are retained in all copies and that this
+ * notice is included verbatim in any distributions. No written agreement,
+ * license, or royalty fee is required for any of the authorized uses.
+ * Modifications to this software may be copyrighted by their authors
+ * and need not follow the licensing terms described here, provided that
+ * the new terms are clearly indicated on the first page of each file where
+ * they apply. */
 
 
 /*  Linker Script File    */
@@ -33,28 +46,67 @@ SECTIONS
   /* .text in ROM which is used for code */
   .text :
   {
-    KEEP(*(.init))             /* Startup code from .init-section */
-    *(.text)
-    *(.text.*)
-    *(.gnu.linkonce.t.*)
-    *(.glue_7)
-    *(.glue_7t)
+    KEEP(*(.boot))
+
+    *(.text .text.* .gnu.linkonce.t.*)
+    *(.plt)
+    *(.gnu.warning)
+    *(.glue_7t) *(.glue_7) *(.vfp11_veneer)
+
+    *(.rodata .rodata.* .gnu.linkonce.r.*)
+
+    *(.ARM.extab* .gnu.linkonce.armextab.*)
     *(.gcc_except_table)
-    *(.gnu.linkonce.r.*)
-    *(.rodata)                 /* read-only data (constants) */
-    *(.rodata*)
+    *(.eh_frame_hdr)
+    *(.eh_frame)
+
+    . = ALIGN(4);
+    KEEP(*(.init))
+
+    . = ALIGN(4);
+    __preinit_array_start = .;
+    KEEP (*(.preinit_array))
+    __preinit_array_end = .;
+
+    . = ALIGN(4);
+    __init_array_start = .;
+    KEEP (*(SORT(.init_array.*)))
+    KEEP (*(.init_array))
+    __init_array_end = .;
+
+    . = ALIGN(0x4);
+    KEEP (*crtbegin.o(.ctors))
+    KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
+    KEEP (*(SORT(.ctors.*)))
+    KEEP (*crtend.o(.ctors))
+
+    . = ALIGN(4);
     KEEP(*(.fini))
 
-    PROVIDE (etext = .);
+    . = ALIGN(4);
+    __fini_array_start = .;
+    KEEP (*(.fini_array))
+    KEEP (*(SORT(.fini_array.*)))
+    __fini_array_end = .;
+
+    KEEP (*crtbegin.o(.dtors))
+    KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
+    KEEP (*(SORT(.dtors.*)))
+    KEEP (*crtend.o(.dtors))
   } > ROM
 
+  /* .ARM.exidx is sorted, so has to go in its own output section.  */
   __exidx_start = .;
   .ARM.exidx :
   {
     *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-    _etext = . ;               /* IMPORTANT! used by startup.s */
   } > ROM
   __exidx_end = .;
+  .text.align :
+  {
+    . = ALIGN(8);
+    _etext = .;
+  } > ROM
 
 
   /* first in RAM is the stack, which grows down (ultimately past RAM where
@@ -71,53 +123,37 @@ SECTIONS
   .data :
   {
     _data = .;
-    *(.data)
-    *(.data.*)
-    *(.gnu.linkonce.d*)
-    *(.fastrun)
-
-    _edata = . ;
-    PROVIDE (edata = .);
+    KEEP(*(.jcr))
+    *(.got.plt) *(.got)
+    *(.shdata)
+    *(.data .data.* .gnu.linkonce.d.*)
+    *(.ram)
+    . = ALIGN (8);
+    _edata = .;
   } > RAM  AT > ROM
 
 
   /* .bss section which is used for uninitialized data (just in RAM) */
   .bss (NOLOAD) :
   {
-    __bss_start = . ;
-    __bss_start__ = . ;
-    *(.bss)
-    *(.bss.*)
-    *(.gnu.linkonce.b*)
+    _bss = .;
+    *(.shbss)
+    *(.bss .bss.* .gnu.linkonce.b.*)
     *(COMMON)
-
-    __bss_end__ = . ;
-    PROVIDE (__bss_end = .);
+    *(.ram.b)
+    . = ALIGN (8);
+    _end = .;
+    __end = .;
   } > RAM
-
-
-  /* now, mark the end of static memory */
-  _end = . ;
-  PROVIDE (end = .);
 
   /* mark the end of the heap */
   _heap_end = ORIGIN(RAM) + LENGTH(RAM);
-  PROVIDE (heap_end = ORIGIN(RAM) + LENGTH(RAM));
 
-
-  /* Stabs debugging sections.  */
-  .stab          0 : { *(.stab) }
-  .stabstr       0 : { *(.stabstr) }
-  .stab.excl     0 : { *(.stab.excl) }
-  .stab.exclstr  0 : { *(.stab.exclstr) }
-  .stab.index    0 : { *(.stab.index) }
-  .stab.indexstr 0 : { *(.stab.indexstr) }
-  .comment       0 : { *(.comment) }
-
-
+  .stab 0 (NOLOAD) : { *(.stab) }
+  .stabstr 0 (NOLOAD) : { *(.stabstr) }
   /* DWARF debug sections.
-     Symbols in the DWARF debugging sections are relative to the beginning
-     of the section so we begin them at 0.  */
+   * Symbols in the DWARF debugging sections are relative to the beginning
+   * of the section so we begin them at 0.  */
   /* DWARF 1 */
   .debug          0 : { *(.debug) }
   .line           0 : { *(.line) }
@@ -140,4 +176,8 @@ SECTIONS
   .debug_funcnames 0 : { *(.debug_funcnames) }
   .debug_typenames 0 : { *(.debug_typenames) }
   .debug_varnames  0 : { *(.debug_varnames) }
+
+  .note.gnu.arm.ident 0 : { KEEP (*(.note.gnu.arm.ident)) }
+  .ARM.attributes 0 : { KEEP (*(.ARM.attributes)) }
+  /DISCARD/ : { *(.note.GNU-stack) }
 }

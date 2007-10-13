@@ -28,8 +28,8 @@
         .global _etext                  @ -> .data initial values in ROM
         .global _data                   @ -> .data area in RAM
         .global _edata                  @ end of .data area
-        .global __bss_start             @ -> .bss area in RAM
-        .global __bss_end__             @ end of .bss area
+        .global _bss                    @ -> .bss area in RAM
+        .global _end                    @ end of .bss area
         .global _stack                  @ top of stack
 
 @ Stack Sizes
@@ -53,7 +53,7 @@
 
         .text
 	.arm
-	.section .init, "ax"
+	.section .boot, "ax"
 
         .code 32
 
@@ -133,8 +133,8 @@ _mainCRTStartup:
 @ Clear .bss
 @ ----------
         mov   r0,#0                     @ get a zero
-        ldr   r1,=__bss_start           @ -> bss start
-        ldr   r2,=__bss_end__           @ -> bss end
+        ldr   r1,=_bss                  @ -> bss start
+        ldr   r2,=_end                  @ -> bss end
 2:      cmp   r1,r2                     @ check if data to clear
         strlo r0,[r1],#4                @ clear 4 bytes
         blo   2b                        @ loop until done
