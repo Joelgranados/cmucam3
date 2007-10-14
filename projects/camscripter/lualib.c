@@ -9,6 +9,14 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
+
+/* State information so that get_pixel() doesn't have to always grab 
+ * This is cleared by take_picture()
+ */
+cc3_image_t g_img;
+int g_img_prev_x, g_img_prev_y;
+
+    
 /* type-safety helper macros - checks that the object passed in is the correct type of pointer */
 #define checkimage(_l) (cc3_image_t*) luaL_checkudata(_l, 1, "scripter.image")
 #define checkframediff(_l, pos) (cc3_frame_diff_pkt_t*) luaL_checkudata(_l, pos, "scripter.framediff")
@@ -555,7 +563,6 @@ int image_get_width(lua_State *_l) {
  * the values at that pixel into the passed-in pixel data struct.
  */
 int get_pixel(lua_State *_l) {
-    cc3_image_t img;
     cc3_pixel_t *pixel = checkpixel(_l, 1);
     int x = luaL_checknumber(_l, 2);
     int y = luaL_checknumber(_l, 3);
@@ -565,16 +572,21 @@ int get_pixel(lua_State *_l) {
                    "x is outside the bounds of the image.");
     luaL_argcheck(_l, y < cc3_g_pixbuf_frame.height, 3, 
                   "y is outside the bounds of the image");
-    cc3_pixbuf_rewind();
-    img.pix = cc3_malloc_rows(1);
-    img.channels = cc3_g_pixbuf_frame.channels;
-    int idx = 0;
-    do {
-        cc3_pixbuf_read_rows(img.pix, 1);
-        idx++;
-    } while (idx <= y);
-    cc3_get_pixel(&img, x, 0, pixel); // only one row
-    free(img.pix);
+
+    // Only rewind the frame if we are accessing data behind current point in FIFO 
+    if(g_img_prev_y<y || g_img_prev_y==-1) { cc3_pixbuf_rewind();   g_img_prev_y=-1; }
+   
+    // only load a new row if we need to 
+    int idy = g_img_prev_y;
+    while( idy<y) {
+        cc3_pixbuf_read_rows(g_img.pix, 1);
+        idy++;
+    } 
+
+    cc3_get_pixel(&g_img, x, 0, pixel); 
+    // update position in global image
+    g_img_prev_y=idy;
+    g_img_prev_x=x;
 
     return 0;
 }
@@ -1197,6 +1209,12 @@ int print_color_tracker(lua_State *_l) {
  */
 int take_picture(lua_State *_l) {
     cc3_pixbuf_load();
+    // reset line buffer in case image properties changed
+    g_img_prev_y=-1; 
+    g_img_prev_x=-1; 
+    if(g_img.pix!=NULL) free(g_img.pix);
+    g_img.pix = cc3_malloc_rows(1);
+    g_img.channels = cc3_g_pixbuf_frame.channels;
     return 0;
 }
 
