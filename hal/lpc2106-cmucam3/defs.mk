@@ -36,6 +36,9 @@ endif
 #  THUMB_SUFFIX=$(DASH_THUMB)
 #endif
 
+
+# set iprintf as default (can be overriden by IPRINTF=0)
+IPRINTF := 1
 ifeq ($(strip $(IPRINTF)),1)
   IPRINTF_FLAGS := -Dprintf=iprintf \
 	$(foreach pp,as f s sn vas vf v vsn,-D$(pp)printf=$(pp)iprintf)
