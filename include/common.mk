@@ -27,6 +27,10 @@ HALDIR=../../hal/$(hal)
 # include definitions (compiler, options, etc)
 include $(HALDIR)/defs.mk
 
+ifneq ($(strip $(V)),1)
+  VV=@
+endif
+
 
 OBJDIR=$(HALNAME)_buildfiles
 OBJS=$(patsubst %.c, $(OBJDIR)/%.o,$(CSOURCES))
@@ -45,8 +49,8 @@ all: $(item)
 
 $(PROJECT)_$(HALNAME).hex: $(PROJECT)_$(HALNAME)
 	@echo "  OBJCOPY $@"
-	@$(OBJCOPY) -O ihex $< $@
-	@$(SIZE) $<
+	$(VV)$(OBJCOPY) -O ihex $< $@
+	$(VV)$(SIZE) $<
 
 LIBFILES=$(foreach lib,$(LIBS),../../lib/$(lib)/lib$(lib)_$(HALNAME).a)
 LIBDIRS=$(foreach lib,$(LIBS),../../lib/$(lib))
@@ -56,7 +60,7 @@ LIBARGS=$(foreach lib,$(LIBS),-l$(lib)_$(HALNAME))
 # the syscalls -- gc-sections will eliminate useless symbols
 $(PROJECT)_$(HALNAME): $(OBJS) $(HALDIR)/$(HALLIB) $(LIBFILES)
 	@echo "  CC      $@"
-	@$(CC) -o $@ $(OBJS) -L$(HALDIR) \
+	$(VV)$(CC) -o $@ $(OBJS) -L$(HALDIR) \
 	$(foreach ldir,$(LIBDIRS),-L$(ldir)) \
 	$(LIBARGS) \
 	-Wl,-Map=$(PROJECT)_$(HALNAME).map \
@@ -73,13 +77,13 @@ $(OBJDIR):
 
 $(OBJS): $(OBJDIR)/%.o : %.c $(INCLUDES) | $(OBJDIR)
 	@echo "  CC      $@"
-	@$(CC) $(CFLAGS) $(foreach ldir,$(LIBDIRS),-I$(ldir)) -o $@ -c $<
+	$(VV)$(CC) $(CFLAGS) $(foreach ldir,$(LIBDIRS),-I$(ldir)) -o $@ -c $<
 
 
 # if LIB = something
 lib$(PROJECT)_$(HALNAME).a: $(OBJS)
 	@echo "  AR      $@"
-	@$(AR) rs $@ $^
+	$(VV)$(AR) rs $@ $^
 
 
 
