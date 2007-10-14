@@ -42,7 +42,7 @@ INTEGER_STDIO := 1
 ifeq ($(strip $(INTEGER_STDIO)),1)
   INTEGER_STDIO_FLAGS := \
 	-Dprintf=iprintf \
-	$(foreach pp,as f s sn vas vf v vsn,-D$(pp)printf=$(pp)iprintf) \
+	$(foreach pp,as f s sn vas vsn vf vs v,-D$(pp)printf=$(pp)iprintf) \
 	-Dscanf=iscanf \
 	$(foreach pp,f s vf v vs,-D$(pp)scanf=$(pp)iscanf)
 endif
