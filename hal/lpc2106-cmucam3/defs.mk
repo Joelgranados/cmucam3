@@ -37,11 +37,14 @@ endif
 #endif
 
 
-# set iprintf as default (can be overriden by IPRINTF=0)
-IPRINTF := 1
-ifeq ($(strip $(IPRINTF)),1)
-  IPRINTF_FLAGS := -Dprintf=iprintf \
-	$(foreach pp,as f s sn vas vf v vsn,-D$(pp)printf=$(pp)iprintf)
+# set iprintf and iscanf as default (can be overriden by INTEGER_STDIO=0)
+INTEGER_STDIO := 1
+ifeq ($(strip $(INTEGER_STDIO)),1)
+  INTEGER_STDIO_FLAGS := \
+	-Dprintf=iprintf \
+	$(foreach pp,as f s sn vas vf v vsn,-D$(pp)printf=$(pp)iprintf) \
+	-Dscanf=iscanf \
+	$(foreach pp,f s vf v vs,-D$(pp)scanf=$(pp)iscanf)
 endif
 
 
@@ -54,7 +57,7 @@ override CFLAGS+=-I$(HALDIR)/../../include -O2 -pipe -funit-at-a-time \
 	-Werror-implicit-function-declaration \
 	-ffreestanding -std=gnu99 -g -fdata-sections -ffunction-sections \
 	-mcpu=arm7tdmi-s -fno-exceptions \
-	-msoft-float -mthumb-interwork $(IPRINTF_FLAGS)
+	-msoft-float -mthumb-interwork $(INTEGER_STDIO_FLAGS)
 
 override LDFLAGS+=-lm -T$(HALDIR)/lpc2106-rom.ln \
 	-mcpu=arm7tdmi-s -msoft-float
