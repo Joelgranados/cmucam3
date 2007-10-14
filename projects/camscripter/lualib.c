@@ -575,6 +575,7 @@ int get_pixel(lua_State *_l) {
     } while (idx <= y);
     cc3_get_pixel(&img, x, 0, pixel); // only one row
     free(img.pix);
+
     return 0;
 }
 

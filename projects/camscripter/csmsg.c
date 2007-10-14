@@ -294,7 +294,7 @@ void send_debug_msg( char* msg, ... ) {
  * Send detailed information about a particular pixel -- it's rgb values.
  */
 void send_image_info_msg(image_info_pkt_t* info) {
-    char txt[100]; // should be plenty
+    char txt[64]; // should be plenty
     sprintf(txt, "R,G,B:(%d,%d,%d) Average in area:(%d,%d,%d)", 
             info->r, info->g, info->b, info->avg_r, info->avg_g, info->avg_b, info->x, info->y);
 
