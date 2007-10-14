@@ -1,0 +1,243 @@
+This patch removes floating point operations used by Lua 5.1 by
+changing the type of Lua numbers from double to long.  It implements
+division and modulus so that x == (x / y) * y + x % y.  The
+exponentiation function returns zero for negative exponents.  The
+patch removes the difftime function, and the math module should not be
+used.  The string.format function no longer handles the floating point
+directives %e, %E, %f, %g, and %G.  By removing the definition of
+LUA_NUMBER_INTEGRAL in src/luaconf.h, one obtains a Lua number
+implementation based on doubles.
+
+John D. Ramsdell
+May 2, 2006
+
+diff -ur olua-5.1/src/linit.c lua-5.1/src/linit.c
+--- olua-5.1/src/linit.c	2005-12-29 10:32:11.000000000 -0500
++++ lua-5.1/src/linit.c	2006-05-02 07:30:15.000000000 -0400
+@@ -21,7 +21,9 @@
+   {LUA_IOLIBNAME, luaopen_io},
+   {LUA_OSLIBNAME, luaopen_os},
+   {LUA_STRLIBNAME, luaopen_string},
++#if !defined LUA_NUMBER_INTEGRAL
+   {LUA_MATHLIBNAME, luaopen_math},
++#endif
+   {LUA_DBLIBNAME, luaopen_debug},
+   {NULL, NULL}
+ };
+diff -ur olua-5.1/src/lmathlib.c lua-5.1/src/lmathlib.c
+--- olua-5.1/src/lmathlib.c	2005-08-26 13:36:32.000000000 -0400
++++ lua-5.1/src/lmathlib.c	2006-05-02 07:30:15.000000000 -0400
+@@ -252,8 +252,10 @@
+   luaL_register(L, LUA_MATHLIBNAME, mathlib);
+   lua_pushnumber(L, PI);
+   lua_setfield(L, -2, "pi");
++#if !defined LUA_NUMBER_INTEGRAL
+   lua_pushnumber(L, HUGE_VAL);
+   lua_setfield(L, -2, "huge");
++#endif
+ #if defined(LUA_COMPAT_MOD)
+   lua_getfield(L, -1, "fmod");
+   lua_setfield(L, -2, "mod");
+diff -ur olua-5.1/src/loslib.c lua-5.1/src/loslib.c
+--- olua-5.1/src/loslib.c	2006-01-27 08:54:31.000000000 -0500
++++ lua-5.1/src/loslib.c	2006-05-02 07:30:15.000000000 -0400
+@@ -185,11 +185,13 @@
+ }
+ 
+ 
++#if !defined LUA_NUMBER_INTEGRAL
+ static int os_difftime (lua_State *L) {
+   lua_pushnumber(L, difftime((time_t)(luaL_checknumber(L, 1)),
+                              (time_t)(luaL_optnumber(L, 2, 0))));
+   return 1;
+ }
++#endif
+ 
+ /* }====================================================== */
+ 
+@@ -215,7 +217,9 @@
+ static const luaL_Reg syslib[] = {
+   {"clock",     os_clock},
+   {"date",      os_date},
++#if !defined LUA_NUMBER_INTEGRAL
+   {"difftime",  os_difftime},
++#endif
+   {"execute",   os_execute},
+   {"exit",      os_exit},
+   {"getenv",    os_getenv},
+diff -ur olua-5.1/src/lstrlib.c lua-5.1/src/lstrlib.c
+--- olua-5.1/src/lstrlib.c	2005-12-29 10:32:11.000000000 -0500
++++ lua-5.1/src/lstrlib.c	2006-05-02 07:30:15.000000000 -0400
+@@ -780,11 +780,13 @@
+           sprintf(buff, form, (unsigned LUA_INTFRM_T)luaL_checknumber(L, arg));
+           break;
+         }
++#if !defined LUA_NUMBER_INTEGRAL
+         case 'e':  case 'E': case 'f':
+         case 'g': case 'G': {
+           sprintf(buff, form, (double)luaL_checknumber(L, arg));
+           break;
+         }
++#endif
+         case 'q': {
+           addquoted(L, &b, arg);
+           continue;  /* skip the 'addsize' at the end */
+diff -ur olua-5.1/src/luaconf.h lua-5.1/src/luaconf.h
+--- olua-5.1/src/luaconf.h	2006-02-10 12:44:06.000000000 -0500
++++ lua-5.1/src/luaconf.h	2006-05-02 07:45:46.000000000 -0400
+@@ -128,8 +128,9 @@
+ ** CHANGE that if ptrdiff_t is not adequate on your machine. (On most
+ ** machines, ptrdiff_t gives a good choice between int or long.)
+ */
+-#define LUA_INTEGER	ptrdiff_t
+ 
++/* Changed to long for use with integral Lua numbers. */
++#define LUA_INTEGER	long
+ 
+ /*
+ @@ LUA_API is a mark for all core API functions.
+@@ -488,14 +489,31 @@
+ ** ===================================================================
+ */
+ 
++/* Define LUA_NUMBER_INTEGRAL to produce a system that uses no
++   floating point operations by changing the type of Lua numbers from
++   double to long.  It implements division and modulus so that 
++
++   x == (x / y) * y + x % y.  
++   
++   The exponentiation function returns zero for negative exponents.
++   Defining LUA_NUMBER_INTEGRAL also removes the difftime function,
++   and the math module should not be used.  The string.format function
++   no longer handles the floating point directives %e, %E, %f, %g, and
++   %G. */
++
++#define LUA_NUMBER_INTEGRAL
++#if defined LUA_NUMBER_INTEGRAL
++#define LUA_NUMBER	long
++#else
+ #define LUA_NUMBER_DOUBLE
+ #define LUA_NUMBER	double
++#endif
+ 
+ /*
+ @@ LUAI_UACNUMBER is the result of an 'usual argument conversion'
+ @* over a number.
+ */
+-#define LUAI_UACNUMBER	double
++#define LUAI_UACNUMBER	LUA_NUMBER
+ 
+ 
+ /*
+@@ -505,11 +523,20 @@
+ @@ LUAI_MAXNUMBER2STR is maximum size of previous conversion.
+ @@ lua_str2number converts a string to a number.
+ */
++#if defined LUA_NUMBER_INTEGRAL
++#define LUA_NUMBER_SCAN		"%ld"
++#define LUA_NUMBER_FMT		"%ld"
++#else
+ #define LUA_NUMBER_SCAN		"%lf"
+ #define LUA_NUMBER_FMT		"%.14g"
++#endif
+ #define lua_number2str(s,n)	sprintf((s), LUA_NUMBER_FMT, (n))
+ #define LUAI_MAXNUMBER2STR	32 /* 16 digits, sign, point, and \0 */
++#if defined LUA_NUMBER_INTEGRAL
++#define lua_str2number(s,p)	strtol((s), (p), 10)
++#else
+ #define lua_str2number(s,p)	strtod((s), (p))
++#endif
+ 
+ 
+ /*
+@@ -520,9 +547,36 @@
+ #define luai_numadd(a,b)	((a)+(b))
+ #define luai_numsub(a,b)	((a)-(b))
+ #define luai_nummul(a,b)	((a)*(b))
++#if defined LUA_NUMBER_INTEGRAL
++#define luai_numdiv(a,b)	\
++  (-1/2?			\
++   (a)/(b):			\
++   ((a)<0==(b)<0||(a)%(b)==0?	\
++    (a)/(b):			\
++    (a)/(b)-1))
++#define luai_nummod(a,b)	\
++  (-1/2?			\
++   (a)%(b):			\
++   ((a)<0==(b)<0||(a)%(b)==0?	\
++    (a)%(b):			\
++    (a)%(b)+(b)))
++#define luai_lnumdiv(a,b)	\
++  ((b)==0?			\
++   (luaG_runerror(L,"divide by zero"),0): \
++   luai_numdiv(a,b))
++#define luai_lnummod(a,b)	\
++  ((b)==0?			\
++   (luaG_runerror(L,"modulo by zero"),0): \
++   luai_nummod(a,b))
++LUA_NUMBER luai_ipow(LUA_NUMBER, LUA_NUMBER);
++#define luai_numpow(a,b)	(luai_ipow(a,b))
++#else
+ #define luai_numdiv(a,b)	((a)/(b))
+ #define luai_nummod(a,b)	((a) - floor((a)/(b))*(b))
++#define luai_lnumdiv(a,b)	(luai_numdiv(a,b))
++#define luai_lnummod(a,b)	(luai_nummod(a,b))
+ #define luai_numpow(a,b)	(pow(a,b))
++#endif
+ #define luai_numunm(a)		(-(a))
+ #define luai_numeq(a,b)		((a)==(b))
+ #define luai_numlt(a,b)		((a)<(b))
+diff -ur olua-5.1/src/lvm.c lua-5.1/src/lvm.c
+--- olua-5.1/src/lvm.c	2006-01-23 14:51:43.000000000 -0500
++++ lua-5.1/src/lvm.c	2006-05-02 07:30:15.000000000 -0400
+@@ -27,6 +27,25 @@
+ #include "lvm.h"
+ 
+ 
++#if defined LUA_NUMBER_INTEGRAL
++LUA_NUMBER luai_ipow(LUA_NUMBER a, LUA_NUMBER b) {
++  if (b < 0)
++    return 0;
++  else if (b == 0)
++    return 1;
++  else {
++    LUA_NUMBER c = 1;
++    for (;;) {
++      if (b & 1)
++	c *= a;
++      b = b >> 1;
++      if (b == 0)
++	return c;
++      a *= a;
++    }
++  }
++}
++#endif
+ 
+ /* limit for table tag-method chains (to avoid loops) */
+ #define MAXTAGLOOP	100
+@@ -321,8 +340,8 @@
+       case TM_ADD: setnvalue(ra, luai_numadd(nb, nc)); break;
+       case TM_SUB: setnvalue(ra, luai_numsub(nb, nc)); break;
+       case TM_MUL: setnvalue(ra, luai_nummul(nb, nc)); break;
+-      case TM_DIV: setnvalue(ra, luai_numdiv(nb, nc)); break;
+-      case TM_MOD: setnvalue(ra, luai_nummod(nb, nc)); break;
++      case TM_DIV: setnvalue(ra, luai_lnumdiv(nb, nc)); break;
++      case TM_MOD: setnvalue(ra, luai_lnummod(nb, nc)); break;
+       case TM_POW: setnvalue(ra, luai_numpow(nb, nc)); break;
+       case TM_UNM: setnvalue(ra, luai_numunm(nb)); break;
+       default: lua_assert(0); break;
+@@ -479,11 +498,11 @@
+         continue;
+       }
+       case OP_DIV: {
+-        arith_op(luai_numdiv, TM_DIV);
++        arith_op(luai_lnumdiv, TM_DIV);
+         continue;
+       }
+       case OP_MOD: {
+-        arith_op(luai_nummod, TM_MOD);
++        arith_op(luai_lnummod, TM_MOD);
+         continue;
+       }
+       case OP_POW: {
