@@ -1,5 +1,20 @@
 #!/usr/bin/perl -w
 
+# Copyright 2007  Adam Goode
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 use strict;
 
 use constant TOOL_PREFIX => 'arm-none-eabi-';
@@ -62,52 +77,56 @@ my %aeabi_table = (
 );
 
 
-while (<>) {
+
+my %syms;
+my @all_addrs;
+
+open(OBJDUMP, '-|', TOOL_PREFIX . "objdump", "-d", "--", @ARGV);
+while(<OBJDUMP>) {
     chomp;
 
-    last if /^Cross Reference Table$/;
+    next unless (/([0-9A-Fa-f]+):.*<__aeabi_([^>+]+)>/);
+    my $addr = $1;
+    my $sym = $2;
+
+    next unless defined $aeabi_table{$sym};
+    push @{$syms{$sym}}, $addr;
+    push @all_addrs, $addr;
 }
 
-<>;
-<>;
+close OBJDUMP;
 
-my %xref;
-my $sym;
 
-while (<>) {
+if (!%syms) {
+    print "No floating point found!\n";
+    exit;
+}
+
+
+my %addr2line;
+my $i = 0;
+
+#print join(' ', @all_addrs), "\n";
+open(ADDR2LINE, '-|', TOOL_PREFIX . "addr2line", "-f", "-e", $ARGV[0], @all_addrs);
+while(<ADDR2LINE>) {
     chomp;
+    my $funcname = $_;
+    chomp(my $line = <ADDR2LINE>);
 
-    if (/^(\S+)/) {
-	$sym = $1;
-	$xref{$sym} = [];
-    } elsif (/([^\/]+\.a\([^)]+\.o\))$/) {
-	push @{$xref{$sym}}, $1;
-    } elsif (/([^\/]+\.o)$/) {
-	push @{$xref{$sym}}, $1;
-    }
+    $addr2line{$all_addrs[$i++]} = "$funcname : $line";
 }
+close ADDR2LINE;
 
-my $num_aeabi = 0;
-foreach (keys %xref) {
-    next unless  (/__aeabi_(.*)/);
+foreach (sort keys %syms) {
+    my $desc = $aeabi_table{$_};
+    my %lines;
 
-    my $key = $_;
-    my $aeabi_key = $1;
-    my @list = @{$xref{$_}};
-
-    if (@list) {
-	my $desc = $aeabi_table{$aeabi_key};
-	if (defined $desc) {
-	    $num_aeabi++;
-	    print "'$desc' ($key) used by:\n";
-	    foreach (sort @list) {
-		print "  $_\n";
-	    }
-	    print "\n";
-	}
+    print "'$desc' (__aeabi_$_) used by:\n";
+    my @lines = map({$addr2line{$_}} @{$syms{$_}});
+    foreach (@lines) {
+	next if defined $lines{$_};
+	print "  $_\n";
+	$lines{$_} = 1;
     }
-}
-
-if (!$num_aeabi) {
-    print "No floating point detected!\n";
+    print "\n";
 }
