@@ -64,7 +64,7 @@ void cc3_pixbuf_load ()
 {
   //  uint32_t start_time;
   FILE *fp;
-  char filename[40];
+  char filename[128];
   int i,val,r,g,b,r2,b2,g2,t,depth,x,y,col_cnt,k;
   char c;
   static int img_cnt=0;
@@ -158,14 +158,15 @@ void cc3_pixbuf_load ()
    if(i>=VIRTUAL_FIFO_SIZE)
 	{
 	  printf( "*Virtual-Camera Error: FIFO ran out of data during frame load.\n" );
-          abort();
+         fclose(fp);
+	 abort();
 	}
    } while(val!=EOF);
    
    printf( "Virtual FIFO Loaded %d bytes.\n", i);
    virtual_fifo_index=0;
    cc3_g_pixbuf_frame.y_loc = 0;
-
+   fclose(fp);
 }
 
 void _cc3_fifo_read_inc (void)
