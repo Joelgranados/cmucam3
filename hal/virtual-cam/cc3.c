@@ -64,7 +64,7 @@ void cc3_pixbuf_load ()
 {
   //  uint32_t start_time;
   FILE *fp;
-  char filename[128];
+  char filename[255];
   int i,val,r,g,b,r2,b2,g2,t,depth,x,y,col_cnt,k;
   char c;
   static int img_cnt=0;
