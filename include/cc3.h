@@ -72,7 +72,9 @@ typedef enum {
  */
 typedef enum {
   CC3_COLORSPACE_YCRCB = 0,   /**< YCrCb colorspace */
-  CC3_COLORSPACE_RGB = 1      /**< RGB colorspace */
+  CC3_COLORSPACE_RGB = 1,      /**< RGB colorspace */
+  CC3_COLORSPACE_HSV = 2,      /**< HSV colorspace */
+  CC3_COLORSPACE_MONOCHROME = 3      /**< Monochrome colorspace */
 } cc3_colorspace_t;
 
 /**
