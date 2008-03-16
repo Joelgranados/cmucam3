@@ -97,6 +97,7 @@ typedef enum {
   RAW_MODE,
   COLOR_SPACE,
   HIRES_DIFF,
+  FRAME_STREAM,
 
   RETURN,                       // Must be second to last
   CMUCAM2_CMDS_COUNT            // Must be last entry so array sizes are correct
@@ -116,6 +117,7 @@ static const char cmucam2_cmds[CMUCAM2_CMDS_COUNT][3] = {
 
   /* Data Rate Commands */
   //  DM delay mode
+  [FRAME_STREAM] = "FS",
   [POLL_MODE] = "PM",
   //  PS packet skip
   [RAW_MODE] = "RM",
@@ -227,7 +229,7 @@ int main (void)
   uint32_t arg_list[MAX_ARGS];
   uint32_t start_time;
   uint8_t sw_color_space;
-  bool error, poll_mode, auto_led, demo_mode, buf_mode;
+  bool error, poll_mode, auto_led, demo_mode, buf_mode,frame_stream_mode;
   int8_t line_mode;
   cc3_track_pkt_t t_pkt;
   cc3_color_info_pkt_t s_pkt;
@@ -280,6 +282,7 @@ cmucam2_start:
   sw_color_space=DEFAULT_COLOR;
   auto_led = true;
   poll_mode = false;
+  frame_stream_mode = false;
   line_mode = 0;
   buf_mode = false;
   packet_filter_flag = false;
@@ -462,6 +465,20 @@ cmucam2_start:
           poll_mode = true;
         else
           poll_mode = false;
+        break;
+
+	
+      case FRAME_STREAM:
+        if (n != 1 || arg_list[0] > 1) {
+          error = true;
+          break;
+        }
+
+        print_ACK ();
+        if (arg_list[0] == 1)
+          frame_stream_mode = true;
+        else
+          frame_stream_mode = false;
         break;
 
       case SERVO_PARAMETERS:
@@ -651,7 +668,15 @@ cmucam2_start:
         }
 
         print_ACK ();
-        cmucam2_send_image_direct (auto_led,sw_color_space);
+        do {
+		cmucam2_send_image_direct (auto_led,sw_color_space);
+		// Check to see if data is on the UART to break from frame_stream_mode
+   		if (!cc3_uart_has_data (0)) {
+      		if (getchar () == '\r')
+        		break;
+    		}
+  	} while (frame_stream_mode);
+	
         cc3_pixbuf_frame_set_coi (old_coi);
         break;
 
