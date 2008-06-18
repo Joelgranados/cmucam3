@@ -46,7 +46,7 @@ void abort(void);
 int _close(int file);
 _off_t _lseek(int file, _off_t offset, int dir);
 int _fstat(int file, struct stat *st);
-int isatty (int file);
+int _isatty (int file);
 int _system(const char *s);
 int _link(char *old, char *new);
 int _open(const char *name, int flags, int mode);
@@ -140,7 +140,7 @@ int _fstat(int file, struct stat *st)
 }
 
 
-int isatty (int file)
+int _isatty (int file)
 {
   _cc3_device_driver_t * dev = _cc3_get_driver_for_file_number(file);
   if (dev == NULL) {
