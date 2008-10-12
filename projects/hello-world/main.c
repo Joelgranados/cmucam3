@@ -26,7 +26,9 @@ int main (void)
   val = setvbuf (stdout, NULL, _IONBF, 0);
   val = setvbuf (stdin, NULL, _IONBF, 0);
 
+  printf( "Calling camera init\n" );
   cc3_camera_init ();
+  printf( "Camera init done\n" );
 
   cc3_camera_set_colorspace (CC3_COLORSPACE_RGB);
   cc3_camera_set_resolution (CC3_CAMERA_RESOLUTION_LOW);

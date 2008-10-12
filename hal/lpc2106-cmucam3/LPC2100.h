@@ -186,11 +186,27 @@
 
 
 /* General Pupupose IO (GPIO) (32 bit data bus) */
-#define GPIO_BASE          (0xE0028000)
-#define GPIO_IOPIN         (0xE0028000)	/* GPIO Pin value reg  */
-#define GPIO_IOSET         (0xE0028004)	/* GPIO Output set reg */
-#define GPIO_IODIR         (0xE0028008)	/* GPIO Direction cntrl reg */
-#define GPIO_IOCLR         (0xE002800C)	/* GPIO Output clear reg */
+#ifndef FASTIO
+  #define GPIO_BASE          (0xE0028000)
+  #define GPIO_IOPIN         (0xE0028000)	/* GPIO Pin value reg  */
+  #define GPIO_IOSET         (0xE0028004)	/* GPIO Output set reg */
+  #define GPIO_IODIR         (0xE0028008)	/* GPIO Direction cntrl reg */
+  #define GPIO_IOCLR         (0xE002800C)	/* GPIO Output clear reg */
+#else
+  #define GPIO_IOPIN         (0x3FFFC014)	/* fast GPIO Pin value reg  */
+  #define GPIO_IOSET         (0x3FFFC018)	/* fast GPIO Output set reg */
+  #define GPIO_IODIR         (0x3FFFC000)	/* fast GPIO Direction reg */
+  #define GPIO_IOCLR         (0x3FFFC01C)	/* fast GPIO Output clear reg */
+#endif
+
+/* LPC2106-01 FAST IO extension ports */
+// Currently we just rename the original gpio functions, but in the
+// future we plan to use these instead.
+#define FIO_IODIR	(0x3FFFC000)
+#define FIO_IOMASK	(0x3FFFC010)
+#define FIO_IOPIN	(0x3FFFC014)
+#define FIO_IOSET	(0x3FFFC018)
+#define FIO_IOCLR	(0x3FFFC01C)
 
 /* Pin Connect Block (PCB) (32 bit data bus) */
 #define PCB_BASE           (0xE002C000)
@@ -209,6 +225,7 @@
 #define SYSCON_PCON        (0xE01FC0C0)
 #define SYSCON_PCONP       (0xE01FC0C4)
 #define SYSCON_VPBDIV      (0xE01FC100)
+#define SYSCON_SCS	   (0xE01FC1A0)
 
 /* MAM control registers  */
 #define MAMCR		   (0xE01FC000)
@@ -320,6 +337,7 @@
 #define VICPCellID1      (VIC_BASE_ADDR + 0xFF4)
 #define VICPCellID2      (VIC_BASE_ADDR + 0xFF8)
 #define VICPCellID3      (VIC_BASE_ADDR + 0xFFC)
+
 
 
 #endif
