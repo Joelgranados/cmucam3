@@ -54,9 +54,9 @@ int main(void) {
 
     if (f == NULL || i > 512) {
       if (f == NULL) {
-	perror("crap");
+	fprintf(stderr, "Error unable to open file. Check MMC card and try rebooting.\n");
       } else {
-	fprintf(stderr, "full\n");
+	fprintf(stderr, "MMC card full\n");
       }
 
       while (true) {
