@@ -39,7 +39,7 @@ int main(void) {
   
   while(true) {
     simple_track_color(&t_pkt);
-    printf( "centroid = %d,%d bounding box = %d,%d,%d,%d num pix= %d density = %d\n",
+    printf( "centroid = %lu,%lu bounding box = %d,%d,%d,%d num pix= %lu density = %lu\n",
 		    t_pkt.centroid_x, t_pkt.centroid_y,
 		    t_pkt.x0,t_pkt.y0,t_pkt.x1,t_pkt.y1,
 		    t_pkt.num_pixels, t_pkt.int_density );
