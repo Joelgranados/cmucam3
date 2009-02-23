@@ -35,7 +35,7 @@ int main(void) {
   t_pkt.lower_bound.channel[CC3_CHANNEL_BLUE] = 0;
   t_pkt.upper_bound.channel[CC3_CHANNEL_BLUE] = 50; 
   t_pkt.noise_filter = 2; 
-
+  t_pkt.track_invert = false;
   
   while(true) {
     simple_track_color(&t_pkt);

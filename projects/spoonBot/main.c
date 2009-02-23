@@ -172,6 +172,7 @@ int main (void)
   // t_pkt.upper_bound.channel[CC3_CHANNEL_BLUE] = 20; 
 
   t_pkt.noise_filter = 4;
+  t_pkt.track_invert = false;
 
   x_mid = cc3_g_pixbuf_frame.width / 2;
   y_mid = cc3_g_pixbuf_frame.height / 2;
