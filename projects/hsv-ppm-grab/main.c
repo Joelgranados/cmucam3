@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <cc3_hsv.h>
-#include "cc3.h"
+#include <cc3.h>
 
 
 void capture_ppm(FILE *fp);
@@ -35,8 +35,11 @@ int main(void) {
 
     // Check if files exist, if they do then skip over them
     do {
-      snprintf(filename, 16, "c:/img%.5d.ppm", i);
-      //snprintf(filename, 16, "img%.5d.ppm", i);
+	#ifndef VIRTUAL_CAM
+      		snprintf(filename, 16, "c:/img%.5d.ppm", i);
+	#else
+      		snprintf(filename, 16, "img%.5d.ppm", i);
+	#endif
       f = fopen(filename, "r");
       if (f != NULL) {
 	printf( "%s already exists...\n",filename );
@@ -101,22 +104,25 @@ void capture_ppm(FILE *f)
   int write_time;
 
   cc3_pixbuf_load ();
-  uint8_t *row = cc3_malloc_rows(1);
+  cc3_pixel_t *row = (cc3_pixel_t*) cc3_malloc_rows(1);
 
   size_x = cc3_g_pixbuf_frame.width;
   size_y = cc3_g_pixbuf_frame.height;
 
-  fprintf(f,"P6\n%d %d\n255\n",size_x,size_y );
+  fprintf(f,"P6\n%lu %lu\n255\n",size_x,size_y );
 
   time = cc3_timer_get_current_ms();
   for (y = 0; y < size_y; y++) {
     cc3_pixbuf_read_rows(row, 1);
     cc3_rgb2hsv_row(row,size_x);  // This line will convert the row to HSV
-    for (x = 0; x < size_x * 3U; x++) {
-      uint8_t p = row[x];
-      if (fputc(p, f) == EOF) {
-	perror("fputc failed");
-      }
+    for (x = 0; x < size_x; x++) {
+      uint8_t h,s,v;
+	h = row[x].channel[CC3_CHANNEL_HUE];
+	s = row[x].channel[CC3_CHANNEL_SAT];
+	v = row[x].channel[CC3_CHANNEL_VAL];
+        if (fputc(h, f) == EOF) { perror("fputc failed\n"); }
+        if (fputc(s, f) == EOF) { perror("fputc failed\n"); }
+        if (fputc(v, f) == EOF) { perror("fputc failed\n"); }
     }
     fprintf(stderr, ".");
     fflush(stderr);
