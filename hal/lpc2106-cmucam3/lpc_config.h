@@ -32,7 +32,7 @@
      = 235920000 ~=236 MHz
    - PSEL0 (Bit5 in PLLCFG) = 1, PSEL1 (Bit6) = 0 (0b01)
 */
-#define FOSC		14745000
+#define FOSC		14745600
 #define PLL_M		4
 #define MSEL		(PLL_M-1)
 #define PSEL0 		5

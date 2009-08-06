@@ -615,7 +615,8 @@ static bool _cc3_sccb_send (unsigned int num, unsigned int *buffer)
       //while(!SCCB_SCL);
 
 
-      if (data & 0x08) {
+      //if (data & 0x08) {
+      if (data & 0x80) {
         _cc3_set_cam_ddr (_CC3_SCCB_PORT_DDR_READ_SDA);  // SDA=1 SCL=0
 
       }
