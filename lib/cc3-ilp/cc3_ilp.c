@@ -32,11 +32,11 @@ inline void cc3_get_pixel (cc3_image_t * img, uint16_t x, uint16_t y,
                     cc3_pixel_t * out_pix)
 {
   if (img->channels > 1) {
-    out_pix->channel[0] = ((uint8_t *) img->pix)[y * img->width + (x * 3)];
+    out_pix->channel[0] = ((uint8_t *) img->pix)[(y * img->width * 3) + (x * 3)];
     out_pix->channel[1] =
-      ((uint8_t *) img->pix)[y * img->width + (x * 3) + 1];
+      ((uint8_t *) img->pix)[(y * img->width*3) + (x * 3) + 1];
     out_pix->channel[2] =
-      ((uint8_t *) img->pix)[y * img->width + (x * 3) + 2];
+      ((uint8_t *) img->pix)[(y * img->width*3) + (x * 3) + 2];
   }
   else {
     out_pix->channel[0] = ((uint8_t *) img->pix)[y * img->width + x];
@@ -49,9 +49,9 @@ inline void cc3_set_pixel (cc3_image_t * img, uint16_t x, uint16_t y,
                     cc3_pixel_t * in_pix)
 {
   if (img->channels > 1) {
-    ((uint8_t *) img->pix)[y * img->width + (x * 3)] = in_pix->channel[0];
-    ((uint8_t *) img->pix)[y * img->width + (x * 3) + 1] = in_pix->channel[1];
-    ((uint8_t *) img->pix)[y * img->width + (x * 3) + 2] = in_pix->channel[2];
+    ((uint8_t *) img->pix)[(y * img->width * 3) + (x * 3)] = in_pix->channel[0];
+    ((uint8_t *) img->pix)[(y * img->width * 3) + (x * 3) + 1] = in_pix->channel[1];
+    ((uint8_t *) img->pix)[(y * img->width * 3) + (x * 3) + 2] = in_pix->channel[2];
   }
   else {
     ((uint8_t *) img->pix)[y * img->width + x] = in_pix->channel[0];
