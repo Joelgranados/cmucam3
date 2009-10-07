@@ -300,8 +300,7 @@ int cc3_pixbuf_read_rows (void * mem, uint32_t rows)
     case CC3_CHANNEL_ALL:
       _cc3_second_green_valid = false;
       for (j = 0; j < width; j++) {
-        uint8_t *p = ((uint8_t *) mem) +
-          (r * width + j * 3);
+        uint8_t *p = ((uint8_t *) mem) + ((r * width * 3) + j * 3);
         _cc3_pixbuf_read_pixel (p, p - 3, off0, off1, off2);
 
 	// advance by x_step
