@@ -1,20 +1,23 @@
-CC=gcc
-OBJS=lpc21isp.o
-CFLAGS=-O2 -Wall -g
-INSTALLDIR=/usr/local/bin/
+all:      lpc21isp
 
-all: lpc21isp
+GLOBAL_DEP  = adprog.h lpc21isp.h lpcprog.h lpcterm.h
+CC = gcc
 
-.c.o:
-	$(CC) $(CFLAGS) -c $< -o $@
+ifneq ($(findstring(freebsd, $(OSTYPE))),)
+CFLAGS+=-D__FREEBSD__
+endif
 
-lpc21isp: $(OBJS)
-	$(CC) -o $@ $(OBJS)
+adprog.o: adprog.c $(GLOBAL_DEP)
+	$(CC) $(CDEBUG) $(CFLAGS) -c -o adprog.o adprog.c
+
+lpcprog.o: lpcprog.c $(GLOBAL_DEP)
+	$(CC) $(CDEBUG) $(CFLAGS) -c -o lpcprog.o lpcprog.c
+
+lpcterm.o: lpcterm.c $(GLOBAL_DEP)
+	$(CC) $(CDEBUG) $(CFLAGS) -c -o lpcterm.o lpcterm.c
+
+lpc21isp: lpc21isp.c adprog.o lpcprog.o lpcterm.o $(GLOBAL_DEP)
+	$(CC) $(CDEBUG) $(CFLAGS) -o lpc21isp lpc21isp.c adprog.o lpcprog.o lpcterm.o
 
 clean:
-	rm -f $(OBJS) lpc21isp
-
-install:
-	install -m 755 lpc21isp /usr/local/bin/lpc21isp
-
-.PHONY: clean
+	$(RM) adprog.o lpcprog.o lpcterm.o lpc21isp
