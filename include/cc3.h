@@ -486,4 +486,11 @@ bool cc3_gpio_get_value(uint8_t pin);
  */
 uint8_t cc3_gpio_get_count(void);
 
+
+void cc3_uart0_write(const char *str);
+
+int cc3_uart0_getchar(void);
+
+int cc3_uart0_putchar(int c);
+
 #endif

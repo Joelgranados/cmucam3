@@ -1,0 +1,14 @@
+As to the License, there basically isn't any.  :-)
+
+The original code for RDCF2 was released under Public Domain by the
+original author.  I've tacked on an MMC/SD driver to it, cleaned up
+the sources so that it will build under a gcc compiler, added
+funtionality and re-released under the Public Domain.
+
+All that I ask is that you give credit to me and the original author.
+You can do this by retaining the copyright notices in the rdcf2.c, 
+rdcf2.h, and the software associated with the mmc driver module.
+
+Tom Walsh - openhardware.net
+Nov 17, 2005
+

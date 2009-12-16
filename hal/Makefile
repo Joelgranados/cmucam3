@@ -1,4 +1,4 @@
-SUBDIRS=lpc2106-cmucam3 virtual-cam
+SUBDIRS=lpc2106-cmucam3 lpc2103-retkodfuncam virtual-cam
 #SUBDIRS=lpc2106-cmucam3
 #SUBDIRS=virtual-cam
 
