@@ -31,7 +31,7 @@
 #define I2C_I2EN      (0x40)
 #define I2C_STA	      (0x20)
 #define I2C_STO	      (0x10)
-#define I2C_SI	      (0x08)
+#define I2C_SIC	      (0x08)
 #define I2C_AA	      (0x04)
 
 
@@ -305,7 +305,7 @@ int i2c_test_write_polling(uint8_t addr, uint8_t data)
 
   cc3_uart0_write("Testing i2c\r\n");
 
-  REG(I2C_I2CONCLR)=I2C_I2EN | I2C_STA | I2C_SI | I2C_AA;   // 0x6c;  // clear all flags
+  REG(I2C_I2CONCLR)=I2C_I2EN | I2C_STA | I2C_SIC | I2C_AA;   // 0x6c;  // clear all flags
   REG(I2C_I2CONSET)=I2C_I2EN;  // enable I2C 
   REG (I2C_I2SCLH) = 80;
   REG (I2C_I2SCLL) = 80;
@@ -337,21 +337,21 @@ int i2c_test_write_polling(uint8_t addr, uint8_t data)
 		break;
 	case 0x08:
 		REG(I2C_I2DAT)=addr | I2C_WRITE_BIT;  // set slave address and write bit
-		REG(I2C_I2CONCLR)=I2C_STA | I2C_SI; // clear SI and start flag
+		REG(I2C_I2CONCLR)=I2C_STA | I2C_SIC; // clear SI and start flag
   		cc3_uart0_write("0x08 state\r\n");
 		break;
 	case 0x18:
 		// Ack received from slave for slave address
 		// set the data
 		REG(I2C_I2DAT)=data;
-		REG(I2C_I2CONCLR)=I2C_SI; // clear SI 
+		REG(I2C_I2CONCLR)=I2C_SIC; // clear SI 
   		cc3_uart0_write("0x18 state\r\n");
 		break;
 	case 0x28:
 		// Ack received from slave for byte transmitted from master.
 		// Stop condition is transmitted in this state signaling the end of transmission
 		REG(I2C_I2CONSET)=I2C_STO;  // Transmit stop condition
-		REG(I2C_I2CONCLR)=I2C_SI;  // clear SI	
+		REG(I2C_I2CONCLR)=I2C_SIC;  // clear SI	
   		done=1;
   		cc3_uart0_write("done state\r\n");
 		break;
