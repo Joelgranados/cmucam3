@@ -4,6 +4,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include "../../hal/lpc2103-retkodfuncam/LPC2100.h"
+#include "../../hal/lpc2103-retkodfuncam/cc3_pin_defines.h"
 
 //#define SERIAL_BAUD_RATE  CC3_UART_RATE_230400
 #define SERIAL_BAUD_RATE  CC3_UART_RATE_115200
@@ -25,7 +27,12 @@
 
 #define VERSION_BANNER "CMUcam1 v1.00 c6"
 
-
+#define I2C_WRITE_BIT (0x80)
+#define I2C_I2EN      (0x40)
+#define I2C_STA	      (0x20)
+#define I2C_STO	      (0x10)
+#define I2C_SI	      (0x08)
+#define I2C_AA	      (0x04)
 
 
 typedef enum {
@@ -66,6 +73,9 @@ static int32_t cmucam1_get_command (cmucam1_command_t * cmd,
                                     uint32_t arg_list[]);
 static int32_t cmucam1_get_command_raw (cmucam1_command_t * cmd,
                                         uint32_t arg_list[]);
+
+int i2c_test_write_polling(uint8_t addr, uint8_t data);
+void print_num(uint32_t x);
 static void print_ACK (void);
 static void print_NCK (void);
 static void print_prompt (void);
@@ -107,7 +117,8 @@ int main (void)
     exit (1);
   }
 
-  cc3_uart0_write("camera init done\r\n");
+
+n=i2c_test_write_polling(0x3d, 0x55);  // camera address is 0x3d, 0x55 is test data
 
 cmucam1_start:
   auto_led = true;
@@ -288,6 +299,84 @@ cmucam1_start:
   return 0;
 }
 
+int i2c_test_write_polling(uint8_t addr, uint8_t data)
+{
+  uint8_t state,last_state,done,blink;
+
+  cc3_uart0_write("Testing i2c\r\n");
+
+  REG(I2C_I2CONCLR)=I2C_I2EN | I2C_STA | I2C_SI | I2C_AA;   // 0x6c;  // clear all flags
+  REG(I2C_I2CONSET)=I2C_I2EN;  // enable I2C 
+  REG (I2C_I2SCLH) = 80;
+  REG (I2C_I2SCLL) = 80;
+
+  //REG (GPIO_IOSET) = _CC3_CAM_RESET;
+  cc3_timer_wait_ms(1000);
+
+  last_state=REG(I2C_I2STAT);
+  cc3_uart0_write("starting state:");
+  print_num(last_state);
+  cc3_uart0_write("\r\n");
+  //  REG(I2C_I2ADR)= addr | I2C_WRITE_BIT;  // set slave address and write bit
+
+  REG(I2C_I2CONSET)=I2C_I2EN | I2C_STA;  // Send Start Bit 
+  done=0;
+  blink=0;
+  // I2C state machine
+  while(!done) {
+     // Poll for status change, this can be inside an interrupt later
+     do {
+  	  state=REG(I2C_I2STAT);
+          cc3_led_set_state (0, blink); blink=!blink;
+	} while(state==last_state);
+
+      switch(state)
+      {
+	case 0x00:
+  		cc3_uart0_write("zero state\r\n");
+		break;
+	case 0x08:
+		REG(I2C_I2DAT)=addr | I2C_WRITE_BIT;  // set slave address and write bit
+		REG(I2C_I2CONCLR)=I2C_STA | I2C_SI; // clear SI and start flag
+  		cc3_uart0_write("0x08 state\r\n");
+		break;
+	case 0x18:
+		// Ack received from slave for slave address
+		// set the data
+		REG(I2C_I2DAT)=data;
+		REG(I2C_I2CONCLR)=I2C_SI; // clear SI 
+  		cc3_uart0_write("0x18 state\r\n");
+		break;
+	case 0x28:
+		// Ack received from slave for byte transmitted from master.
+		// Stop condition is transmitted in this state signaling the end of transmission
+		REG(I2C_I2CONSET)=I2C_STO;  // Transmit stop condition
+		REG(I2C_I2CONCLR)=I2C_SI;  // clear SI	
+  		done=1;
+  		cc3_uart0_write("done state\r\n");
+		break;
+	case 0xF8:
+  		cc3_uart0_write("No relevant state data state");
+		break;
+	default:
+  		cc3_uart0_write("unknown state:");
+		print_num(state);
+  		cc3_uart0_write("\r\n");
+		break;
+      }
+	last_state=state;
+
+  } 
+
+  cc3_led_set_state (0, false); 
+  cc3_uart0_write("done...\r\n");
+ 
+
+
+
+return 1;  // return ack bit eventually
+
+}
 
 void cmucam1_send_image_direct (bool auto_led)
 {
@@ -501,6 +590,22 @@ int32_t cmucam1_get_command_raw (cmucam1_command_t * cmd, uint32_t * arg_list)
   return argc;
 }
 
+void print_num(uint32_t x)
+{       
+	uint8_t t,set;
+	uint32_t div;
+
+	set=0;
+	for(div=10000; div>=10; div/=10 )
+	{
+		if(x>=div | set==1) { t=x/div; cc3_uart0_putchar('0'+t); set=1; }
+		x=x%div;
+	}
+
+	x=x%10;
+	cc3_uart0_putchar('0'+x);
+
+}
 
 void raw_print (uint8_t val)
 {

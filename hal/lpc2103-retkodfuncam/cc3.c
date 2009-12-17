@@ -163,7 +163,7 @@ bool cc3_camera_init ()
 
   cc3_uart0_write("i2c clocks set\r\n");
 
-  // enable EXTCLK
+  // enable EXTCLK and voltage regulators
   REG (GPIO_IOSET) = _CC3_CAM_ENABLE;
 
   // wait >1ms
@@ -172,10 +172,15 @@ bool cc3_camera_init ()
   // enable RESET
   REG (GPIO_IOSET) = _CC3_CAM_RESET;
 
-  // wait >353ms
+  // wait >353ms for VCO to stabalize
   cc3_timer_wait_ms(353);
 
-  cc3_uart0_write("RESET on\r\n");
+  // extra time for good luck
+  cc3_timer_wait_ms(100);
+
+  REG (GPIO_IOCLR) = _CC3_CAM_RESET;
+
+//  cc3_uart0_write("RESET on\r\n");
 
   return true;
 }
