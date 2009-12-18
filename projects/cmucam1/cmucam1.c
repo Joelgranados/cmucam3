@@ -359,7 +359,7 @@ int i2c_test_write_polling(uint8_t addr, uint8_t data)
   		cc3_uart0_write("done state\r\n");
 		break;
 	case 0xF8:
-  		cc3_uart0_write("No relevant state data state");
+  		cc3_uart0_write("No relevant state data state\r\n");
 		break;
 	default:
   		cc3_uart0_write("unknown state:");
