@@ -119,6 +119,7 @@ int main (void)
 
 
 n=i2c_test_write_polling(0x3d, 0x55);  // camera address is 0x3d, 0x55 is test data
+while(1);
 
 cmucam1_start:
   auto_led = true;
@@ -304,6 +305,8 @@ int i2c_test_write_polling(uint8_t addr, uint8_t data)
   uint8_t state,last_state,done,blink;
 
   cc3_uart0_write("Testing i2c\r\n");
+
+  REG (GPIO_IODIR) = _CC3_DEFAULT_PORT_DIR;
 
   REG(I2C_I2CONCLR)=I2C_I2EN | I2C_STA | I2C_SIC | I2C_AA;   // 0x6c;  // clear all flags
   REG(I2C_I2CONSET)=I2C_I2EN;  // enable I2C 

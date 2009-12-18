@@ -149,19 +149,16 @@ bool cc3_camera_init ()
 {
   // set pins to i2c
   REG (PCB_PINSEL0) = ((~_CC3_I2C0_MASK) & REG (PCB_PINSEL0)) | _CC3_I2C0_PINSEL;
+//  REG (PCB_PINSEL0) = _CC3_I2C0_PINSEL;
 
-  cc3_uart0_write("i2c pins set\r\n");
+  cc3_uart0_write("i2c PCB set\r\n");
 
-  // turn on i2c (master transmitter mode)
-  REG (I2C_I2CONSET) = 0x40;
+ 
+  REG (GPIO_IOCLR) = _CC3_CAM_RESET;
+  REG (GPIO_IOCLR) = _CC3_CAM_ENABLE;
 
-  cc3_uart0_write("i2c on\r\n");
-
-  // set i2c clocks for 60 MHz (80 + 80 @ 60 MHz = 375 KHz operation)
-  REG (I2C_I2SCLH) = 80;
-  REG (I2C_I2SCLL) = 80;
-
-  cc3_uart0_write("i2c clocks set\r\n");
+  // Give everything time to settle, remove later
+  cc3_timer_wait_ms(500);
 
   // enable EXTCLK and voltage regulators
   REG (GPIO_IOSET) = _CC3_CAM_ENABLE;
@@ -175,12 +172,7 @@ bool cc3_camera_init ()
   // wait >353ms for VCO to stabalize
   cc3_timer_wait_ms(353);
 
-  // extra time for good luck
-  cc3_timer_wait_ms(100);
 
-  REG (GPIO_IOCLR) = _CC3_CAM_RESET;
-
-//  cc3_uart0_write("RESET on\r\n");
 
   return true;
 }
