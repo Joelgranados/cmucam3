@@ -314,6 +314,11 @@ void cc3_uart0_write(const char *str)
   uart0_write(str);
 }
 
+void cc3_uart0_write_hex (unsigned int i)
+{
+  uart0_write_hex(i);
+}
+
 void uart0_write_hex (unsigned int i)
 {
   char buffer[8];

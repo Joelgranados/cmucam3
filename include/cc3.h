@@ -493,4 +493,6 @@ int cc3_uart0_getchar(void);
 
 int cc3_uart0_putchar(int c);
 
+void cc3_uart0_write_hex(unsigned int i);
+
 #endif
