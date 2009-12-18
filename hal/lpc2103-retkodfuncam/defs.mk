@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-export hal=lpc2103-retkodcam
+export hal=lpc2103-retkodfuncam
 #HALNAME=$(hal)$(THUMB_SUFFIX)
 HALNAME=$(hal)
 
