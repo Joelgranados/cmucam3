@@ -363,7 +363,7 @@ int i2c_test_write_polling(uint8_t addr, uint8_t data)
 		break;
 	default:
   		cc3_uart0_write("unknown state:");
-		print_num(state);
+		cc3_uart0_write_hex(state);
   		cc3_uart0_write("\r\n");
 		break;
       }
