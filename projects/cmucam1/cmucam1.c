@@ -339,7 +339,7 @@ int i2c_test_write_polling(uint8_t addr, uint8_t data)
   		cc3_uart0_write("zero state\r\n");
 		break;
 	case 0x08:
-		REG(I2C_I2DAT)=addr | I2C_WRITE_BIT;  // set slave address and write bit
+		REG(I2C_I2DAT)=addr << 1;  // set slave address and write bit
 		REG(I2C_I2CONCLR)=I2C_STA | I2C_SIC; // clear SI and start flag
   		cc3_uart0_write("0x08 state\r\n");
 		break;
