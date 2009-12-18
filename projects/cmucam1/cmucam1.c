@@ -601,7 +601,7 @@ void print_num(uint32_t x)
 	set=0;
 	for(div=10000; div>=10; div/=10 )
 	{
-		if(x>=div | set==1) { t=x/div; cc3_uart0_putchar('0'+t); set=1; }
+	  if((x>=div) | (set==1)) { t=x/div; cc3_uart0_putchar('0'+t); set=1; }
 		x=x%div;
 	}
 
