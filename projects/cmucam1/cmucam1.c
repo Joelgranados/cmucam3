@@ -31,7 +31,7 @@
 #define I2C_I2EN      (0x40)
 #define I2C_STA	      (0x20)
 #define I2C_STO	      (0x10)
-#define I2C_SIC	      (0x08)
+#define I2C_SI	      (0x08)
 #define I2C_AA	      (0x04)
 
 
@@ -74,7 +74,7 @@ static int32_t cmucam1_get_command (cmucam1_command_t * cmd,
 static int32_t cmucam1_get_command_raw (cmucam1_command_t * cmd,
                                         uint32_t arg_list[]);
 
-int i2c_test_write_polling(uint8_t addr, uint8_t data);
+int i2c_test_write_polling(uint8_t addr, uint8_t *data, int len);
 void print_num(uint32_t x);
 static void print_ACK (void);
 static void print_NCK (void);
@@ -118,8 +118,9 @@ int main (void)
   }
 
 
-n=i2c_test_write_polling(0x3d, 0x55);  // camera address is 0x3d, 0x55 is test data
-while(1);
+  uint8_t data[] = {0x02, 0x40};
+  n=i2c_test_write_polling(0x3d, data, sizeof(data));  // camera address is 0x3d, 0x55 is test data
+  while(1);
 
 cmucam1_start:
   auto_led = true;
@@ -300,15 +301,16 @@ cmucam1_start:
   return 0;
 }
 
-int i2c_test_write_polling(uint8_t addr, uint8_t data)
+int i2c_test_write_polling(uint8_t addr, uint8_t *data, int len)
 {
+  int i = 0; // first byte is sent by state 0x18, remaining is state 0x28
   uint8_t state,last_state,done,blink;
 
   cc3_uart0_write("Testing i2c\r\n");
 
   REG (GPIO_IODIR) = _CC3_DEFAULT_PORT_DIR;
 
-  REG(I2C_I2CONCLR)=I2C_I2EN | I2C_STA | I2C_SIC | I2C_AA;   // 0x6c;  // clear all flags
+  REG(I2C_I2CONCLR)=I2C_I2EN | I2C_STA | I2C_SI | I2C_AA;   // 0x6c;  // clear all flags
   REG(I2C_I2CONSET)=I2C_I2EN;  // enable I2C 
   REG (I2C_I2SCLH) = 100;
   REG (I2C_I2SCLL) = 60;
@@ -331,7 +333,7 @@ int i2c_test_write_polling(uint8_t addr, uint8_t data)
      do {
   	  state=REG(I2C_I2STAT);
           cc3_led_set_state (0, blink); blink=!blink;
-	} while(state==last_state);
+     } while(!(REG(I2C_I2CONSET) & I2C_SI));
 
       switch(state)
       {
@@ -340,23 +342,32 @@ int i2c_test_write_polling(uint8_t addr, uint8_t data)
 		break;
 	case 0x08:
 		REG(I2C_I2DAT)=addr << 1;  // set slave address and write bit
-		REG(I2C_I2CONCLR)=I2C_STA | I2C_SIC; // clear SI and start flag
+		REG(I2C_I2CONCLR)=I2C_STO | I2C_SI;
   		cc3_uart0_write("0x08 state\r\n");
 		break;
 	case 0x18:
 		// Ack received from slave for slave address
 		// set the data
-		REG(I2C_I2DAT)=data;
-		REG(I2C_I2CONCLR)=I2C_SIC; // clear SI 
+		cc3_uart0_write_hex(data[i]);
+		REG(I2C_I2DAT)=data[i++];
+		REG(I2C_I2CONCLR)=I2C_STA | I2C_STO | I2C_SI;
   		cc3_uart0_write("0x18 state\r\n");
 		break;
 	case 0x28:
 		// Ack received from slave for byte transmitted from master.
-		// Stop condition is transmitted in this state signaling the end of transmission
-		REG(I2C_I2CONSET)=I2C_STO;  // Transmit stop condition
-		REG(I2C_I2CONCLR)=I2C_SIC;  // clear SI	
-  		done=1;
-  		cc3_uart0_write("done state\r\n");
+		if (i < len) {
+			// continue sending
+			cc3_uart0_write_hex(data[i]);
+			REG(I2C_I2DAT)=data[i++];
+			REG(I2C_I2CONCLR)=I2C_STA | I2C_STO | I2C_SI;
+			cc3_uart0_write("0x28 state\r\n");
+		} else {
+			// Stop condition is transmitted in this state signaling the end of transmission
+			REG(I2C_I2CONSET)=I2C_STO;  // Transmit stop condition
+			REG(I2C_I2CONCLR)=I2C_SI;  // clear SI	
+			done=1;
+			cc3_uart0_write("0x28 done state\r\n");
+		}
 		break;
 	case 0xF8:
   		cc3_uart0_write("No relevant state data state\r\n");
