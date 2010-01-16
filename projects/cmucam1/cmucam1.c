@@ -119,7 +119,60 @@ int main (void)
 
 
   uint8_t data[] = {0x02, 0x40};
-  n=i2c_test_write_polling(0x3d, data, sizeof(data));  // camera address is 0x3d, 0x55 is test data
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x0d;
+  data[1] = 0x01;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x0b;
+  data[1] = 0x00;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x6d;
+  data[1] = 0xa1;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x58;
+  data[1] = 0x10;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x05;
+  data[1] = 0x80;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x1a;
+  data[1] = 0xff;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x1b;
+  data[1] = 0xb3;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x0e;
+  data[1] = 0x14;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x11;
+  data[1] = 0x6a;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x14;
+  data[1] = 0x33;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x1f;
+  data[1] = 0x0b;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x1e;
+  data[1] = 0xe7;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x04;
+  data[1] = 0x18;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
   while(1);
 
 cmucam1_start:
@@ -316,7 +369,7 @@ int i2c_test_write_polling(uint8_t addr, uint8_t *data, int len)
   REG (I2C_I2SCLL) = 60;
 
   //REG (GPIO_IOSET) = _CC3_CAM_RESET;
-  cc3_timer_wait_ms(1000);
+  //  cc3_timer_wait_ms(1000);
 
   last_state=REG(I2C_I2STAT);
   cc3_uart0_write("starting state:");
