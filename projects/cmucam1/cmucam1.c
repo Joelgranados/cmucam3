@@ -310,8 +310,8 @@ int i2c_test_write_polling(uint8_t addr, uint8_t data)
 
   REG(I2C_I2CONCLR)=I2C_I2EN | I2C_STA | I2C_SIC | I2C_AA;   // 0x6c;  // clear all flags
   REG(I2C_I2CONSET)=I2C_I2EN;  // enable I2C 
-  REG (I2C_I2SCLH) = 80;
-  REG (I2C_I2SCLL) = 80;
+  REG (I2C_I2SCLH) = 100;
+  REG (I2C_I2SCLL) = 60;
 
   //REG (GPIO_IOSET) = _CC3_CAM_RESET;
   cc3_timer_wait_ms(1000);
