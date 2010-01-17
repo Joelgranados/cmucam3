@@ -104,7 +104,7 @@ int main (void)
 {
   int32_t val, n;
 	uint8_t red,green,blue,d0,d1;
-	int8_t row,col,row_max,col_max,j;
+	int32_t row,col,row_max,col_max,j;
 
       	cc3_uart_init (0,
                  SERIAL_BAUD_RATE,
@@ -259,8 +259,8 @@ cmucam1_start:
 
         print_ACK ();
         print_cr ();
-	row_max=50;
-	col_max=50;
+	row_max=200;
+	col_max=200;
         cc3_uart0_putchar (1);
   	while (REG (GPIO_IOPIN) & _CC3_CAM_VBLK);   
 	while (!(REG (GPIO_IOPIN) & _CC3_CAM_VBLK)); 
