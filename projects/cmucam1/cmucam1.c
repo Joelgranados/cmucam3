@@ -102,8 +102,8 @@ static char line_buf[MAX_LINE];
 
 int main (void)
 {
-  int32_t val, n;
-	uint8_t red,green,blue,d0,d1;
+  int32_t val, n,i;
+	uint8_t red,green,blue,pix_data[4];
 	int32_t row,col,row_max,col_max,j;
 
       	cc3_uart_init (0,
@@ -259,8 +259,8 @@ cmucam1_start:
 
         print_ACK ();
         print_cr ();
-	row_max=200;
-	col_max=200;
+	row_max=100;
+	col_max=100;
         cc3_uart0_putchar (1);
   	while (REG (GPIO_IOPIN) & _CC3_CAM_VBLK);   
 	while (!(REG (GPIO_IOPIN) & _CC3_CAM_VBLK)); 
@@ -275,7 +275,26 @@ cmucam1_start:
 		while ((REG (GPIO_IOPIN) & _CC3_CAM_HBLK));
 		while (!(REG (GPIO_IOPIN) & _CC3_CAM_HBLK));
 		// traverse row*3 pix into row 
-		 for(j=0; j<row+1; j++ )
+		for(j=0; j<row+1; j++ )
+			{
+			for(i=0; i<4; i++ )
+				{
+				while (!(REG (GPIO_IOPIN) & _CC3_CAM_DCLK)); 
+  				while (REG (GPIO_IOPIN) & _CC3_CAM_DCLK);
+		     		pix_data[i]=REG(GPIO_IOPIN)>>24; 
+				}	
+			}
+        
+		// Filter out control characters	
+		for(i=0; i<4; i++ ) if(pix_data[i]<4) pix_data[i]=4;
+		cc3_uart0_putchar (pix_data[1]);
+		cc3_uart0_putchar (pix_data[0]);
+		cc3_uart0_putchar (pix_data[2]);
+		
+		cc3_uart0_putchar (pix_data[3]);
+		cc3_uart0_putchar (pix_data[0]);
+		cc3_uart0_putchar (pix_data[2]);
+	/*	 for(j=0; j<row+1; j++ )
 			{
 			while (!(REG (GPIO_IOPIN) & _CC3_CAM_DCLK)); 
   			while (REG (GPIO_IOPIN) & _CC3_CAM_DCLK);
@@ -296,7 +315,8 @@ cmucam1_start:
 		if(blue<16) blue=16;
         	cc3_uart0_putchar (red);
         	cc3_uart0_putchar (green);
-        	cc3_uart0_putchar (blue);
+        	cc3_uart0_putchar (blue);*/
+
 		}
 	}
         cc3_uart0_putchar (3);
