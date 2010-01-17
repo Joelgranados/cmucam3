@@ -8,7 +8,7 @@
 
 uint8_t img[X_MAX][Y_MAX][CHAN_MAX];
 int x, y;
-
+int x_max, y_max;
 int
 main (int argc, char *argv[])
 {
@@ -35,6 +35,8 @@ main (int argc, char *argv[])
 
   // Parse data from frame dump
   chan = 0;
+  x_max=0;
+  y_max=0;
   while (1)
     {
       c = fgetc (fp);
@@ -53,6 +55,7 @@ main (int argc, char *argv[])
 	  printf ("New col %d\n", x);
 	  chan = 0;
 	  if(x<X_MAX) x++;
+	  if(x>x_max)x_max=x;
 	  y = 0;
 	}
       else if (c == 3)
@@ -66,6 +69,7 @@ main (int argc, char *argv[])
 	    {
 	      chan = 0;
 	     if(y<Y_MAX) y++;
+	     if(y>y_max)y_max=y;
 	    }
 	}
 
@@ -81,9 +85,9 @@ main (int argc, char *argv[])
       printf ("Could not write ppm output\n");
     }
 
-  fprintf (fp, "P6\n%d %d\n255\n", x, y);
-  for (i = 0; i < x; i++)
-    for (j = 0; j < y; j++)
+  fprintf (fp, "P6\n%d %d\n255\n", x_max, y_max);
+  for (i = 0; i < x_max; i++)
+    for (j = 0; j < y_max; j++)
       for (k = 0; k < 3; k++)
 	fprintf (fp, "%c", img[i][j][k]);
   fclose (fp);
