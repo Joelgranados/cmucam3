@@ -25,7 +25,7 @@
 #define MAX_ARGS 10
 #define MAX_LINE 128
 
-#define VERSION_BANNER "CMUcam1 v1.00 c6"
+#define VERSION_BANNER "CMUcam v1.00 c6"
 
 #define I2C_WRITE_BIT (0x80)
 #define I2C_I2EN      (0x40)
@@ -37,7 +37,7 @@
 
 typedef enum {
   RESET,
-  SEND_FRAME,
+  DUMP_FRAME,
   GET_VERSION,
   CAMERA_REG,
   CAMERA_POWER,
@@ -57,7 +57,7 @@ static const char cmucam1_cmds[CMUCAM1_CMDS_COUNT][3] = {
   //  CT camera type
 
   /* Image Windowing Commands */
-  [SEND_FRAME] = "SF",
+  [DUMP_FRAME] = "DF",
 
   /* Auxiliary I/O Commands */
   [GET_BUTTON] = "GB",
@@ -103,8 +103,10 @@ static char line_buf[MAX_LINE];
 int main (void)
 {
   int32_t val, n;
+	uint8_t red,green,blue,d0,d1;
+	int8_t row,col,row_max,col_max,j;
 
-  cc3_uart_init (0,
+      	cc3_uart_init (0,
                  SERIAL_BAUD_RATE,
                  CC3_UART_MODE_8N1, CC3_UART_BINMODE_BINARY);
 
@@ -173,7 +175,7 @@ int main (void)
   data[1] = 0x18;
   n=i2c_test_write_polling(0x3d, data, sizeof data);
 
-  while(1);
+  //while(1);
 
 cmucam1_start:
   auto_led = true;
@@ -210,7 +212,7 @@ cmucam1_start:
       n = cmucam1_get_command (&command, arg_list);
     }
 
-    cc3_uart0_write("got command\r\n");
+    //cc3_uart0_write("got command\r\n");
 
     if (n != -1) {
       switch (command) {
@@ -253,8 +255,52 @@ cmucam1_start:
           auto_led = true;
         break;
 
-      case SEND_FRAME:
-        old_coi = cc3_g_pixbuf_frame.coi;
+      case DUMP_FRAME:
+
+        print_ACK ();
+        print_cr ();
+	row_max=50;
+	col_max=50;
+        cc3_uart0_putchar (1);
+  	while (REG (GPIO_IOPIN) & _CC3_CAM_VBLK);   
+	while (!(REG (GPIO_IOPIN) & _CC3_CAM_VBLK)); 
+	for(row=0; row<row_max; row++ )
+	{
+        cc3_uart0_putchar (2);
+	// wait until vblk goes low to high
+
+		for(col=0; col<col_max; col++ )
+		{
+		// wait until blk goes high
+		while ((REG (GPIO_IOPIN) & _CC3_CAM_HBLK));
+		while (!(REG (GPIO_IOPIN) & _CC3_CAM_HBLK));
+		// traverse row*3 pix into row 
+		 for(j=0; j<row+1; j++ )
+			{
+			while (!(REG (GPIO_IOPIN) & _CC3_CAM_DCLK)); 
+  			while (REG (GPIO_IOPIN) & _CC3_CAM_DCLK);
+		     	d0=REG(GPIO_IOPIN)>>24; 	
+			while (!(REG (GPIO_IOPIN) & _CC3_CAM_DCLK)); 
+  			while (REG (GPIO_IOPIN) & _CC3_CAM_DCLK);
+		     	d1=REG(GPIO_IOPIN)>>24; 	
+			}
+		
+		// grab d0,d1
+		//d0=0xff;
+		//d1=0xff;
+		blue=d0&0x1f<<3; 
+		green=((d0&0xe0)>>5) | (d1<<5); 
+		red=d1&0xe0;
+		if(red<16) red=16;
+		if(green<16) green=16;
+		if(blue<16) blue=16;
+        	cc3_uart0_putchar (red);
+        	cc3_uart0_putchar (green);
+        	cc3_uart0_putchar (blue);
+		}
+	}
+        cc3_uart0_putchar (3);
+        /*old_coi = cc3_g_pixbuf_frame.coi;
         if (n == 1) {
           if (arg_list[0] > 4) {
             error = true;
@@ -278,6 +324,8 @@ cmucam1_start:
   	} while (frame_stream_mode);
 	
         cc3_pixbuf_frame_set_coi (old_coi);
+	*/
+	
         break;
 
       case CAMERA_REG:
