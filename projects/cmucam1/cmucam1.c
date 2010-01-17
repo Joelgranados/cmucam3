@@ -102,9 +102,9 @@ static char line_buf[MAX_LINE];
 
 int main (void)
 {
-  int32_t val, n,i;
+  	int32_t val, n,led_state;
 	uint8_t red,green,blue,pix_data[4];
-	int32_t row,col,row_max,col_max,j;
+	int32_t row,col,row_max,col_max,i,j;
 
       	cc3_uart_init (0,
                  SERIAL_BAUD_RATE,
@@ -262,29 +262,43 @@ cmucam1_start:
 	row_max=100;
 	col_max=100;
         cc3_uart0_putchar (1);
+        cc3_uart0_putchar (2);
+	for(col=0; col<col_max; col++ )
+	{
   	while (REG (GPIO_IOPIN) & _CC3_CAM_VBLK);   
 	while (!(REG (GPIO_IOPIN) & _CC3_CAM_VBLK)); 
-	for(row=0; row<row_max; row++ )
-	{
-        cc3_uart0_putchar (2);
+	// for now don't put putc here to make sure we aren't missing data	
 	// wait until vblk goes low to high
 
-		for(col=0; col<col_max; col++ )
+		for(row=0; row<row_max; row++ )
 		{
-		// wait until blk goes high
+		// wait until blk goes high wait until previous row completes
 		while ((REG (GPIO_IOPIN) & _CC3_CAM_HBLK));
 		while (!(REG (GPIO_IOPIN) & _CC3_CAM_HBLK));
-		// traverse row*3 pix into row 
-		for(j=0; j<row+1; j++ )
-			{
-			for(i=0; i<4; i++ )
+		// traverse current col value into row 
+		for(j=0; j<col+1; j++ )
+		{
+			// for(i=0; i<2; i++ )   // For RGB 
+			 for(i=0; i<4; i++ )   // For YUV 
 				{
+				// Read pix value on rising edge
 				while (!(REG (GPIO_IOPIN) & _CC3_CAM_DCLK)); 
-  				while (REG (GPIO_IOPIN) & _CC3_CAM_DCLK);
 		     		pix_data[i]=REG(GPIO_IOPIN)>>24; 
+  				while (REG (GPIO_IOPIN) & _CC3_CAM_DCLK);
 				}	
-			}
-        
+		}
+     /* 
+	       	red=pix_data[1] & 0xf8; 
+	       	blue=pix_data[0] & 0x1f<<3; 
+	       	green=(pix_data[0] & 0xe0>>5) | (pix_data[1]<<5); 
+		if(red<4) red=4;
+		if(green<4) green=4;
+		if(blue<4) blue=4;
+		cc3_uart0_putchar (red);
+		cc3_uart0_putchar (green);
+		cc3_uart0_putchar (blue);
+*/		
+	       	
 		// Filter out control characters	
 		for(i=0; i<4; i++ ) if(pix_data[i]<4) pix_data[i]=4;
 		cc3_uart0_putchar (pix_data[1]);
@@ -294,30 +308,11 @@ cmucam1_start:
 		cc3_uart0_putchar (pix_data[3]);
 		cc3_uart0_putchar (pix_data[0]);
 		cc3_uart0_putchar (pix_data[2]);
-	/*	 for(j=0; j<row+1; j++ )
-			{
-			while (!(REG (GPIO_IOPIN) & _CC3_CAM_DCLK)); 
-  			while (REG (GPIO_IOPIN) & _CC3_CAM_DCLK);
-		     	d0=REG(GPIO_IOPIN)>>24; 	
-			while (!(REG (GPIO_IOPIN) & _CC3_CAM_DCLK)); 
-  			while (REG (GPIO_IOPIN) & _CC3_CAM_DCLK);
-		     	d1=REG(GPIO_IOPIN)>>24; 	
-			}
-		
-		// grab d0,d1
-		//d0=0xff;
-		//d1=0xff;
-		blue=d0&0x1f<<3; 
-		green=((d0&0xe0)>>5) | (d1<<5); 
-		red=d1&0xe0;
-		if(red<16) red=16;
-		if(green<16) green=16;
-		if(blue<16) blue=16;
-        	cc3_uart0_putchar (red);
-        	cc3_uart0_putchar (green);
-        	cc3_uart0_putchar (blue);*/
-
+	
 		}
+	cc3_led_set_state(0, led_state); 
+	led_state=!led_state;
+        cc3_uart0_putchar (2);
 	}
         cc3_uart0_putchar (3);
         /*old_coi = cc3_g_pixbuf_frame.coi;
