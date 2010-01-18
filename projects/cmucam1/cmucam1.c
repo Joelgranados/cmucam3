@@ -104,6 +104,7 @@ int main (void)
 {
   	int32_t val, n,led_state;
 	uint8_t red,green,blue,pix_data[4];
+	int32_t raw_pix_data[4],raw_pix_data_tmp;
 	int32_t row,col,row_max,col_max,i,j;
 
       	cc3_uart_init (0,
@@ -139,8 +140,16 @@ int main (void)
   data[1] = 0x10;
   n=i2c_test_write_polling(0x3d, data, sizeof data);
 
+  // agr turn on PLL
+//  data[0] = 0x03;
+//  data[1] = 0x08;
+  //data[1] = 0x80;
+//  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+
   data[0] = 0x05;
-  data[1] = 0x80;
+  data[1] = 0x00;
+  //data[1] = 0x80;
   n=i2c_test_write_polling(0x3d, data, sizeof data);
 
   data[0] = 0x1a;
@@ -257,10 +266,11 @@ cmucam1_start:
 
       case DUMP_FRAME:
 
+
         print_ACK ();
         print_cr ();
-	row_max=100;
-	col_max=100;
+	row_max=300;
+	col_max=300;
         cc3_uart0_putchar (1);
         cc3_uart0_putchar (2);
 	for(col=0; col<col_max; col++ )
@@ -282,10 +292,15 @@ cmucam1_start:
 			 for(i=0; i<4; i++ )   // For YUV 
 				{
 				// Read pix value on rising edge
+				//do{
+				//raw_pix_data_tmp=REG(GPIO_IOPIN);
+				//} while((raw_pix_data_tmp & _CC3_CAM_DCLK)==0 );
+				//raw_pix_data[i]=raw_pix_data_tmp;
 				while (!(REG (GPIO_IOPIN) & _CC3_CAM_DCLK)); 
-		     		pix_data[i]=REG(GPIO_IOPIN)>>24; 
+		     		raw_pix_data[i]=REG(GPIO_IOPIN); 
   				while (REG (GPIO_IOPIN) & _CC3_CAM_DCLK);
 				}	
+				
 		}
      /* 
 	       	red=pix_data[1] & 0xf8; 
@@ -300,7 +315,11 @@ cmucam1_start:
 */		
 	       	
 		// Filter out control characters	
-		for(i=0; i<4; i++ ) if(pix_data[i]<4) pix_data[i]=4;
+		for(i=0; i<4; i++ ) { 
+			pix_data[i]=raw_pix_data[i]>>24;
+			if(pix_data[i]<4) pix_data[i]=4;
+		}
+
 		cc3_uart0_putchar (pix_data[1]);
 		cc3_uart0_putchar (pix_data[0]);
 		cc3_uart0_putchar (pix_data[2]);
