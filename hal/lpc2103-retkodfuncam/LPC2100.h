@@ -19,6 +19,8 @@
 #ifndef LPC2100_H
 #define LPC2100_H
 
+
+#define FASTIO
 // write address to register macro
 #define REG(addr) (*(volatile unsigned long *)(addr))
 
@@ -215,6 +217,7 @@
 
 /* System Control Block (32 bit data bus) */
 
+
 #define SYSCON_EXTINT      (0xE01FC140)
 #define SYSCON_EXTWAKE     (0xE01FC144)
 #define SYSCON_MEMMAP      (0xE01FC040)
@@ -226,6 +229,11 @@
 #define SYSCON_PCONP       (0xE01FC0C4)
 #define SYSCON_APBDIV      (0xE01FC100)
 #define SYSCON_SCS	   (0xE01FC1A0)
+
+// Added for lpc2103
+#define SYSCON_EXTMODE	   (0xE01FC148)
+#define SYSCON_EXTPOLAR    (0xE01FC14C)
+
 
 /* MAM control registers  */
 #define MAMCR		   (0xE01FC000)

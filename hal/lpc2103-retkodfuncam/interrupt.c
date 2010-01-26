@@ -27,7 +27,34 @@
 #include "servo.h"
 #include "cc3_hal.h"
 
+
+#define VIC_MSK_EINT0_DCLK	0x4000
+#define VIC_MSK_EINT1_BUTTON	0x8000
+#define VIC_MSK_EINT2_VBLK	0x10000
+
+void (*vblk_callback)(void);
+void (*hblk_callback)(void);
+void (*dclk_callback)(void);
+
+
 volatile bool _cc3_button_trigger;
+
+void register_vblk_callback(void *f)
+{
+vblk_callback=f;
+}
+
+void register_dclk_callback(void *f)
+{
+dclk_callback=f;
+}
+
+void register_hblk_callback(void *f)
+{
+hblk_callback=f;
+}
+
+
 
 void disable_ext_interrupt (void)
 {
@@ -59,6 +86,37 @@ void disable_servo_interrupt (void)
     REG (VICIntEnClr) = 0x20;
 }
 
+void enable_dclk_interrupt()
+{
+   REG(VICIntEnable) = VIC_MSK_EINT0_DCLK;
+}
+
+void disable_dclk_interrupt()
+{
+  REG (VICIntEnClr) = VIC_MSK_EINT0_DCLK;
+  REG (SYSCON_EXTINT) = 0x1;  // clear EINT0
+}
+
+void enable_vblk_interrupt()
+{
+   REG(VICIntEnable) = VIC_MSK_EINT2_VBLK;
+}
+
+void disable_vblk_interrupt()
+{
+  REG (VICIntEnClr) = VIC_MSK_EINT2_VBLK;
+  REG (SYSCON_EXTINT) = 0x4;  // clear EINT2
+}
+
+void init_camera_interrupts()
+{
+REG(SYSCON_EXTMODE)=0x7;  // set all to be edge sensitive
+REG(SYSCON_EXTPOLAR)=0x7; // set all to be rising edge sensitive
+REG(PCB_PINSEL0) = (REG(PCB_PINSEL0) & ~_CC3_CAM_VBLK_PINSEL_MASK) | _CC3_CAM_VBLK_PINSEL;
+REG(PCB_PINSEL1) = (REG(PCB_PINSEL1) & ~_CC3_CAM_DCLK_PINSEL_MASK) | _CC3_CAM_DCLK_PINSEL;
+REG (SYSCON_EXTINT) = 0x7;  // clear all existing interrupts
+}
+
 void enable_button_interrupt (void)
 {
   //uart0_write("button int enable\r\n");
@@ -67,7 +125,7 @@ void enable_button_interrupt (void)
                       ~_CC3_BUTTON_PINSEL_MASK) | _CC3_BUTTON_PINSEL;
 
   // vic bit 15: EINT1
-  REG (VICIntEnable) = 0x8000;
+  REG (VICIntEnable) = VIC_MSK_EINT1_BUTTON;
 }
 
 void disable_button_interrupt (void)
@@ -75,7 +133,7 @@ void disable_button_interrupt (void)
   //uart0_write("button int disable\r\n");
 
   // vic bit 15: EINT1
-  REG (VICIntEnClr) = 0x8000;
+  REG (VICIntEnClr) = VIC_MSK_EINT1_BUTTON;
 
   // pin select back to GPIO
   REG(PCB_PINSEL0) = (REG(PCB_PINSEL0) & ~_CC3_BUTTON_PINSEL_MASK);
@@ -86,12 +144,26 @@ void disable_button_interrupt (void)
 
 void interrupt (void)
 {
-    if (REG (VICRawIntr) & 0x8000) {
+    if (REG (VICRawIntr) & VIC_MSK_EINT1_BUTTON) {
       // button press
       //uart0_write("button int\r\n");
       _cc3_button_trigger = true;
       disable_button_interrupt ();
     }
+
+    if (REG (VICRawIntr) & VIC_MSK_EINT0_DCLK) {
+      REG (SYSCON_EXTINT) = 0x1;  // clear EINT0
+      if(dclk_callback!=NULL) dclk_callback();
+    }
+
+    if (REG (VICRawIntr) & VIC_MSK_EINT2_VBLK) {
+      REG (SYSCON_EXTINT) = 0x4;  // clear EINT2
+      if(vblk_callback!=NULL) vblk_callback();
+    }
+
+
+
+
 }
 
 void swi (void)

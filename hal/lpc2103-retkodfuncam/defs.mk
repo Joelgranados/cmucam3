@@ -49,7 +49,7 @@ endif
 
 
 LIBS+=
-override CFLAGS+=-I$(HALDIR)/../../include -Os -pipe -funit-at-a-time \
+override CFLAGS+=-I$(HALDIR)/../../include -O2 -pipe -funit-at-a-time \
 	-Wall -Wstrict-prototypes -Wcast-align -Wcast-qual \
 	-Wimplicit -Wmissing-declarations -Wmissing-prototypes \
 	-Wnested-externs -Wpointer-arith -Wswitch -Wno-redundant-decls \
@@ -57,10 +57,10 @@ override CFLAGS+=-I$(HALDIR)/../../include -Os -pipe -funit-at-a-time \
 	-Werror-implicit-function-declaration \
 	-ffreestanding -std=gnu99 -g -fdata-sections -ffunction-sections \
 	-mcpu=arm7tdmi-s -fno-exceptions \
-	-msoft-float -mthumb -mthumb-interwork $(INTEGER_STDIO_FLAGS) \
+	-msoft-float $(INTEGER_STDIO_FLAGS) \
 	-DFASTIO
 
 override LDFLAGS+=-T$(HALDIR)/lpc2103-rom.ln \
-	-mcpu=arm7tdmi-s -msoft-float -mthumb
+	-mcpu=arm7tdmi-s -msoft-float 
 
 HALLIB=libhal-$(HALNAME).a

@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include "../../hal/lpc2103-retkodfuncam/LPC2100.h"
 #include "../../hal/lpc2103-retkodfuncam/cc3_pin_defines.h"
+#include "../../hal/lpc2103-retkodfuncam/interrupt.h"
 
 //#define SERIAL_BAUD_RATE  CC3_UART_RATE_230400
 #define SERIAL_BAUD_RATE  CC3_UART_RATE_115200
@@ -100,6 +101,22 @@ static char line_buf[MAX_LINE];
 
 #define TEST_MSG "test ABCDEFGHIJKLMNOPQRSTUVWXYZ\r\n"
 
+
+void my_vblk()
+{
+
+  cc3_uart0_write("vblk\r\n");
+  //disable_vblk_interrupt();
+}
+
+void my_dclk()
+{
+
+  cc3_uart0_write("dclk");
+  //disable_dclk_interrupt();
+}
+
+
 int main (void)
 {
   	int32_t val, n,led_state;
@@ -184,7 +201,15 @@ int main (void)
   data[1] = 0x18;
   n=i2c_test_write_polling(0x3d, data, sizeof data);
 
-  //while(1);
+
+  cc3_uart0_write("Testing Camera Interrupts\r\n");
+
+  register_vblk_callback(&my_vblk);  
+  register_dclk_callback(&my_dclk); 
+  init_camera_interrupts();
+  enable_vblk_interrupt(); 
+  enable_dclk_interrupt(); 
+  while(1);
 
 cmucam1_start:
   auto_led = true;
@@ -282,9 +307,11 @@ cmucam1_start:
 
 		for(row=0; row<row_max; row++ )
 		{
-		// wait until blk goes high wait until previous row completes
+		// wait until hblk goes high wait until previous row completes
 		while ((REG (GPIO_IOPIN) & _CC3_CAM_HBLK));
 		while (!(REG (GPIO_IOPIN) & _CC3_CAM_HBLK));
+
+		// enable fiq and start counting pixels
 		// traverse current col value into row 
 		for(j=0; j<col+1; j++ )
 		{

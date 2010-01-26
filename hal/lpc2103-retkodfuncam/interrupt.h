@@ -29,6 +29,23 @@ void enable_servo_interrupt (void);
 void disable_servo_interrupt (void);
 void enable_button_interrupt (void);
 void disable_button_interrupt (void);
+void init_camera_interrupts();
+
+void register_vblk_callback(void *f);
+void register_hblk_callback(void *f);
+void register_dclk_callback(void *f);
+
+void enable_vblk_interrupt();
+void enable_hblk_interrupt();
+void enable_dclk_interrupt();
+
+void disable_vblk_interrupt();
+void disable_hblk_interrupt();
+void disable_dclk_interrupt();
+
+
+
+
 
 void interrupt (void);
 
