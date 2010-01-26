@@ -112,7 +112,7 @@ void my_vblk()
 void my_dclk()
 {
 
-  cc3_uart0_write("dclk");
+  //cc3_uart0_write(".");
   //disable_dclk_interrupt();
 }
 
