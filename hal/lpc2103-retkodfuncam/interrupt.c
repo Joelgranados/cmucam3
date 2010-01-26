@@ -28,8 +28,8 @@
 #include "cc3_hal.h"
 
 
-#define VIC_MSK_EINT0_DCLK	0x4000
-#define VIC_MSK_EINT1_BUTTON	0x8000
+#define VIC_MSK_EINT0_DCLK	0x04000
+#define VIC_MSK_EINT1_BUTTON	0x08000
 #define VIC_MSK_EINT2_VBLK	0x10000
 
 void (*vblk_callback)(void);
@@ -110,8 +110,8 @@ void disable_vblk_interrupt()
 
 void init_camera_interrupts()
 {
-REG(SYSCON_EXTMODE)=0x7;  // set all to be edge sensitive
-REG(SYSCON_EXTPOLAR)=0x7; // set all to be rising edge sensitive
+REG(SYSCON_EXTMODE)=0x5;  // set camera pins to be edge sensitive
+REG(SYSCON_EXTPOLAR)=0x5; // set camera pins to be rising edge sensitive
 REG(PCB_PINSEL0) = (REG(PCB_PINSEL0) & ~_CC3_CAM_VBLK_PINSEL_MASK) | _CC3_CAM_VBLK_PINSEL;
 REG(PCB_PINSEL1) = (REG(PCB_PINSEL1) & ~_CC3_CAM_DCLK_PINSEL_MASK) | _CC3_CAM_DCLK_PINSEL;
 REG (SYSCON_EXTINT) = 0x7;  // clear all existing interrupts
