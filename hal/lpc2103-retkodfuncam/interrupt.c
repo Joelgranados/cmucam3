@@ -31,6 +31,7 @@
 #define VIC_MSK_EINT0_DCLK	0x04000
 #define VIC_MSK_EINT1_BUTTON	0x08000
 #define VIC_MSK_EINT2_VBLK	0x10000
+#define VIC_MSK_TIMER1_HBLK	0x00020
 
 void (*vblk_callback)(void);
 void (*hblk_callback)(void);
@@ -108,6 +109,17 @@ void disable_vblk_interrupt()
   REG (SYSCON_EXTINT) = 0x4;  // clear EINT2
 }
 
+void enable_hblk_interrupt()
+{
+   REG(VICIntEnable) = VIC_MSK_TIMER1_HBLK;
+}
+
+void disable_hblk_interrupt()
+{
+  REG (VICIntEnClr) = VIC_MSK_TIMER1_HBLK;
+}
+
+
 void init_camera_interrupts()
 {
 REG(SYSCON_EXTMODE)=0x5;  // set camera pins to be edge sensitive
@@ -115,6 +127,11 @@ REG(SYSCON_EXTPOLAR)=0x5; // set camera pins to be rising edge sensitive
 REG(PCB_PINSEL0) = (REG(PCB_PINSEL0) & ~_CC3_CAM_VBLK_PINSEL_MASK) | _CC3_CAM_VBLK_PINSEL;
 REG(PCB_PINSEL1) = (REG(PCB_PINSEL1) & ~_CC3_CAM_DCLK_PINSEL_MASK) | _CC3_CAM_DCLK_PINSEL;
 REG (SYSCON_EXTINT) = 0x7;  // clear all existing interrupts
+
+REG(PCB_PINSEL1) = (REG(PCB_PINSEL1) & ~_CC3_CAM_HBLK_PINSEL_MASK) | _CC3_CAM_HBLK_PINSEL;
+REG(TIMER1_CCR) = 0x140;  // CAP2RE rising edge trigger and interrupt generation
+REG(TIMER1_TCR) = 0x9; // Setup counting mode for CAP1.2 
+REG(TIMER1_IR) = 0xff;  // clear all pending timer 1 interrupts
 }
 
 void enable_button_interrupt (void)
@@ -144,13 +161,13 @@ void disable_button_interrupt (void)
 
 void interrupt (void)
 {
-    if (REG (VICRawIntr) & VIC_MSK_EINT1_BUTTON) {
+/*    if (REG (VICRawIntr) & VIC_MSK_EINT1_BUTTON) {
       // button press
       //uart0_write("button int\r\n");
       _cc3_button_trigger = true;
       disable_button_interrupt ();
     }
-
+*/
     if (REG (VICRawIntr) & VIC_MSK_EINT0_DCLK) {
       REG (SYSCON_EXTINT) = 0x1;  // clear EINT0
       if(dclk_callback!=NULL) dclk_callback();
@@ -161,8 +178,12 @@ void interrupt (void)
       if(vblk_callback!=NULL) vblk_callback();
     }
 
+    if (REG (VICRawIntr) & VIC_MSK_TIMER1_HBLK) {
+	REG(TIMER1_IR) = 0xff;  // clear TIMER1 interrupt register flags
+      	if(hblk_callback!=NULL) hblk_callback();
+    }
 
-
+REG(VICVectAddr) = 0x0;
 
 }
 

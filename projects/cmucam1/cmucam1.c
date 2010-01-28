@@ -98,23 +98,50 @@ static bool error, poll_mode, auto_led, buf_mode,frame_stream_mode;
 static int8_t line_mode;
 
 static char line_buf[MAX_LINE];
-
-#define TEST_MSG "test ABCDEFGHIJKLMNOPQRSTUVWXYZ\r\n"
+static uint32_t hblk_cnt, last_hblk_cnt; 
+static uint32_t dclk_cnt, last_dclk_cnt; 
+volatile uint32_t new_frame;
 
 
 void my_vblk()
 {
 
-  cc3_uart0_write("vblk\r\n");
+//  cc3_uart0_write("vblk\r\n");
+/*
+	cc3_uart0_write("hblk cnt:");
+  	print_num(last_hblk_cnt);
+  	cc3_uart0_write("\r\n");
+      	last_hblk_cnt=hblk_cnt;
+
+	cc3_uart0_write("dclk cnt: ");
+  	print_num(last_dclk_cnt);
+  	cc3_uart0_write("\r\n");
+*/
+	new_frame=1; 
+  hblk_cnt=0; 
   //disable_vblk_interrupt();
 }
 
 void my_dclk()
 {
-
-  //cc3_uart0_write(".");
+ dclk_cnt++;
+ // cc3_uart0_write(".");
   //disable_dclk_interrupt();
 }
+
+void my_hblk()
+{
+  	hblk_cnt++;
+//	cc3_uart0_write("hblk: ");
+//  	print_num(last_dclk_cnt);
+//  	cc3_uart0_write("\r\n");
+      	last_dclk_cnt=dclk_cnt;
+	dclk_cnt=0;
+//  cc3_uart0_write("hblk\r\n");
+  //cc3_uart0_write(".");
+  //disable_hblk_interrupt();
+}
+
 
 
 int main (void)
@@ -123,6 +150,7 @@ int main (void)
 	uint8_t red,green,blue,pix_data[4];
 	int32_t raw_pix_data[4],raw_pix_data_tmp;
 	int32_t row,col,row_max,col_max,i,j;
+
 
       	cc3_uart_init (0,
                  SERIAL_BAUD_RATE,
@@ -204,12 +232,40 @@ int main (void)
 
   cc3_uart0_write("Testing Camera Interrupts\r\n");
 
+  new_frame=0;
+  hblk_cnt=0;
   register_vblk_callback(&my_vblk);  
   register_dclk_callback(&my_dclk); 
+  register_hblk_callback(&my_hblk); 
   init_camera_interrupts();
   enable_vblk_interrupt(); 
   enable_dclk_interrupt(); 
-  while(1);
+  enable_hblk_interrupt(); 
+
+  
+  // This will run for a short while and then stop
+  while(1){
+	cc3_uart0_write(".");
+  }
+
+  while(1){
+
+        cc3_led_set_state (0, new_frame);
+
+	if(new_frame)
+	{
+	cc3_uart0_write("hblk cnt:");
+  	print_num(last_hblk_cnt);
+  	cc3_uart0_write("\r\n");
+      	last_hblk_cnt=hblk_cnt;
+
+	cc3_uart0_write("dclk cnt: ");
+  	print_num(last_dclk_cnt);
+  	cc3_uart0_write("\r\n");
+	new_frame=0;
+	}
+	
+  }
 
 cmucam1_start:
   auto_led = true;
@@ -772,7 +828,7 @@ void print_num(uint32_t x)
 	uint32_t div;
 
 	set=0;
-	for(div=10000; div>=10; div/=10 )
+	for(div=100000; div>=10; div/=10 )
 	{
 	  if((x>=div) | (set==1)) { t=x/div; cc3_uart0_putchar('0'+t); set=1; }
 		x=x%div;
