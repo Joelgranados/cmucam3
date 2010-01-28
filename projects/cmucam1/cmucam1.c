@@ -103,7 +103,7 @@ static uint32_t dclk_cnt, last_dclk_cnt;
 volatile uint32_t new_frame;
 
 
-void my_vblk()
+inline void my_vblk()
 {
 
 //  cc3_uart0_write("vblk\r\n");
@@ -117,19 +117,20 @@ void my_vblk()
   	print_num(last_dclk_cnt);
   	cc3_uart0_write("\r\n");
 */
-	new_frame=1; 
+  new_frame=1; 
+  last_hblk_cnt=hblk_cnt;
   hblk_cnt=0; 
   //disable_vblk_interrupt();
 }
 
-void my_dclk()
+inline void my_dclk()
 {
  dclk_cnt++;
  // cc3_uart0_write(".");
   //disable_dclk_interrupt();
 }
 
-void my_hblk()
+inline void my_hblk()
 {
   	hblk_cnt++;
 //	cc3_uart0_write("hblk: ");
