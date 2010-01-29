@@ -145,13 +145,14 @@ hblk_cnt++;
 		dclk_cnt=0;
 		enable_dclk_interrupt();
 	}
-
 }
 
 
 
 
 /*
+// Here is some craptacular code to try and grab a row of data
+
 void my_vblk()
 {
   // start of frame
