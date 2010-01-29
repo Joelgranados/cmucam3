@@ -117,7 +117,41 @@ uint32_t capture_next_row(uint32_t width)
 	return hblk_cnt;
 }
 
+void my_vblk()
+{
+  hblk_cnt=0; 
+}
 
+void my_dclk()
+{
+	row_buf[dclk_cnt]=(REG(GPIO_IOPIN)>>24); 
+	dclk_cnt++;
+}
+
+void my_hblk()
+{
+hblk_cnt++;
+	if( hblk_cnt%2==0 ) 
+	{
+		// Use this row to print dclk_cnt from last row
+		disable_dclk_interrupt();
+  		print_num(hblk_cnt);
+		cc3_uart0_write(" ");
+  		print_num(dclk_cnt);
+		cc3_uart0_write("\r\n");
+	}
+	else {
+		// Lets count dclk
+		dclk_cnt=0;
+		enable_dclk_interrupt();
+	}
+
+}
+
+
+
+
+/*
 void my_vblk()
 {
   // start of frame
@@ -165,7 +199,7 @@ void my_hblk()
 	}
 }
 
-
+*/
 
 int main (void)
 {
@@ -260,6 +294,12 @@ int main (void)
   register_hblk_callback(&my_hblk); 
 
   init_camera_interrupts();
+
+  // Simple dclk counting test
+  enable_vblk_interrupt(); 
+  enable_hblk_interrupt(); 
+  while(1);
+  // End dclk counting test
 
   while(1){
 
