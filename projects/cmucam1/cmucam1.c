@@ -128,13 +128,14 @@ void my_vblk()
 
 void my_dclk()
 {
-
+ // Read a row into memory
  if(dclk_cnt< row_width) {
 	 row_buf[dclk_cnt]=(REG(GPIO_IOPIN)>>24); 
 	 dclk_cnt++;
  }
  else
  {
+  // signal when you have enough
   row_done=1;	
   disable_dclk_interrupt();
  }
@@ -145,7 +146,9 @@ void my_hblk()
 
   	if(hblk_cnt<1023) 
 	{
-		
+		// New row is starting
+		// Reset the dclk_cnt which is the index into
+		// the row buffer that gets filled by the dclk int	
 		dclk_cnt=0;
 		hblk_cnt++;
   		if( row_done==0 ) enable_dclk_interrupt();
