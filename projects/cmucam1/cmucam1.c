@@ -100,11 +100,13 @@ static int8_t line_mode;
 static char line_buf[MAX_LINE];
 static uint32_t hblk_cnt, last_hblk_cnt; 
 static uint32_t dclk_cnt, last_dclk_cnt; 
+static uint32_t full_row_check; 
 volatile uint32_t new_frame;
 
 
 void my_vblk()
 {
+
 
 //  cc3_uart0_write("vblk\r\n");
 /*
@@ -117,27 +119,38 @@ void my_vblk()
   	print_num(last_dclk_cnt);
   	cc3_uart0_write("\r\n");
 */
-  new_frame=1; 
-  last_hblk_cnt=hblk_cnt;
+  if(hblk_cnt>100) {
+  	last_hblk_cnt=hblk_cnt;
+	disable_dclk_interrupt();
+  }
   hblk_cnt=0; 
+  new_frame=1; 
   //disable_vblk_interrupt();
 }
 
 void my_dclk()
 {
- dclk_cnt++;
  // cc3_uart0_write(".");
-  //disable_dclk_interrupt();
+ if(dclk_cnt<1280) dclk_cnt++;
+ else
+  disable_dclk_interrupt();
 }
 
 void my_hblk()
 {
+  	if(hblk_cnt==0)
+	{
+		enable_dclk_interrupt(); 
+		dclk_cnt=0;
+	}
   	hblk_cnt++;
 //	cc3_uart0_write("hblk: ");
 //  	print_num(last_dclk_cnt);
 //  	cc3_uart0_write("\r\n");
+	if(dclk_cnt>100) {
       	last_dclk_cnt=dclk_cnt;
-	dclk_cnt=0;
+
+	}
 //  cc3_uart0_write("hblk\r\n");
   //cc3_uart0_write(".");
   //disable_hblk_interrupt();
@@ -231,7 +244,7 @@ int main (void)
   n=i2c_test_write_polling(0x3d, data, sizeof data);
 
 
-  cc3_uart0_write("Testing Camera Interrupts\r\n");
+  cc3_uart0_write("Cam Setup\r\n");
 
   new_frame=0;
   hblk_cnt=0;
@@ -240,14 +253,13 @@ int main (void)
   register_hblk_callback(&my_hblk); 
   init_camera_interrupts();
   enable_vblk_interrupt(); 
-  enable_dclk_interrupt(); 
   enable_hblk_interrupt(); 
 
   
   // This will run for a short while and then stop
-  while(1){
-	cc3_uart0_write(".");
-  }
+//  while(1){
+//	cc3_uart0_write(".");
+//  }
 
   while(1){
 
@@ -267,6 +279,7 @@ int main (void)
 	}
 	
   }
+
 
 cmucam1_start:
   auto_led = true;
@@ -525,7 +538,7 @@ int i2c_test_write_polling(uint8_t addr, uint8_t *data, int len)
   int i = 0; // first byte is sent by state 0x18, remaining is state 0x28
   uint8_t state,last_state,done,blink;
 
-  cc3_uart0_write("Testing i2c\r\n");
+  //cc3_uart0_write("Testing i2c\r\n");
 
   REG (GPIO_IODIR) = _CC3_DEFAULT_PORT_DIR;
 
@@ -538,9 +551,9 @@ int i2c_test_write_polling(uint8_t addr, uint8_t *data, int len)
   //  cc3_timer_wait_ms(1000);
 
   last_state=REG(I2C_I2STAT);
-  cc3_uart0_write("starting state:");
-  print_num(last_state);
-  cc3_uart0_write("\r\n");
+  //cc3_uart0_write("starting state:");
+  //print_num(last_state);
+  //cc3_uart0_write("\r\n");
   //  REG(I2C_I2ADR)= addr | I2C_WRITE_BIT;  // set slave address and write bit
 
   REG(I2C_I2CONSET)=I2C_I2EN | I2C_STA;  // Send Start Bit 
@@ -557,43 +570,43 @@ int i2c_test_write_polling(uint8_t addr, uint8_t *data, int len)
       switch(state)
       {
 	case 0x00:
-  		cc3_uart0_write("zero state\r\n");
+  		//cc3_uart0_write("zero state\r\n");
 		break;
 	case 0x08:
 		REG(I2C_I2DAT)=addr << 1;  // set slave address and write bit
 		REG(I2C_I2CONCLR)=I2C_STO | I2C_SI;
-  		cc3_uart0_write("0x08 state\r\n");
+  		//cc3_uart0_write("0x08 state\r\n");
 		break;
 	case 0x18:
 		// Ack received from slave for slave address
 		// set the data
-		cc3_uart0_write_hex(data[i]);
+		//cc3_uart0_write_hex(data[i]);
 		REG(I2C_I2DAT)=data[i++];
 		REG(I2C_I2CONCLR)=I2C_STA | I2C_STO | I2C_SI;
-  		cc3_uart0_write("0x18 state\r\n");
+  		//cc3_uart0_write("0x18 state\r\n");
 		break;
 	case 0x28:
 		// Ack received from slave for byte transmitted from master.
 		if (i < len) {
 			// continue sending
-			cc3_uart0_write_hex(data[i]);
+			//cc3_uart0_write_hex(data[i]);
 			REG(I2C_I2DAT)=data[i++];
 			REG(I2C_I2CONCLR)=I2C_STA | I2C_STO | I2C_SI;
-			cc3_uart0_write("0x28 state\r\n");
+			//cc3_uart0_write("0x28 state\r\n");
 		} else {
 			// Stop condition is transmitted in this state signaling the end of transmission
 			REG(I2C_I2CONSET)=I2C_STO;  // Transmit stop condition
 			REG(I2C_I2CONCLR)=I2C_SI;  // clear SI	
 			done=1;
-			cc3_uart0_write("0x28 done state\r\n");
+			//cc3_uart0_write("0x28 done state\r\n");
 		}
 		break;
 	case 0xF8:
-  		cc3_uart0_write("No relevant state data state\r\n");
+  		//cc3_uart0_write("No relevant state data state\r\n");
 		break;
 	default:
-  		cc3_uart0_write("unknown state:");
-		cc3_uart0_write_hex(state);
+  		//cc3_uart0_write("unknown state:");
+		//cc3_uart0_write_hex(state);
   		cc3_uart0_write("\r\n");
 		break;
       }
@@ -602,7 +615,7 @@ int i2c_test_write_polling(uint8_t addr, uint8_t *data, int len)
   } 
 
   cc3_led_set_state (0, false); 
-  cc3_uart0_write("done...\r\n");
+//  cc3_uart0_write("done...\r\n");
  
 
 
