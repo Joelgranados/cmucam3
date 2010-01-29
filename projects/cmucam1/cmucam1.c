@@ -98,62 +98,68 @@ static bool error, poll_mode, auto_led, buf_mode,frame_stream_mode;
 static int8_t line_mode;
 
 static char line_buf[MAX_LINE];
-static uint32_t hblk_cnt, last_hblk_cnt; 
-static uint32_t dclk_cnt, last_dclk_cnt; 
-static uint32_t full_row_check; 
-volatile uint32_t new_frame;
+
+
+volatile uint32_t hblk_cnt,dclk_cnt; 
+volatile uint32_t frame_done, row_done;
+
+volatile uint32_t row_width;
+volatile static uint8_t row_buf[1280];
+
+//int capture_row(uint8_t row);
+uint32_t capture_next_row(uint32_t width);
+
+uint32_t capture_next_row(uint32_t width)
+{
+	row_done=0;
+	row_width=width;
+	do{ } while(!row_done);
+	return hblk_cnt;
+}
 
 
 void my_vblk()
 {
-
-
-//  cc3_uart0_write("vblk\r\n");
-/*
-	cc3_uart0_write("hblk cnt:");
-  	print_num(last_hblk_cnt);
-  	cc3_uart0_write("\r\n");
-      	last_hblk_cnt=hblk_cnt;
-
-	cc3_uart0_write("dclk cnt: ");
-  	print_num(last_dclk_cnt);
-  	cc3_uart0_write("\r\n");
-*/
-  if(hblk_cnt>100) {
-  	last_hblk_cnt=hblk_cnt;
-	disable_dclk_interrupt();
-  }
+  // start of frame
+  frame_done=0;
   hblk_cnt=0; 
-  new_frame=1; 
-  //disable_vblk_interrupt();
+  enable_hblk_interrupt(); 
 }
 
 void my_dclk()
 {
- // cc3_uart0_write(".");
- if(dclk_cnt<1280) dclk_cnt++;
+
+ if(dclk_cnt< row_width) {
+	 row_buf[dclk_cnt]=(REG(GPIO_IOPIN)>>24); 
+	 dclk_cnt++;
+ }
  else
+ {
+  row_done=1;	
   disable_dclk_interrupt();
+ }
 }
 
 void my_hblk()
 {
-  	if(hblk_cnt==0)
-	{
-		enable_dclk_interrupt(); 
-		dclk_cnt=0;
-	}
-  	hblk_cnt++;
-//	cc3_uart0_write("hblk: ");
-//  	print_num(last_dclk_cnt);
-//  	cc3_uart0_write("\r\n");
-	if(dclk_cnt>100) {
-      	last_dclk_cnt=dclk_cnt;
 
+  	if(hblk_cnt<1023) 
+	{
+		
+		dclk_cnt=0;
+		hblk_cnt++;
+  		if( row_done==0 ) enable_dclk_interrupt();
 	}
-//  cc3_uart0_write("hblk\r\n");
-  //cc3_uart0_write(".");
-  //disable_hblk_interrupt();
+	else
+	{
+		// end of frame
+		disable_vblk_interrupt(); 
+		disable_hblk_interrupt(); 
+  		disable_dclk_interrupt();
+		frame_done=1;
+		// Bail on the row wait if it didn't capture enough
+		row_done=1;
+	}
 }
 
 
@@ -170,7 +176,7 @@ int main (void)
                  SERIAL_BAUD_RATE,
                  CC3_UART_MODE_8N1, CC3_UART_BINMODE_BINARY);
 
-  cc3_timer_wait_ms(1000);
+  //cc3_timer_wait_ms(1000);
 
   cc3_uart0_write("going to do camera_init\r\n");
 
@@ -246,37 +252,23 @@ int main (void)
 
   cc3_uart0_write("Cam Setup\r\n");
 
-  new_frame=0;
-  hblk_cnt=0;
   register_vblk_callback(&my_vblk);  
   register_dclk_callback(&my_dclk); 
   register_hblk_callback(&my_hblk); 
-  init_camera_interrupts();
-  enable_vblk_interrupt(); 
-  enable_hblk_interrupt(); 
 
-  
-  // This will run for a short while and then stop
-//  while(1){
-//	cc3_uart0_write(".");
-//  }
+  init_camera_interrupts();
 
   while(1){
 
-        cc3_led_set_state (0, new_frame);
+	// Start next frame capture (vblk stops at end of frame)
+  	enable_vblk_interrupt(); 
 
-	if(new_frame)
-	{
-	cc3_uart0_write("hblk cnt:");
-  	print_num(last_hblk_cnt);
-  	cc3_uart0_write("\r\n");
-      	last_hblk_cnt=hblk_cnt;
-
-	cc3_uart0_write("dclk cnt: ");
-  	print_num(last_dclk_cnt);
-  	cc3_uart0_write("\r\n");
-	new_frame=0;
-	}
+	do {
+		// ask for a row of size n, return which row was captured
+		row=capture_next_row(100); // 1280 is max
+  		print_num(row);
+		cc3_uart0_write("\r\n");
+	} while(!frame_done);
 	
   }
 
