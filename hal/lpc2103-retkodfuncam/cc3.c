@@ -270,3 +270,9 @@ bool cc3_button_get_and_reset_trigger (void)
 
   return result;
 }
+
+void cc3_sleep_until_interrupt (void)
+{
+  // nighty night
+  REG (SYSCON_PCON) = 1;
+}
