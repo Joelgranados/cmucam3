@@ -57,8 +57,7 @@ override CFLAGS+=-I$(HALDIR)/../../include -O2 -pipe -funit-at-a-time \
 	-Werror-implicit-function-declaration \
 	-ffreestanding -std=gnu99 -g -fdata-sections -ffunction-sections \
 	-mcpu=arm7tdmi-s -fno-exceptions \
-	-msoft-float $(INTEGER_STDIO_FLAGS) \
-	-DFASTIO
+	-msoft-float $(INTEGER_STDIO_FLAGS)
 
 override LDFLAGS+=-T$(HALDIR)/lpc2103-rom.ln \
 	-mcpu=arm7tdmi-s -msoft-float 
