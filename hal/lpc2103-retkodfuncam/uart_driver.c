@@ -10,7 +10,7 @@ extern int errno;
 
 // we are using sparse file descriptor space,
 // so don't increase this willy-nilly
-static const int max_uarts = 16;
+#define MAX_UARTS 16
 
 static int process_uart_filename(const char *name) {
   // parse "COMx:"
@@ -33,7 +33,7 @@ static int uart_open (const char *name,
 {
   int uart_num = process_uart_filename(name);
   if (uart_num >= 0 && uart_num < cc3_uart_get_count()) {
-    return uart_num + max_uarts; // new uart
+    return uart_num + MAX_UARTS; // new uart
   } else {
     errno = ENODEV;
     return -1;
@@ -56,11 +56,11 @@ static ssize_t uart_read (int file, void *ptr, size_t len)
 
   switch (file) {
   case 0:  // non-redirected stdin
-  case max_uarts + 0:
+  case MAX_UARTS + 0:
     binmode = _cc3_uart0_binmode;
     uart_getc = uart0_getc;
     break;
-  case max_uarts + 1:
+  case MAX_UARTS + 1:
     binmode = _cc3_uart1_binmode;
     uart_getc = uart1_getc;
     break;
@@ -95,11 +95,11 @@ static ssize_t uart_write (int file, const void *ptr, size_t len)
   switch (file) {
   case 1:  // non-redirected stdout
   case 2:  // non-redirected stderr
-  case max_uarts + 0:
+  case MAX_UARTS + 0:
     binmode = _cc3_uart0_binmode;
     uart_putc = uart0_putc;
     break;
-  case max_uarts + 1:
+  case MAX_UARTS + 1:
     binmode = _cc3_uart1_binmode;
     uart_putc = uart1_putc;
     break;
