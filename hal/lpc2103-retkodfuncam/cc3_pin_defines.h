@@ -53,7 +53,7 @@
 // button
 #define _CC3_BUTTON             0x00004000
 #define _CC3_BUTTON_PINSEL_MASK 0x30000000
-#define _CC3_BUTTON_PINSEL      0x20000000
+#define _CC3_BUTTON_PINSEL      0x10000000
 
 // SPI
 #define _CC3_SPI_MASK           0x0000FF00
