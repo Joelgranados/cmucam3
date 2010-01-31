@@ -832,9 +832,3 @@ bool _cc3_set_register_state ()
   cc3_pixbuf_frame_reset();
   return result;
 }
-
-void cc3_sleep_until_interrupt (void)
-{
-  // nighty night
-  REG (SYSCON_PCON) = 1;
-}
