@@ -64,36 +64,15 @@ _boot:
 @ Runtime Interrupt Vectors
 @ -------------------------
 Vectors:
-        b     _start                    @ reset - _start
-        ldr   pc,_undf                  @ undefined - _undf
-        ldr   pc,_swi                   @ SWI - _swi
-	ldr   pc,_pabt                  @ program abort - _pabt
-	ldr   pc,_dabt                  @ data abort - _dabt
-        nop                             @ reserved
-        ldr   pc,_irq                   @ IRQ
-        ldr   pc,_fiq                   @ FIQ - _fiq
+        b     _start
+        b     undefined
+        b     swi
+	b     prefetch_abort
+	b     data_abort
+        nop
+        b     interrupt
+        b     fast_interrupt
 
-@ Use this group for development
-_undf:  .word __undf                    @ undefined
-_swi:   .word __swi                     @ SWI
-_pabt:  .word __pabt                    @ prefetch abort
-_dabt:  .word __dabt                    @ data abort
-_irq:   .word __irq                     @ IRQ
-_fiq:   .word __fiq                     @ FIQ
-
-__undf: b     undefined                 @ undefined
-__swi:  b     swi                       @ SWI
-__pabt: b     prefetch_abort		@ prefetch abort
-__dabt: b     data_abort                @ data abort
-__fiq:  nop                             @ FIQ
-__irq:  stmfd   sp!, { lr }               /* save return address on stack */
-	mrs     lr, spsr                  /* use lr to save spsr_irq */
-	stmfd   sp!, { r0-r3, r12, lr }   /* save work regs & spsr on stack */
-	bl      interrupt                 /* go handle the interrupt */
-	ldmfd   sp!, { r0-r3, r12, lr }   /* restore regs from stack */
-	msr     spsr_cxsf, lr             /* put back spsr_irq */
-	ldmfd   sp!, { lr }               /* put back lr_irq */
-	subs    pc, lr, #0x4              /* return, restoring CPSR from SPSR */
         .size _boot, . - _boot
         .endfunc
 

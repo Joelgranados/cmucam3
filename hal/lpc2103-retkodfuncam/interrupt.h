@@ -47,12 +47,12 @@ void disable_dclk_interrupt(void);
 
 
 
-void interrupt (void);
+void interrupt (void) __attribute__((interrupt("IRQ")));
+void fast_interrupt (void) __attribute__((interrupt("FIQ")));
 
-void undefined (void);
-void swi (void);
-void prefetch_abort (void);
-void data_abort (void);
-void segfault (void);
+void undefined (void) __attribute__((interrupt("UNDEF")));
+void swi (void) __attribute__((interrupt("SWI")));
+void prefetch_abort (void) __attribute__((interrupt("ABORT")));
+void data_abort (void) __attribute__((interrupt("ABORT")));
 
 #endif
