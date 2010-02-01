@@ -34,7 +34,7 @@
 
 @ Stack Sizes
         .set  UND_STACK_SIZE, 0x00000004
-        .set  ABT_STACK_SIZE, 0x00000004
+        .set  ABT_STACK_SIZE, 0x00000050
         .set  FIQ_STACK_SIZE, 0x00000004
         .set  IRQ_STACK_SIZE, 0x00000100
         .set  SVC_STACK_SIZE, 0x00000004
@@ -67,11 +67,26 @@ Vectors:
         b     _start
         b     undefined
         b     swi
-	b     prefetch_abort
-	b     data_abort
+        b     _prefetch_abort
+        b     _data_abort
         nop
         b     interrupt
         b     fast_interrupt
+
+
+_prefetch_abort:
+        sub    lr, lr, #4          @ adjust
+        stmfd  sp!, { r4-r12, lr } @ pass as args (r0-r3 are already good)
+        mrs    lr, spsr
+        stmfd  sp!, { lr }         @ pass spsr
+        b      prefetch_abort
+
+_data_abort:
+        sub    lr, lr, #8          @ adjust
+        stmfd  sp!, { r4-r12, lr } @ pass as args (r0-r3 are already good)
+        mrs    lr, spsr
+        stmfd  sp!, { lr }         @ pass spsr
+        b      data_abort
 
         .size _boot, . - _boot
         .endfunc

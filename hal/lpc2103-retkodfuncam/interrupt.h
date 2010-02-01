@@ -52,7 +52,15 @@ void fast_interrupt (void) __attribute__((interrupt("FIQ")));
 
 void undefined (void) __attribute__((interrupt("UNDEF")));
 void swi (void) __attribute__((interrupt("SWI")));
-void prefetch_abort (void) __attribute__((interrupt("ABORT")));
-void data_abort (void) __attribute__((interrupt("ABORT")));
+void prefetch_abort (long r_0, long r_1, long r_2, long r_3,
+		     long spsr,
+		     long r_4, long r_5, long r_6, long r_7,
+		     long r_8, long r_9, long r_10, long r_11,
+		     long r_12, long prev_pc);
+void data_abort (long r_0, long r_1, long r_2, long r_3,
+		 long spsr,
+		 long r_4, long r_5, long r_6, long r_7,
+		 long r_8, long r_9, long r_10, long r_11,
+		 long r_12, long prev_pc);
 
 #endif

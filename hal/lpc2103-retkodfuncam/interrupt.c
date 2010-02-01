@@ -37,6 +37,38 @@ void (*vblk_callback)(void);
 void (*hblk_callback)(void);
 void (*dclk_callback)(void);
 
+#define DUMP_REGS()				\
+  uart0_write(" r0   ");			\
+  uart0_write_hex(r_0);				\
+  uart0_write(" r1   ");			\
+  uart0_write_hex(r_1);				\
+  uart0_write(" r2   ");			\
+  uart0_write_hex(r_2);				\
+  uart0_write(" r3   ");			\
+  uart0_write_hex(r_3);				\
+  uart0_write(" r4   ");			\
+  uart0_write_hex(r_4);				\
+  uart0_write(" r5   ");			\
+  uart0_write_hex(r_5);				\
+  uart0_write(" r6   ");			\
+  uart0_write_hex(r_6);				\
+  uart0_write(" r7   ");			\
+  uart0_write_hex(r_7);				\
+  uart0_write(" r8   ");			\
+  uart0_write_hex(r_8);				\
+  uart0_write(" r9   ");			\
+  uart0_write_hex(r_9);				\
+  uart0_write(" r10  ");			\
+  uart0_write_hex(r_10);			\
+  uart0_write(" r11  ");			\
+  uart0_write_hex(r_11);			\
+  uart0_write(" ip   ");			\
+  uart0_write_hex(r_12);			\
+  uart0_write(" pc   ");			\
+  uart0_write_hex(prev_pc);			\
+  uart0_write(" cpsr ");			\
+  uart0_write_hex(spsr);
+
 
 volatile bool _cc3_button_trigger;
 
@@ -185,6 +217,8 @@ void interrupt (void)
 
 REG(VICVectAddr) = 0x0;
 
+}
+
 void fast_interrupt (void)
 {
     REG(VICVectAddr) = 0x0;
@@ -198,6 +232,7 @@ void swi (void)
 }
 
 
+__attribute__((noreturn))
 static void panic_blink(int delay) {
   // set LEDs to output
   REG (GPIO_IODIR) |= _CC3_LED_0;
@@ -216,24 +251,26 @@ void undefined (void)
   panic_blink(500);
 }
 
-void prefetch_abort (void)
+void prefetch_abort (long r_0, long r_1, long r_2, long r_3,
+		     long spsr,
+		     long r_4, long r_5, long r_6, long r_7,
+		     long r_8, long r_9, long r_10, long r_11,
+		     long r_12, long prev_pc)
 {
-    register volatile char *r_14 asm ("r14");
-    long prev_pc = (long) r_14 - 4;
     uart0_write ("prefetch abort!\r\n");
-    uart0_write_hex (prev_pc);
-    // XXX: register dump
+    DUMP_REGS()
 
     panic_blink(1000);
 }
 
-void data_abort (void)
+void data_abort (long r_0, long r_1, long r_2, long r_3,
+		 long spsr,
+		 long r_4, long r_5, long r_6, long r_7,
+		 long r_8, long r_9, long r_10, long r_11,
+		 long r_12, long prev_pc)
 {
-    register volatile char *r_14 asm ("r14");
-    long prev_pc = (long) r_14 - 8;
     uart0_write ("data abort!\r\n");
-    uart0_write_hex (prev_pc);
-    // XXX: register dump
+    DUMP_REGS()
 
     panic_blink(1500);
 }
