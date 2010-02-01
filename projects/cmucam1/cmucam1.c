@@ -120,11 +120,12 @@ uint32_t capture_next_row(uint32_t width)
 void my_vblk()
 {
   hblk_cnt=0; 
+  enable_hblk_interrupt(); 
 }
 
 void my_dclk()
 {
-	row_buf[dclk_cnt]=(REG(GPIO_IOPIN)>>24); 
+	if(dclk_cnt<1280) row_buf[dclk_cnt]=(REG(GPIO_IOPIN)>>24); 
 	dclk_cnt++;
 }
 
@@ -298,7 +299,7 @@ int main (void)
 
   // Simple dclk counting test
   enable_vblk_interrupt(); 
-  enable_hblk_interrupt(); 
+  //enable_hblk_interrupt(); 
   while(1);
   // End dclk counting test
 

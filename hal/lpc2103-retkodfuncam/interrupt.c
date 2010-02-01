@@ -200,21 +200,21 @@ void interrupt (void)
       disable_button_interrupt ();
     }
 */
-    if (REG (VICRawIntr) & VIC_MSK_EINT0_DCLK) {
-      REG (SYSCON_EXTINT) = 0x1;  // clear EINT0
-      if(dclk_callback!=NULL) dclk_callback();
-    }
-
-    if (REG (VICRawIntr) & VIC_MSK_EINT2_VBLK) {
+   if (REG (VICRawIntr) & VIC_MSK_EINT2_VBLK) {
       REG (SYSCON_EXTINT) = 0x4;  // clear EINT2
       if(vblk_callback!=NULL) vblk_callback();
     }
 
-    if (REG (VICRawIntr) & VIC_MSK_TIMER1_HBLK) {
+   else if (REG (VICRawIntr) & VIC_MSK_TIMER1_HBLK) {
 	REG(TIMER1_IR) = 0xff;  // clear TIMER1 interrupt register flags
       	if(hblk_callback!=NULL) hblk_callback();
     }
+   else if (REG (VICRawIntr) & VIC_MSK_EINT0_DCLK) {
+      REG (SYSCON_EXTINT) = 0x1;  // clear EINT0
+      if(dclk_callback!=NULL) dclk_callback();
+    }
 
+ 
 REG(VICVectAddr) = 0x0;
 
 }
