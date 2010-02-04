@@ -21,18 +21,19 @@
 /*
 	PLL
 
-   - Main clock F_OSC=20MHz
+   - Main clock F_OSC=14.7456MHz
    - System should run at max. Frequency (70MHz)
-   - Choose multiplier M=3 = 60 MHz
+   - Choose multiplier M=4
+     so cclk = M * F_OSC= 4 * 14745000Hz = 58980000 Hz
    - MSEL-Bits in PLLCFG (bits 0-4) MSEL = M-1
    - F_CCO must be inbetween the limits 156 MHz to 320 MHz
      datasheet: F_CCO = F_OSC * M * 2 * P
-   - choose divider P=2 => F_CCO = 20000000Hz * 3 * 2 * 2
-     = 240000000 = 240 MHz
+   - choose divider P=2 => F_CCO = 14745000Hz * 4 * 2 * 2
+     = 235920000 ~=236 MHz
    - PSEL0 (Bit5 in PLLCFG) = 1, PSEL1 (Bit6) = 0 (0b01)
 */
-#define FOSC		20000000
-#define PLL_M		3
+#define FOSC		14745600
+#define PLL_M		4
 #define MSEL		(PLL_M-1)
 #define PSEL0 		5
 #define PSEL1 		6
@@ -49,13 +50,13 @@
 /*
 	MAM(Memory Accelerator Module)
 	- choosen: MAM fully enabled = MAM-Mode 2
-	- System-Clock cclk=60MHz -> 3 CCLKs are proposed as fetch timing
+	- System-Clock cclk=59MHz -> 3 CCLKs are proposed as fetch timing
 */
 #define MAM_MODE 	2
 #define MAM_FETCH   3
 
 /*
-	APB (A... Pheriphal Bus)
+	APB (A... Peripheral Bus)
 	- choosen: APB should run at full speed -> divider APBDIV=1
 	=> pclk = cclk = 59MHz
 */
