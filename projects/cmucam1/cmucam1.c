@@ -105,6 +105,7 @@ volatile uint32_t frame_done, row_done;
 
 volatile uint32_t row_width;
 volatile static uint8_t row_buf[1280];
+volatile uint32_t blah;
 
 //int capture_row(uint8_t row);
 uint32_t capture_next_row(uint32_t width);
@@ -124,8 +125,10 @@ void my_vblk()
 
 void my_dclk()
 {
-	row_buf[dclk_cnt]=(REG(GPIO_IOPIN)>>24); 
+	if(dclk_cnt<1280) row_buf[dclk_cnt]=(REG(GPIO_IOPIN)>>24); 
 	dclk_cnt++;
+        //cc3_led_set_state (0, blah);
+	//blah=!blah;
 }
 
 void my_hblk()
