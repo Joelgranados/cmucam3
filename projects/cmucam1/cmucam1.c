@@ -120,12 +120,11 @@ uint32_t capture_next_row(uint32_t width)
 void my_vblk()
 {
   hblk_cnt=0; 
-  enable_hblk_interrupt(); 
 }
 
 void my_dclk()
 {
-	if(dclk_cnt<1280) row_buf[dclk_cnt]=(REG(GPIO_IOPIN)>>24); 
+	row_buf[dclk_cnt]=(REG(GPIO_IOPIN)>>24); 
 	dclk_cnt++;
 }
 
@@ -265,11 +264,13 @@ int main (void)
   n=i2c_test_write_polling(0x3d, data, sizeof data);
 
   data[0] = 0x0e;
-  data[1] = 0x14;
+//  data[1] = 0x14;
+  data[1] = 0x1c;
   n=i2c_test_write_polling(0x3d, data, sizeof data);
 
   data[0] = 0x11;
-  data[1] = 0x6a;
+//  data[1] = 0x6a;
+  data[1] = 0x4a;
   n=i2c_test_write_polling(0x3d, data, sizeof data);
 
   data[0] = 0x14;
@@ -285,7 +286,8 @@ int main (void)
   n=i2c_test_write_polling(0x3d, data, sizeof data);
 
   data[0] = 0x04;
-  data[1] = 0x18;
+  //data[1] = 0x18;
+  data[1] = 0x1d;
   n=i2c_test_write_polling(0x3d, data, sizeof data);
 
 
@@ -299,7 +301,7 @@ int main (void)
 
   // Simple dclk counting test
   enable_vblk_interrupt(); 
-  //enable_hblk_interrupt(); 
+  enable_hblk_interrupt(); 
   while(1);
   // End dclk counting test
 
