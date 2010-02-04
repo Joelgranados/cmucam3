@@ -226,7 +226,6 @@ int main (void)
     exit (1);
   }
 
-
   uint8_t data[] = {0x02, 0x40};
   n=i2c_test_write_polling(0x3d, data, sizeof data);
 
@@ -586,8 +585,10 @@ int i2c_test_write_polling(uint8_t addr, uint8_t *data, int len)
 
   REG(I2C_I2CONCLR)=I2C_I2EN | I2C_STA | I2C_SI | I2C_AA;   // 0x6c;  // clear all flags
   REG(I2C_I2CONSET)=I2C_I2EN;  // enable I2C 
-  REG (I2C_I2SCLH) = 100;
-  REG (I2C_I2SCLL) = 60;
+ // REG (I2C_I2SCLH) = 100;
+//  REG (I2C_I2SCLL) = 60;
+  REG (I2C_I2SCLH) = 200;
+  REG (I2C_I2SCLL) = 120;
 
   //REG (GPIO_IOSET) = _CC3_CAM_RESET;
   //  cc3_timer_wait_ms(1000);
