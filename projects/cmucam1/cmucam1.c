@@ -100,14 +100,18 @@ static int8_t line_mode;
 static char line_buf[MAX_LINE];
 
 
-volatile uint32_t hblk_cnt,dclk_cnt; 
+volatile uint32_t hblk_cnt;
+//volatile uint32_t dclk_cnt; 
 volatile uint32_t frame_done, row_done;
 
 volatile uint32_t row_width;
-volatile static uint8_t row_buf[1280];
-volatile uint32_t blah;
 
+
+// XXX: This moved to interrupt.h and fast_interrupt.c
+//volatile static uint8_t row_buf[1280];
 //int capture_row(uint8_t row);
+
+
 uint32_t capture_next_row(uint32_t width);
 
 uint32_t capture_next_row(uint32_t width)
@@ -122,15 +126,14 @@ void my_vblk()
 {
   hblk_cnt=0; 
 }
-
+/*
+ // XXX: This moved to fast-interrupt.c
 void my_dclk()
 {
 	if(dclk_cnt<1280) row_buf[dclk_cnt]=(REG(GPIO_IOPIN)>>24); 
 	dclk_cnt++;
-        //cc3_led_set_state (0, blah);
-	//blah=!blah;
 }
-
+*/
 void my_hblk()
 {
 hblk_cnt++;
@@ -296,7 +299,7 @@ int main (void)
   cc3_uart0_write("Cam Setup\r\n");
 
   register_vblk_callback(&my_vblk);  
-  register_dclk_callback(&my_dclk); 
+  //register_dclk_callback(&my_dclk); 
   register_hblk_callback(&my_hblk); 
 
   init_camera_interrupts();

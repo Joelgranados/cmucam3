@@ -28,8 +28,23 @@
 #include "cc3_hal.h"
 
 
+volatile uint32_t dclk_cnt; 
+volatile uint8_t row_buf[1280];
+
 __attribute__((section(".boot.fiq")))
 void fast_interrupt (void)
 {
-    REG(VICVectAddr) = 0x0;
+      // XXX: cleanup the static 1280 crap below
+   // if (REG (VICRawIntr) & VIC_MSK_EINT0_DCLK) {
+      REG (SYSCON_EXTINT) = 0x1;  // clear EINT0
+	if(dclk_cnt<1280) row_buf[dclk_cnt]=(REG(GPIO_IOPIN)>>24); 
+      dclk_cnt++;
+      if(dclk_cnt%2==0)
+      REG (GPIO_IOSET) = _CC3_LED_0;
+      else
+      REG (GPIO_IOCLR) = _CC3_LED_0;
+      //dclk_callback();
+      //  if(dclk_callback!=NULL) dclk_callback();
+   // }
+//    REG(VICVectAddr) = 0x0;
 }

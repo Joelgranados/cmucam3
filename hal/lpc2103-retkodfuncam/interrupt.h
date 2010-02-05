@@ -22,6 +22,9 @@
 #include <stdbool.h>
 
 extern volatile bool _cc3_button_trigger;
+// XXX: this doesn't belong here
+extern volatile uint32_t dclk_cnt; 
+extern volatile uint8_t row_buf[1280];
 
 void enable_ext_interrupt (void);
 void disable_ext_interrupt (void);

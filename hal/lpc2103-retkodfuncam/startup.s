@@ -35,7 +35,7 @@
 @ Stack Sizes
         .set  UND_STACK_SIZE, 0x00000004
         .set  ABT_STACK_SIZE, 0x00000050
-        .set  FIQ_STACK_SIZE, 0x00000004
+        .set  FIQ_STACK_SIZE, 0x00000100
         .set  IRQ_STACK_SIZE, 0x00000100
         .set  SVC_STACK_SIZE, 0x00000004
 
@@ -159,7 +159,8 @@ _mainCRTStartup:
         ldr   lr,=_start                @ reset if return
 
 /* Enter the C code */
-        msr   CPSR_c,#MODE_SYS|F_BIT    @ System Mode
+/*        msr   CPSR_c,#MODE_SYS|F_BIT    @ System Mode*/
+        msr   CPSR_c,#MODE_SYS @ System Mode
         bx    r10                       @ enter main()
 
         .size _start, . - _start

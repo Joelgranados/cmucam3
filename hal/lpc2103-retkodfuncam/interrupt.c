@@ -164,6 +164,7 @@ REG(PCB_PINSEL1) = (REG(PCB_PINSEL1) & ~_CC3_CAM_HBLK_PINSEL_MASK) | _CC3_CAM_HB
 REG(TIMER1_CCR) = 0x140;  // CAP2RE rising edge trigger and interrupt generation
 REG(TIMER1_TCR) = 0x9; // Setup counting mode for CAP1.2 
 REG(TIMER1_IR) = 0xff;  // clear all pending timer 1 interrupts
+REG(VICIntSelect) =  VIC_MSK_EINT0_DCLK;
 }
 
 void enable_button_interrupt (void)
@@ -209,11 +210,11 @@ void interrupt (void)
 	REG(TIMER1_IR) = 0xff;  // clear TIMER1 interrupt register flags
       	if(hblk_callback!=NULL) hblk_callback();
     }
-   else if (REG (VICRawIntr) & VIC_MSK_EINT0_DCLK) {
+/*   else if (REG (VICRawIntr) & VIC_MSK_EINT0_DCLK) {
       REG (SYSCON_EXTINT) = 0x1;  // clear EINT0
       if(dclk_callback!=NULL) dclk_callback();
     }
-
+*/
  
 REG(VICVectAddr) = 0x0;
 
