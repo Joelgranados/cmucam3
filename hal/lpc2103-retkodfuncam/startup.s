@@ -58,21 +58,21 @@
         .code 32
 
         .global _boot
-        .func   _boot
 _boot:
 
 @ Runtime Interrupt Vectors
 @ -------------------------
-Vectors:
         b     _start
-        b     undefined
+	b     undefined
         b     swi
         b     _prefetch_abort
         b     _data_abort
         nop
         b     interrupt
-        b     fast_interrupt
 
+	.section .text, "ax"
+
+	.global _prefetch_abort, _data_abort
 
 _prefetch_abort:
         sub    lr, lr, #4          @ adjust
@@ -87,9 +87,6 @@ _data_abort:
         mrs    lr, spsr
         stmfd  sp!, { lr }         @ pass spsr
         b      data_abort
-
-        .size _boot, . - _boot
-        .endfunc
 
 
 @ Setup the operating mode & stack.

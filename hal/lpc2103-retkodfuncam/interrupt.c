@@ -219,11 +219,6 @@ REG(VICVectAddr) = 0x0;
 
 }
 
-void fast_interrupt (void)
-{
-    REG(VICVectAddr) = 0x0;
-}
-
 void swi (void)
 {
     uart0_write ("swi!\r\n");

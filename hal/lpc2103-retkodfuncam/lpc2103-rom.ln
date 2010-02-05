@@ -47,6 +47,7 @@ SECTIONS
   .text :
   {
     KEEP(*(.boot))
+    KEEP(*(.boot.fiq))
 
     *(.text .text.* .gnu.linkonce.t.*)
     *(.plt)

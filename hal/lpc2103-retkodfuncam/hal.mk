@@ -18,6 +18,8 @@ include defs.mk
 CSOURCES=interrupt.c cc3.c cc3_hal.c syscalls.c serial.c \
 	servo.c rdcf2.c mmc_hardware.c mmc_driver.c gpio.c \
 	devices.c uart_driver.c
+CSOURCES_FIQ=fast-interrupt.c
+
 INCLUDES=cc3_hal.h devices.h lpc_config.h rdcf2.h servo.h \
 	cc3_pin_defines.h interrupt.h LPC2100.h mmc_hardware.h serial.h spi.h \
 	gpio.h ../../include/cc3.h
@@ -27,6 +29,7 @@ ASMSOURCES=startup.s
 #COBJS=$(patsubst %.c, %$(THUMB_SUFFIX).o,$(CSOURCES))
 #ASMOBJS=$(patsubst %.s, %$(THUMB_SUFFIX).o,$(ASMSOURCES))
 COBJS=$(patsubst %.c, %.o,$(CSOURCES))
+COBJS_FIQ=$(patsubst %.c, %.o,$(CSOURCES_FIQ))
 ASMOBJS=$(patsubst %.s, %.o,$(ASMSOURCES))
 
 all: $(HALLIB)
@@ -39,7 +42,10 @@ $(ASMOBJS): %.o : %.s $(INCLUDES)
 $(COBJS): %.o : %.c $(INCLUDES)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-$(HALLIB): $(COBJS) $(ASMOBJS)
+$(COBJS_FIQ): %.o : %.c $(INCLUDES)
+	$(CC) -c -o $@ $< $(CFLAGS) -ffixed-r0 -ffixed-r1 -ffixed-r2 -ffixed-r3 -ffixed-r4 -ffixed-r5 -ffixed-r6 -ffixed-r7
+
+$(HALLIB): $(COBJS) $(COBJS_FIQ) $(ASMOBJS)
 	$(AR) rs $@ $^
 
 
