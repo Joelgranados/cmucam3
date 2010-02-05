@@ -60,6 +60,6 @@ override CFLAGS+=-I$(HALDIR)/../../include -O2 -pipe -funit-at-a-time \
 	-msoft-float $(INTEGER_STDIO_FLAGS)
 
 override LDFLAGS+=-T$(HALDIR)/lpc2103-rom.ln \
-	-mcpu=arm7tdmi-s -msoft-float 
+	-mcpu=arm7tdmi-s -msoft-float
 
 HALLIB=libhal-$(HALNAME).a
