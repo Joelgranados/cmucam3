@@ -206,7 +206,7 @@ void interrupt (void)
       if(vblk_callback!=NULL) vblk_callback();
     }
 
-   else if (REG (VICRawIntr) & VIC_MSK_TIMER1_HBLK) {
+   if (REG (VICRawIntr) & VIC_MSK_TIMER1_HBLK) {
 	REG(TIMER1_IR) = 0xff;  // clear TIMER1 interrupt register flags
       	if(hblk_callback!=NULL) hblk_callback();
     }

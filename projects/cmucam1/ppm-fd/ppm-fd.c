@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #define X_MAX		1024
-#define Y_MAX		768
+#define Y_MAX		1024	
 #define CHAN_MAX	3
 
 uint8_t img[X_MAX][Y_MAX][CHAN_MAX];

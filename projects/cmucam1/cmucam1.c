@@ -102,9 +102,10 @@ static char line_buf[MAX_LINE];
 
 volatile uint32_t hblk_cnt;
 //volatile uint32_t dclk_cnt; 
-volatile uint32_t frame_done, row_done;
+volatile uint32_t frame_done;
 
 volatile uint32_t row_width;
+volatile uint32_t dclk_lines[288];
 
 
 // XXX: This moved to interrupt.h and fast_interrupt.c
@@ -118,81 +119,33 @@ uint32_t capture_next_row(uint32_t width)
 {
 	row_done=0;
 	row_width=width;
-	do{ } while(!row_done);
+	do{ 
+	} while(!row_done);
 	return hblk_cnt;
 }
 
 void my_vblk()
 {
-  hblk_cnt=0; 
-}
-/*
- // XXX: This moved to fast-interrupt.c
-void my_dclk()
-{
-	if(dclk_cnt<1280) row_buf[dclk_cnt]=(REG(GPIO_IOPIN)>>24); 
-	dclk_cnt++;
-}
-*/
-void my_hblk()
-{
-hblk_cnt++;
-	if( hblk_cnt%2==0 ) 
-	{
-		// Use this row to print dclk_cnt from last row
-		disable_dclk_interrupt();
-  		print_num(hblk_cnt);
-		cc3_uart0_write(" ");
-  		print_num(dclk_cnt);
-		cc3_uart0_write("\r\n");
-	}
-	else {
-		// Lets count dclk
-		dclk_cnt=0;
-		enable_dclk_interrupt();
-	}
-}
-
-
-
-
-/*
-// Here is some craptacular code to try and grab a row of data
-
-void my_vblk()
-{
+    
   // start of frame
   frame_done=0;
   hblk_cnt=0; 
   enable_hblk_interrupt(); 
 }
 
-void my_dclk()
-{
- // Read a row into memory
- if(dclk_cnt< row_width) {
-	 row_buf[dclk_cnt]=(REG(GPIO_IOPIN)>>24); 
-	 dclk_cnt++;
- }
- else
- {
-  // signal when you have enough
-  row_done=1;	
-  disable_dclk_interrupt();
- }
-}
 
 void my_hblk()
 {
-
   	if(hblk_cnt<1023) 
 	{
 		// New row is starting
 		// Reset the dclk_cnt which is the index into
 		// the row buffer that gets filled by the dclk int	
-		dclk_cnt=0;
 		hblk_cnt++;
-  		if( row_done==0 ) enable_dclk_interrupt();
+  		if( row_done==0 ) {
+			dclk_cnt=0;
+			enable_dclk_interrupt();
+		}
 	}
 	else
 	{
@@ -204,17 +157,23 @@ void my_hblk()
 		// Bail on the row wait if it didn't capture enough
 		row_done=1;
 	}
+
 }
 
-*/
+
+
 
 int main (void)
 {
   	int32_t val, n,led_state;
-	uint8_t red,green,blue,pix_data[4];
+	uint8_t red,green,blue,pix_data[4],y1,u,v,y2;
 	int32_t raw_pix_data[4],raw_pix_data_tmp;
 	int32_t row,col,row_max,col_max,i,j;
 
+
+  disable_dclk_interrupt();
+  disable_hblk_interrupt();
+  disable_vblk_interrupt();
 
       	cc3_uart_init (0,
                  SERIAL_BAUD_RATE,
@@ -304,25 +263,54 @@ int main (void)
 
   init_camera_interrupts();
 
-  // Simple dclk counting test
-  enable_vblk_interrupt(); 
-  enable_hblk_interrupt(); 
-  while(1);
-  // End dclk counting test
 
-  while(1){
+//  while(1){
 
+
+        cc3_uart0_putchar (1);
 	// Start next frame capture (vblk stops at end of frame)
   	enable_vblk_interrupt(); 
 
 	do {
 		// ask for a row of size n, return which row was captured
-		row=capture_next_row(100); // 1280 is max
-  		print_num(row);
-		cc3_uart0_write("\r\n");
+		row=capture_next_row(ROW_BUF_LEN); // 1280 is max
+        	cc3_uart0_putchar (2);
+		for(i=0; i<ROW_BUF_LEN; i++ ) 
+		{
+	       		/*
+			red=row_buf[i+1] & 0xf8; 
+	       		blue=row_buf[i] & 0x1f<<3; 
+	       		green=(row_buf[i] & 0xe0>>5) | (row_buf[i+1]<<5); 
+			i++;
+			if(red<4) red=4;
+			if(green<4) green=4;
+			if(blue<4) blue=4;
+			cc3_uart0_putchar (red);
+			cc3_uart0_putchar (green);
+			cc3_uart0_putchar (blue);
+
+			*/
+
+			y1=row_buf[i];
+			u=row_buf[i+1];
+			y2=row_buf[i+2];
+			v=row_buf[i+3];
+			i+=3;
+
+			cc3_uart0_putchar (y1);
+			cc3_uart0_putchar (u);
+			cc3_uart0_putchar (v);
+
+			cc3_uart0_putchar (y2);
+			cc3_uart0_putchar (u);
+			cc3_uart0_putchar (v);
+		}
+  		//print_num(row);
+		//cc3_uart0_write("\r\n");
 	} while(!frame_done);
-	
-  }
+        	cc3_uart0_putchar (3);
+	while(1);	
+//  }
 
 
 cmucam1_start:

@@ -19,12 +19,15 @@
 #ifndef INTERRUPT_H
 #define INTERRUPT_H
 
+#define ROW_BUF_LEN		500
+
 #include <stdbool.h>
 
 extern volatile bool _cc3_button_trigger;
 // XXX: this doesn't belong here
 extern volatile uint32_t dclk_cnt; 
-extern volatile uint8_t row_buf[1280];
+extern volatile uint32_t row_done; 
+extern volatile uint8_t row_buf[ROW_BUF_LEN];
 
 void enable_ext_interrupt (void);
 void disable_ext_interrupt (void);
