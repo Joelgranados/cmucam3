@@ -106,7 +106,7 @@ volatile uint32_t frame_done;
 
 volatile uint32_t row_width;
 volatile uint32_t dclk_lines[288];
-
+extern volatile uint8_t row_buf[ROW_BUF_LEN];
 
 // XXX: This moved to interrupt.h and fast_interrupt.c
 //volatile static uint8_t row_buf[1280];
@@ -130,13 +130,14 @@ void my_vblk()
   // start of frame
   frame_done=0;
   hblk_cnt=0; 
+  dclk_cnt=0;
   enable_hblk_interrupt(); 
 }
 
 
 void my_hblk()
 {
-  	if(hblk_cnt<1023) 
+  	if(hblk_cnt<100) 
 	{
 		// New row is starting
 		// Reset the dclk_cnt which is the index into
@@ -149,6 +150,7 @@ void my_hblk()
 	}
 	else
 	{
+
 		// end of frame
 		disable_vblk_interrupt(); 
 		disable_hblk_interrupt(); 
@@ -165,7 +167,7 @@ void my_hblk()
 
 int main (void)
 {
-  	int32_t val, n,led_state;
+  	int32_t val, n,led_state,x;
 	uint8_t red,green,blue,pix_data[4],y1,u,v,y2;
 	int32_t raw_pix_data[4],raw_pix_data_tmp;
 	int32_t row,col,row_max,col_max,i,j;
@@ -263,7 +265,43 @@ int main (void)
 
   init_camera_interrupts();
 
+  
 
+
+        cc3_uart0_putchar (1);
+	// Start next frame capture (vblk stops at end of frame)
+  
+	for(x=0; x<200; x+=4 )
+	{
+        	cc3_uart0_putchar (2);
+		frame_done=0;
+		enable_vblk_interrupt(); 
+		do {
+			// ask for a row of size n, return which row was captured
+			row=capture_next_row(ROW_BUF_LEN); // 1280 is max
+
+			y1=row_buf[x];
+			u=row_buf[x+1];
+			y2=row_buf[x+2];
+			v=row_buf[x+3];
+
+			if(y1<4) y1=4;
+			if(y2<4) y2=4;
+			if(u<4) u=4;
+			if(v<4) v=4;
+			cc3_uart0_putchar (y1);
+			cc3_uart0_putchar (u);
+			cc3_uart0_putchar (v);
+	
+			cc3_uart0_putchar (y2);
+			cc3_uart0_putchar (u);
+			cc3_uart0_putchar (v);
+		} while(!frame_done);
+	}
+cc3_uart0_putchar (3);
+while(1);
+
+/*
 //  while(1){
 
 
@@ -277,19 +315,19 @@ int main (void)
         	cc3_uart0_putchar (2);
 		for(i=0; i<ROW_BUF_LEN; i++ ) 
 		{
-	       		/*
-			red=row_buf[i+1] & 0xf8; 
-	       		blue=row_buf[i] & 0x1f<<3; 
-	       		green=(row_buf[i] & 0xe0>>5) | (row_buf[i+1]<<5); 
-			i++;
-			if(red<4) red=4;
-			if(green<4) green=4;
-			if(blue<4) blue=4;
-			cc3_uart0_putchar (red);
-			cc3_uart0_putchar (green);
-			cc3_uart0_putchar (blue);
+	       		
+		//	red=row_buf[i+1] & 0xf8; 
+	       	//	blue=row_buf[i] & 0x1f<<3; 
+	       	//	green=(row_buf[i] & 0xe0>>5) | (row_buf[i+1]<<5); 
+		//	i++;
+		//	if(red<4) red=4;
+		//	if(green<4) green=4;
+		//	if(blue<4) blue=4;
+		//	cc3_uart0_putchar (red);
+		//	cc3_uart0_putchar (green);
+		//	cc3_uart0_putchar (blue);
 
-			*/
+			
 
 			y1=row_buf[i];
 			u=row_buf[i+1];
@@ -311,7 +349,7 @@ int main (void)
         	cc3_uart0_putchar (3);
 	while(1);	
 //  }
-
+*/
 
 cmucam1_start:
   auto_led = true;
