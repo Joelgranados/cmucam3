@@ -136,7 +136,7 @@ void my_vblk()
 
 void my_hblk()
 {
-  	if(hblk_cnt<285) 
+  	if(hblk_cnt<280) 
 	{
 		// New row is starting
 		// Reset the dclk_cnt which is the index into
