@@ -97,12 +97,14 @@ main (int argc, char *argv[])
       printf ("Could not write ppm output\n");
     }
 
-  printf( "x_max=%d y_max=%d\n",x_max, y_max );
-  fprintf (fp, "P6\n%d %d\n255\n", x_max, y_max);
-  for (y = 0; y < y_max; y++)
+  printf( "x_max=%d y_max=%d\n",x_max*2, y_max/2 );
+  fprintf (fp, "P6\n%d %d\n255\n", x_max*2, y_max/2);
+  for (y = 0; y < y_max; y+=2)
     for (x = 0; x < x_max; x++)
-      for (k = 0; k < 3; k++)
-	fprintf (fp, "%c", img[x][y][k]);
+    {
+      for (k = 0; k < 3; k++) fprintf (fp, "%c", img[x][y][k]);
+      for (k = 0; k < 3; k++) fprintf (fp, "%c", img[x][y+1][k]);
+    }
   fclose (fp);
 return 1;
 }
