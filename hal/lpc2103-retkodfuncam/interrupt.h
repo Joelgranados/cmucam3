@@ -19,7 +19,7 @@
 #ifndef INTERRUPT_H
 #define INTERRUPT_H
 
-#define ROW_BUF_LEN		500
+#define ROW_BUF_LEN	710	
 
 #include <stdbool.h>
 

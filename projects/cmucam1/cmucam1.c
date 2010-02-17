@@ -105,7 +105,6 @@ volatile uint32_t hblk_cnt;
 volatile uint32_t frame_done;
 
 volatile uint32_t row_width;
-volatile uint32_t dclk_lines[288];
 extern volatile uint8_t row_buf[ROW_BUF_LEN];
 
 // XXX: This moved to interrupt.h and fast_interrupt.c
@@ -137,7 +136,7 @@ void my_vblk()
 
 void my_hblk()
 {
-  	if(hblk_cnt<100) 
+  	if(hblk_cnt<285) 
 	{
 		// New row is starting
 		// Reset the dclk_cnt which is the index into
@@ -189,7 +188,7 @@ int main (void)
     cc3_led_set_state (0, true);
     exit (1);
   }
-
+/*
   uint8_t data[] = {0x02, 0x40};
   n=i2c_test_write_polling(0x3d, data, sizeof data);
 
@@ -222,11 +221,22 @@ int main (void)
   n=i2c_test_write_polling(0x3d, data, sizeof data);
 
   data[0] = 0x1a;
-  data[1] = 0xff;
+  data[1] = 0x00;
+//  data[1] = 0xff;
   n=i2c_test_write_polling(0x3d, data, sizeof data);
 
   data[0] = 0x1b;
-  data[1] = 0xb3;
+  data[1] = 0x00;
+//  data[1] = 0xb3;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  // agr new since cmucam1 frame dump
+  data[0] = 0x1c;
+  data[1] = 0x00;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x1c;
+  data[1] = 0x00;
   n=i2c_test_write_polling(0x3d, data, sizeof data);
 
   data[0] = 0x0e;
@@ -244,6 +254,66 @@ int main (void)
   n=i2c_test_write_polling(0x3d, data, sizeof data);
 
   data[0] = 0x1f;
+//  data[1] = 0x0b;
+  data[1] = 0x01;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x1e;
+  data[1] = 0x7e;
+//  data[1] = 0xe7;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x04;
+  //data[1] = 0x18;
+  data[1] = 0x1d;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+*/
+
+
+  uint8_t data[] = {0x02, 0x40};
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x0d;
+  data[1] = 0x01;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x0b;
+  data[1] = 0x00;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x6d;
+  data[1] = 0xa1;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x58;
+  data[1] = 0x10;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x05;
+  data[1] = 0x00;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x1a;
+  data[1] = 0xff;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x1b;
+  data[1] = 0xb3;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x0e;
+  data[1] = 0x1c;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x11;
+  data[1] = 0x4a;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x14;
+  data[1] = 0x33;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x1f;
   data[1] = 0x0b;
   n=i2c_test_write_polling(0x3d, data, sizeof data);
 
@@ -252,9 +322,60 @@ int main (void)
   n=i2c_test_write_polling(0x3d, data, sizeof data);
 
   data[0] = 0x04;
-  //data[1] = 0x18;
-  data[1] = 0x1d;
+   data[1] = 0x1d;   //YUV
+  // data[1] = 0x19;   //RGB
   n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+
+
+	/*
+ uint8_t data[] = {0x02, 0x40};
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x0d; data[1] = 0x01;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x0b; data[1] = 0x00;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x6d; data[1] = 0xa1;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x58; data[1] = 0x10;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x05; data[1] = 0x00;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x1a; data[1] = 0x00;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x1b; data[1] = 0x00;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+//  data[0] = 0x1c; data[1] = 0x00;
+//  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x1e; data[1] = 0x7e;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x1f; data[1] = 0x01;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x0e; data[1] = 0xac;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x04; data[1] = 0x1d;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x11; data[1] = 0x4a;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+
+  data[0] = 0x14; data[1] = 0x33;
+  n=i2c_test_write_polling(0x3d, data, sizeof data);
+*/
+
+
 
 
   cc3_uart0_write("Cam Setup\r\n");
@@ -266,40 +387,6 @@ int main (void)
   init_camera_interrupts();
 
   
-
-
-        cc3_uart0_putchar (1);
-	// Start next frame capture (vblk stops at end of frame)
-  
-	for(x=0; x<200; x+=4 )
-	{
-        	cc3_uart0_putchar (2);
-		frame_done=0;
-		enable_vblk_interrupt(); 
-		do {
-			// ask for a row of size n, return which row was captured
-			row=capture_next_row(ROW_BUF_LEN); // 1280 is max
-
-			y1=row_buf[x];
-			u=row_buf[x+1];
-			y2=row_buf[x+2];
-			v=row_buf[x+3];
-
-			if(y1<4) y1=4;
-			if(y2<4) y2=4;
-			if(u<4) u=4;
-			if(v<4) v=4;
-			cc3_uart0_putchar (y1);
-			cc3_uart0_putchar (u);
-			cc3_uart0_putchar (v);
-	
-			cc3_uart0_putchar (y2);
-			cc3_uart0_putchar (u);
-			cc3_uart0_putchar (v);
-		} while(!frame_done);
-	}
-cc3_uart0_putchar (3);
-while(1);
 
 /*
 //  while(1){
@@ -434,73 +521,63 @@ cmucam1_start:
 
         print_ACK ();
         print_cr ();
-	row_max=300;
-	col_max=300;
+
         cc3_uart0_putchar (1);
-        cc3_uart0_putchar (2);
-	for(col=0; col<col_max; col++ )
+	// Start next frame capture (vblk stops at end of frame)
+  
+	for(x=0; x<704; x+=4  )
 	{
-  	while (REG (GPIO_IOPIN) & _CC3_CAM_VBLK);   
-	while (!(REG (GPIO_IOPIN) & _CC3_CAM_VBLK)); 
-	// for now don't put putc here to make sure we aren't missing data	
-	// wait until vblk goes low to high
-
-		for(row=0; row<row_max; row++ )
-		{
-		// wait until hblk goes high wait until previous row completes
-		while ((REG (GPIO_IOPIN) & _CC3_CAM_HBLK));
-		while (!(REG (GPIO_IOPIN) & _CC3_CAM_HBLK));
-
-		// enable fiq and start counting pixels
-		// traverse current col value into row 
-		for(j=0; j<col+1; j++ )
-		{
-			// for(i=0; i<2; i++ )   // For RGB 
-			 for(i=0; i<4; i++ )   // For YUV 
-				{
-				// Read pix value on rising edge
-				//do{
-				//raw_pix_data_tmp=REG(GPIO_IOPIN);
-				//} while((raw_pix_data_tmp & _CC3_CAM_DCLK)==0 );
-				//raw_pix_data[i]=raw_pix_data_tmp;
-				while (!(REG (GPIO_IOPIN) & _CC3_CAM_DCLK)); 
-		     		raw_pix_data[i]=REG(GPIO_IOPIN); 
-  				while (REG (GPIO_IOPIN) & _CC3_CAM_DCLK);
-				}	
-				
-		}
-     /* 
-	       	red=pix_data[1] & 0xf8; 
-	       	blue=pix_data[0] & 0x1f<<3; 
-	       	green=(pix_data[0] & 0xe0>>5) | (pix_data[1]<<5); 
+        	cc3_uart0_putchar (2);
+		frame_done=0;
+		enable_vblk_interrupt(); 
+		do {
+			// ask for a row of size n, return which row was captured
+			row=capture_next_row(ROW_BUF_LEN); // 1280 is max
+		/*
+		// RGB
+		red=row_buf[x] & 0xf8; 
+	       	blue=row_buf[x+1] & 0x1f<<3; 
+	       	green=(row_buf[x+1] & 0xe0>>5) | (row_buf[x]<<5); 
 		if(red<4) red=4;
 		if(green<4) green=4;
 		if(blue<4) blue=4;
 		cc3_uart0_putchar (red);
 		cc3_uart0_putchar (green);
 		cc3_uart0_putchar (blue);
-*/		
-	       	
-		// Filter out control characters	
-		for(i=0; i<4; i++ ) { 
-			pix_data[i]=raw_pix_data[i]>>24;
-			if(pix_data[i]<4) pix_data[i]=4;
-		}
 
-		cc3_uart0_putchar (pix_data[1]);
-		cc3_uart0_putchar (pix_data[0]);
-		cc3_uart0_putchar (pix_data[2]);
-		
-		cc3_uart0_putchar (pix_data[3]);
-		cc3_uart0_putchar (pix_data[0]);
-		cc3_uart0_putchar (pix_data[2]);
-	
-		}
-	cc3_led_set_state(0, led_state); 
-	led_state=!led_state;
-        cc3_uart0_putchar (2);
+		red=row_buf[x+2] & 0xf8; 
+	       	blue=row_buf[x+3] & 0x1f<<3; 
+	       	green=(row_buf[x+3] & 0xe0>>5) | (row_buf[x+2]<<5); 
+		if(red<4) red=4;
+		if(green<4) green=4;
+		if(blue<4) blue=4;
+		cc3_uart0_putchar (red);
+		cc3_uart0_putchar (green);
+		cc3_uart0_putchar (blue);
+		*/
+			
+			// YUV
+			y1=row_buf[x];
+			v=row_buf[x+1];
+			y2=row_buf[x+2];
+			u=row_buf[x+3];
+
+			if(y1<4) y1=4;
+			if(y2<4) y2=4;
+			if(u<4) u=4;
+			if(v<4) v=4;
+			cc3_uart0_putchar (y1);
+			cc3_uart0_putchar (u);
+			cc3_uart0_putchar (v);
+			// Strange interlacing to get second pixel, fix later	
+			cc3_uart0_putchar (y2);
+			cc3_uart0_putchar (u);
+			cc3_uart0_putchar (v);
+
+		} while(!frame_done);
+
 	}
-        cc3_uart0_putchar (3);
+	cc3_uart0_putchar (3);
         /*old_coi = cc3_g_pixbuf_frame.coi;
         if (n == 1) {
           if (arg_list[0] > 4) {
