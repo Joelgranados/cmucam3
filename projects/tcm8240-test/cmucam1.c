@@ -4,9 +4,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include "../../hal/lpc2103-retkodfuncam/LPC2100.h"
-#include "../../hal/lpc2103-retkodfuncam/cc3_pin_defines.h"
-#include "../../hal/lpc2103-retkodfuncam/interrupt.h"
+#include "../../hal/lpc2103-tcm8240/LPC2100.h"
+#include "../../hal/lpc2103-tcm8240/cc3_pin_defines.h"
+#include "../../hal/lpc2103-tcm8240/interrupt.h"
 
 //#define SERIAL_BAUD_RATE  CC3_UART_RATE_230400
 #define SERIAL_BAUD_RATE  CC3_UART_RATE_115200
