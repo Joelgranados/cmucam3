@@ -15,9 +15,9 @@ int main(void) {
   bool light_on = true;
 
   cc3_uart_init (0,
-		 CC3_UART_RATE_115200,
-		 CC3_UART_MODE_8N1,
-		 CC3_UART_BINMODE_TEXT);
+                 CC3_UART_RATE_115200,
+                 CC3_UART_MODE_8N1,
+                 CC3_UART_BINMODE_TEXT);
 
   cc3_camera_init ();
 
@@ -44,12 +44,12 @@ int main(void) {
 
       f = fopen(filename, "r");
       if (f != NULL) {
-	printf( "%s already exists...\n",filename );
-	i++;
-	result = fclose(f);
-	if (result) {
-	  perror("first fclose failed");
-	}
+        printf( "%s already exists...\n",filename );
+        i++;
+        result = fclose(f);
+        if (result) {
+          perror("first fclose failed");
+        }
       }
     } while(f != NULL);
 
@@ -60,16 +60,16 @@ int main(void) {
 
     if (f == NULL || i > 512) {
       if (f == NULL) {
-	perror("crap");
+        perror("crap");
       } else {
-	fprintf(stderr, "full\n");
+        fprintf(stderr, "full\n");
       }
 
       while (true) {
-	cc3_led_set_state(2, true);
-	cc3_timer_wait_ms(500);
-	cc3_led_set_state(2, false);
-	cc3_timer_wait_ms(500);
+        cc3_led_set_state(2, true);
+        cc3_timer_wait_ms(500);
+        cc3_led_set_state(2, false);
+        cc3_timer_wait_ms(500);
       }
     }
 
@@ -107,9 +107,9 @@ void capture_png(FILE *f)
 
   // init PNG
   png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING,
-						NULL,
-						NULL,
-						NULL);
+                                                NULL,
+                                                NULL,
+                                                NULL);
   if (!png_ptr) {
     fprintf(stderr, "png_struct\n");
     exit(1);
@@ -118,7 +118,7 @@ void capture_png(FILE *f)
   png_infop info_ptr = png_create_info_struct(png_ptr);
   if (!info_ptr) {
     png_destroy_write_struct(&png_ptr,
-			     (png_infopp)NULL);
+                             (png_infopp)NULL);
     fprintf(stderr, "png_info\n");
     exit(1);
   }
@@ -138,9 +138,9 @@ void capture_png(FILE *f)
   // more png
   png_init_io(png_ptr, f);
   png_set_IHDR(png_ptr, info_ptr, size_x, size_y,
-	       8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
-	       PNG_COMPRESSION_TYPE_DEFAULT,
-	       PNG_FILTER_TYPE_DEFAULT);
+               8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
+               PNG_COMPRESSION_TYPE_DEFAULT,
+               PNG_FILTER_TYPE_DEFAULT);
 
 
   // header
