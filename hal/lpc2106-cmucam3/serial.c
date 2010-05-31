@@ -115,9 +115,9 @@ uint8_t cc3_uart_get_count(void)
 
 
 bool cc3_uart_init (uint8_t uart, 
-		    cc3_uart_rate_t rate, 
-		    cc3_uart_mode_t mode,
-		    cc3_uart_binmode_t binmode)
+                    cc3_uart_rate_t rate,
+                    cc3_uart_mode_t mode,
+                    cc3_uart_binmode_t binmode)
 {
   static bool started;
 
