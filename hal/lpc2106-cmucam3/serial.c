@@ -227,6 +227,11 @@ char uart1_putc(const char c)
   return c;
 }
 
+int cc3_uart0_putchar(int c)
+{
+  return uart0_putc(c);
+}
+
 
 /*
  * uart0_getc()
@@ -238,6 +243,11 @@ int uart0_getc()
 {
   while ((REG (UART0_LSR) & LSR_RBR_EMPTY) == 0);
   return REG (UART0_RBR);
+}
+
+int cc3_uart0_getchar(void)
+{
+  return uart0_getc();
 }
 
 /*
@@ -297,6 +307,11 @@ void uart0_write (char *str)
   }
 }
 
+void cc3_uart0_write(const char *str)
+{
+  uart0_write(str);
+}
+
 void uart0_write_hex (unsigned int i)
 {
   char buffer[8];
@@ -319,4 +334,9 @@ void uart0_write_hex (unsigned int i)
     uart0_putc(buffer[b]);
   }
   uart0_write("\r\n");
+}
+
+void cc3_uart0_write_hex(unsigned int i)
+{
+  uart0_write_hex(i);
 }
