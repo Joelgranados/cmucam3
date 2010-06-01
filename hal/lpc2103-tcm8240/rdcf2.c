@@ -325,7 +325,7 @@ static const char *spec_to_name_extension (struct rdcf *f,
     }
   while (i < NAME_SIZE + EXTENSION_SIZE)
     name_extension[i++] = ' ';
-  return spec - 1;
+  return (const char*)(spec - 1);
 }
 
 /*-----------------------------------------------------------------------------
@@ -541,7 +541,7 @@ static int find_file (struct rdcf *f, const char *spec)
     int found;
     uint8_t name_extension[NAME_SIZE + EXTENSION_SIZE];
     /* scan name and extension */
-    spec = spec_to_name_extension (f, name_extension, spec);
+    spec = spec_to_name_extension (f, name_extension, (uint8_t)spec);
     /* look it up in directory */
     found = find_file_in_directory_or_find_volume (f, name_extension);
     /* if this is the end of the file specification, return */
@@ -774,7 +774,7 @@ int rdcf_rename (struct rdcf *f, const char *old_spec, const char *new_spec)
     error_exit (f, ~ENOENT);
   if (f->file.attribute & (RDCF_HIDDEN + RDCF_SYSTEM))
     error_exit (f, ~EACCES);
-  spec_to_name_extension (f, name_extension, new_spec);
+  spec_to_name_extension (f, name_extension, (uint8_t)new_spec);
   f->directory_cluster = f->directory_first_cluster;
   if (find_file_in_directory_or_find_volume (f, name_extension))
     error_exit (f, ~ENOENT);
