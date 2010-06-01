@@ -22,11 +22,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-uint8_t cc3_load_img_rows (cc3_image_t * img, uint16_t rows)
+/*uint8_t cc3_load_img_rows (cc3_image_t * img, uint16_t rows)
 {
 
 
-}
+}*/
 
 inline void cc3_get_pixel (cc3_image_t * img, uint16_t x, uint16_t y,
                     cc3_pixel_t * out_pix)

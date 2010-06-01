@@ -128,11 +128,11 @@ uint8_t cc3_track_color (cc3_track_pkt_t * pkt)
   return 1;
 }
 
-uint8_t cc3_track_color_img (cc3_image_t * img, cc3_track_pkt_t * pkt)
+/*uint8_t cc3_track_color_img (cc3_image_t * img, cc3_track_pkt_t * pkt)
 {
 
 
-}
+}*/
 
 
 uint8_t cc3_track_color_scanline_start (cc3_track_pkt_t * pkt)
