@@ -15,12 +15,34 @@
 
 include defs.mk
 
-CSOURCES=interrupt.c cc3.c cc3_hal.c syscalls.c serial.c \
-	servo.c rdcf2.c mmc_hardware.c mmc_driver.c gpio.c \
-	devices.c uart_driver.c
-INCLUDES=cc3_hal.h devices.h lpc_config.h rdcf2.h servo.h \
-	cc3_pin_defines.h interrupt.h LPC2100.h mmc_hardware.h serial.h spi.h \
-	gpio.h ../../include/cc3.h
+CSOURCES=interrupt.c \
+         cc3.c \
+         cc3_hal.c \
+         syscalls.c \
+         serial.c \
+         servo.c \
+         rdcf2.c \
+         mmc_hardware.c \
+         mmc_driver.c \
+         gpio.c \
+         devices.c \
+         uart_driver.c \
+         cc3_debug.c
+
+INCLUDES=cc3_hal.h \
+         devices.h \
+         lpc_config.h \
+         rdcf2.h \
+         servo.h \
+         cc3_pin_defines.h \
+         interrupt.h \
+         LPC2100.h \
+         mmc_hardware.h \
+         serial.h \
+         spi.h \
+         gpio.h \
+         ../../include/cc3.h
+
 ASMSOURCES=startup.s
 
 
