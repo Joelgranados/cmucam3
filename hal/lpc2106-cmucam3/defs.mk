@@ -36,6 +36,12 @@ endif
 #  THUMB_SUFFIX=$(DASH_THUMB)
 #endif
 
+DEBUG_FLAG=
+ifeq ($(DEBUG),1)
+  DEBUG_FLAG += -DCC3_DEBUGGING
+endif
+
+
 
 # set iprintf and iscanf as default (can be overriden by INTEGER_STDIO=0)
 INTEGER_STDIO := 1
@@ -57,7 +63,7 @@ override CFLAGS+=-I$(HALDIR)/../../include -O2 -pipe -funit-at-a-time \
 	-Werror-implicit-function-declaration \
 	-ffreestanding -std=gnu99 -g -fdata-sections -ffunction-sections \
 	-mcpu=arm7tdmi-s -fno-exceptions -fno-common \
-	-msoft-float -mthumb-interwork $(INTEGER_STDIO_FLAGS)
+	-msoft-float -mthumb-interwork $(INTEGER_STDIO_FLAGS) $(DEBUG_FLAG)
 
 override LDFLAGS+=-lm -T$(HALDIR)/lpc2106-rom.ln \
 	-mcpu=arm7tdmi-s -msoft-float
