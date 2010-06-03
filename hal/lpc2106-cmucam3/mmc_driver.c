@@ -42,6 +42,7 @@
 #include "spi.h"
 #include "rdcf2.h"
 #include "mmc_hardware.h"
+#include "cc3_debug.h"
 
 #include <errno.h>
 #undef errno
@@ -103,18 +104,21 @@ static int mmc_open (const char *name, int flags,
   _cc3_mmc_init();
 
   // is a drive still there?
+  CC3_DEBUG("Checking for drive");
   if (!DriveDesc.IsValid) {
     _cc3_mmc_idle();
     errno = ENODEV;
     return -1;
   }
   // find a buffer to use.
+  CC3_DEBUG("Searching for a buffer");
   if ((handle = allocate_fcb ()) == -1) {
     _cc3_mmc_idle();
     errno = ENOBUFS;
     return -1;
   }
 
+  CC3_DEBUG("Running rdcf_open");
   result = rdcf_open (fcbs[handle], remove_prefix(name), flags);
   if (result != 0) {
     _cc3_mmc_idle();

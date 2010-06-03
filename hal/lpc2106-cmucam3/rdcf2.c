@@ -28,6 +28,8 @@
 /* #define _BIG_ENDIAN */
 
 #include "rdcf2.h"
+#include "cc3_debug.h"
+
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -541,17 +543,21 @@ static int find_file (struct rdcf *f, const char *spec)
     int found;
     uint8_t name_extension[NAME_SIZE + EXTENSION_SIZE];
     /* scan name and extension */
+    CC3_DEBUG("spec to name");
     spec = spec_to_name_extension (f, name_extension, (uint8_t)spec);
     /* look it up in directory */
+    CC3_DEBUG("find file in directory");
     found = find_file_in_directory_or_find_volume (f, name_extension);
     /* if this is the end of the file specification, return */
     if (*spec == 0)
       return found;
     /* otherwise, the name and extension were a subdirectory in the path */
+    CC3_DEBUG("file and ext are subdirs");
     if (!found || (f->file.attribute & RDCF_DIRECTORY) == 0)
       error_exit (f, ~EISDIR);
     f->directory_cluster = f->file.first_cluster;
     /* skip over the \ after the subdirectory */
+    CC3_DEBUG("Adding to spec");
     spec++;
   }
 }
@@ -787,32 +793,34 @@ int rdcf_rename (struct rdcf *f, const char *old_spec, const char *new_spec)
 
 int rdcf_open (struct rdcf *f, const char *spec, unsigned mode)
 {
+  CC3_DEBUG("Trying to set jmp");
   int found;
   if ((f->result = setjmp (f->error)) != 0)
     return f->result;
 
-  //  printf("mode: 0x%xd\n", mode);
 
   // does it exist already ?
+  CC3_DEBUG("Does it exist");
   found = find_file (f, initialize_fcb (f, spec));
 
   // is it a directory ?
+  CC3_DEBUG("Is it a directory");
   if (found && f->file.attribute & RDCF_DIRECTORY)
     error_exit (f, ~EISDIR);
 
   // see how to open the file
   if (mode & O_CREAT) {
-    //    printf("O_CREAT\n");
+    CC3_DEBUG("O_CREATE");
     bool new_file = false;
     if (mode & O_TRUNC && found) {
-      //      printf(" O_TRUNC and found\n");
+      CC3_DEBUG("O_TRUNC and found");
       // TRUNC and CREATE and found -> empty the file of clusters
       check_write_access (f);
       release_FAT_entries (f);
 
       new_file = true;
     } else if (!found) {
-      //      printf(" not O_TRUNC, not found\n");
+      CC3_DEBUG("Not O_TRUNC, not found");
       // CREATE and not found -> create a new file
       lengthen_directory_if_necessary (f);
 
@@ -823,7 +831,7 @@ int rdcf_open (struct rdcf *f, const char *spec, unsigned mode)
 
     // write back any changes we made here
     if (new_file) {
-      //      printf(" new_file = true\n");
+      CC3_DEBUG("new file = true");
       f->file.attribute = RDCF_ARCHIVE;
       rdcf_get_date_and_time (&f->file.date_and_time);
       f->mode |= WRITTEN;
@@ -834,7 +842,7 @@ int rdcf_open (struct rdcf *f, const char *spec, unsigned mode)
       flush_buffer (f);
     }
   } else if (!found) {
-    //    printf("!found, !O_CREAT\n");
+    CC3_DEBUG("!found, !O_CREAT");
     // not found, not CREATE -> error
     error_exit (f, ~ENOENT);
   }
@@ -849,17 +857,17 @@ int rdcf_open (struct rdcf *f, const char *spec, unsigned mode)
   // decide the file mode
   switch (mode & 0x3) {
   case O_RDONLY:
-    //    printf("open for reading\n");
+    CC3_DEBUG("open for reading");
     f->mode |= RDCF_READ;
     break;
 
   case O_RDWR:
-    //    printf("open for reading\n");
+    CC3_DEBUG("open for reading and writing");
     f->mode |= RDCF_READ;
     // fallthrough to write
 
   case O_WRONLY:
-    //    printf("open for writing\n");
+    CC3_DEBUG("Open for writing only");
     check_write_access (f);
     f->mode |= RDCF_WRITE;
     break;
@@ -872,7 +880,7 @@ int rdcf_open (struct rdcf *f, const char *spec, unsigned mode)
 
   // seek to end of file if O_WRONLY and O_APPEND
   if ((mode & O_APPEND) && ((mode & 0x3) == O_WRONLY)) {
-    //    printf("O_APPEND seeking now\n");
+    CC3_DEBUG("O_APPEND seeking now");
     int result;
     if ((result = rdcf_seek (f, f->file.size)) != 0)
       return result;
