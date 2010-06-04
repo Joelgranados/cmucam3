@@ -97,10 +97,10 @@ int main(void) {
 
 void capture_png(FILE *f)
 {
-  uint32_t x, y;
+  uint32_t y;
   uint32_t size_x, size_y;
 
-  uint32_t time, time2;
+  uint32_t time1, time2;
   int write_time;
 
   cc3_pixbuf_load();
@@ -147,7 +147,7 @@ void capture_png(FILE *f)
   png_write_info(png_ptr, info_ptr);
 
 
-  time = cc3_timer_get_current_ms();
+  time1 = cc3_timer_get_current_ms();
   for (y = 0; y < size_y; y++) {
     cc3_pixbuf_read_rows(row, 1);
 
@@ -160,7 +160,7 @@ void capture_png(FILE *f)
   png_destroy_write_struct(&png_ptr, &info_ptr);
 
   time2 = cc3_timer_get_current_ms();
-  write_time = time2 - time;
+  write_time = time2 - time1;
 
   free(row);
 
