@@ -5,6 +5,7 @@
 #include "png.h"
 
 #include "cc3.h"
+#include "cc3_debug.h"
 
 static void capture_png(FILE *f);
 
@@ -15,9 +16,9 @@ int main(void) {
   bool light_on = true;
 
   cc3_uart_init (0,
-		 CC3_UART_RATE_115200,
-		 CC3_UART_MODE_8N1,
-		 CC3_UART_BINMODE_TEXT);
+                 CC3_UART_RATE_115200,
+                 CC3_UART_MODE_8N1,
+                 CC3_UART_BINMODE_TEXT);
 
   cc3_camera_init ();
 
@@ -44,32 +45,31 @@ int main(void) {
 
       f = fopen(filename, "r");
       if (f != NULL) {
-	printf( "%s already exists...\n",filename );
-	i++;
-	result = fclose(f);
-	if (result) {
-	  perror("first fclose failed");
-	}
+        CC3_PDEBUG("file already exists");
+        i++;
+        result = fclose(f);
+        if (result) {
+          CC3_ERROR("first fclose failed");
+        }
       }
     } while(f != NULL);
 
     // print file that you are going to write to stderr
-    fprintf(stderr,"%s ", filename);
-    fflush(stderr);
+    CC3_PDEBUG(filename);
     f = fopen(filename, "w");
 
     if (f == NULL || i > 512) {
       if (f == NULL) {
-	perror("crap");
+        CC3_ERROR("crap");
       } else {
-	fprintf(stderr, "full\n");
+        CC3_ERROR("full");
       }
 
       while (true) {
-	cc3_led_set_state(2, true);
-	cc3_timer_wait_ms(500);
-	cc3_led_set_state(2, false);
-	cc3_timer_wait_ms(500);
+        cc3_led_set_state(2, true);
+        cc3_timer_wait_ms(500);
+        cc3_led_set_state(2, false);
+        cc3_timer_wait_ms(500);
       }
     }
 
@@ -83,10 +83,8 @@ int main(void) {
     capture_png(f);
 
     result = fclose(f);
-    if (result) {
-      perror("second fclose failed");
-    }
-    fprintf(stderr, "\r\n");
+    if (result)
+      CC3_PDEBUG("second fclose failed");
 
     i++;
   }
@@ -107,19 +105,19 @@ void capture_png(FILE *f)
 
   // init PNG
   png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING,
-						NULL,
-						NULL,
-						NULL);
+                                                NULL,
+                                                NULL,
+                                                NULL);
   if (!png_ptr) {
-    fprintf(stderr, "png_struct\n");
+    CC3_ERROR("png_struct");
     exit(1);
   }
 
   png_infop info_ptr = png_create_info_struct(png_ptr);
   if (!info_ptr) {
     png_destroy_write_struct(&png_ptr,
-			     (png_infopp)NULL);
-    fprintf(stderr, "png_info\n");
+                             (png_infopp)NULL);
+    CC3_ERROR("png_info");
     exit(1);
   }
 
@@ -138,9 +136,9 @@ void capture_png(FILE *f)
   // more png
   png_init_io(png_ptr, f);
   png_set_IHDR(png_ptr, info_ptr, size_x, size_y,
-	       8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
-	       PNG_COMPRESSION_TYPE_DEFAULT,
-	       PNG_FILTER_TYPE_DEFAULT);
+               8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
+               PNG_COMPRESSION_TYPE_DEFAULT,
+               PNG_FILTER_TYPE_DEFAULT);
 
 
   // header
@@ -153,8 +151,7 @@ void capture_png(FILE *f)
 
     png_write_row(png_ptr, row);
 
-    fprintf(stderr, ".");
-    fflush(stderr);
+    //CC3_PDEBUG(".");
   }
   png_write_end(png_ptr, info_ptr);
   png_destroy_write_struct(&png_ptr, &info_ptr);
@@ -164,7 +161,8 @@ void capture_png(FILE *f)
 
   free(row);
 
-  fprintf(stderr, "\n"
-          "write_time  %10d\n",
-          write_time);
+  CC3_PDEBUG("finished");
+  //fprintf(stderr, "\n"
+  //        "write_time  %10d\n",
+  //        write_time);
 }
