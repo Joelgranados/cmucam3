@@ -51,3 +51,22 @@ cc3_debug_debug ( const int level, const char* file, const int line,
 #endif
 }
 
+/*
+ * Here we should think about centralizing the error handling...
+ */
+void cc3_debug_error ( const int level, const char* file, const int line,
+    const char* message)
+{
+#if defined CC3_DEBUGGING
+  if ( !_cc3_debug_initialized )
+    cc3_debug_initialize();
+
+  //If we don't initialize we just don't write to the serial.
+  if ( _cc3_debug_initialized )
+  {
+    fprintf(stderr, "%d (%s:%d) - %s \n", level, file, line, message);
+    perror(message);
+    fflush(stderr);
+  }
+#endif
+}

@@ -36,11 +36,15 @@ endif
 #  THUMB_SUFFIX=$(DASH_THUMB)
 #endif
 
-DEBUG_FLAG=
-ifeq ($(DEBUG),1)
-  DEBUG_FLAG += -DCC3_DEBUGGING
+DEBUG_FLAG='-DCC3_DEBUGGING=10'
+ifneq ($(DEBUG),)
+  DEBUG_FLAG='-DCC3_DEBUGGING=$(DEBUG)'
 endif
 
+# The user can turn off all debugging with NODEBUG
+ifeq ($(NODEBUG),1)
+  DEBUG_FLAG=
+endif
 
 
 # set iprintf and iscanf as default (can be overriden by INTEGER_STDIO=0)
