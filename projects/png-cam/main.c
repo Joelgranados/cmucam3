@@ -5,15 +5,21 @@
 #include "png.h"
 
 #include "cc3.h"
+#include "cc3_debug.h"
 
-static void capture_png(FILE *f);
+#ifndef VIRTUAL_CAM
+
+static void capture_png( FILE* );
+static bool get_next_file_name( char* );
+
+static int file_offset = 0;
 
 int main(void) {
-  int i;
-  int result;
   FILE *f;
-  bool light_on = true;
+  char filename[16];
 
+  // For the new debugging code we don't really need this.  We leave it here
+  // because it might be expected in the called functions.
   cc3_uart_init (0,
                  CC3_UART_RATE_115200,
                  CC3_UART_MODE_8N1,
@@ -29,78 +35,63 @@ int main(void) {
 
   // init
   cc3_led_set_state(1, true);
-  i = 0;
-  while(!cc3_button_get_state());
+
   while(true) {
-    char filename[16];
+    // Wait until the user pushes the button.
+    while(!cc3_button_get_state());
 
-    // Check if files exist, if they do then skip over them
-    do {
-#ifdef VIRTUAL_CAM
-      snprintf(filename, 16, "img%.5d.png", i);
-#else
-      snprintf(filename, 16, "c:/img%.5d.png", i);
-#endif
+    get_next_file_name(filename);
 
-      f = fopen(filename, "r");
-      if (f != NULL) {
-        printf( "%s already exists...\n",filename );
-        i++;
-        result = fclose(f);
-        if (result) {
-          perror("first fclose failed");
-        }
-      }
-    } while(f != NULL);
-
-    // print file that you are going to write to stderr
-    fprintf(stderr,"%s ", filename);
-    fflush(stderr);
     f = fopen(filename, "w");
-
-    if (f == NULL || i > 512) {
-      if (f == NULL) {
-        perror("crap");
-      } else {
-        fprintf(stderr, "full\n");
-      }
-
-      while (true) {
-        cc3_led_set_state(2, true);
-        cc3_timer_wait_ms(500);
-        cc3_led_set_state(2, false);
-        cc3_timer_wait_ms(500);
-      }
+    if (f == NULL){
+      CC3_DEBUG(filename);
+      perror("Could not open file");
+      continue; // We will try and try again.
     }
 
-
-    if (light_on) {
-      cc3_led_set_state (2, true);
-    } else {
-      cc3_led_set_state (2, false);
-    }
-    light_on = !light_on;
+    // We actually take the pucture.
+    CC3_DEBUG("Capturing png");
     capture_png(f);
 
-    result = fclose(f);
-    if (result) {
-      perror("second fclose failed");
-    }
-    fprintf(stderr, "\r\n");
-
-    i++;
+    // Close the png file
+    if (fclose(f))
+      perror("Close failed");
   }
 
   return 0;
 }
 
+//FIXME: There could be an issue here with the allowed number of
+//       file sin the filesustem.  Check the upper renge.
+//       There was code in png-grab that suggested that 512 was
+//       the maximum amount of files.
+bool get_next_file_name( char* file )
+{
+  FILE *f;
+
+  //Find the next free filename.
+  do {
+    snprintf(file, 16, "c:/img%.5d.png", file_offset);
+
+    f = fopen(file, "r");
+    if (f != NULL) {
+      file_offset++;
+      if (fclose(f))
+        perror("Close failed"); //We just continue as if nothing happend
+    }
+  } while(f != NULL);
+
+  // We have found a filename
+  CC3_DEBUG(file); // print the filename to the serial.
+  return true;
+}
 
 void capture_png(FILE *f)
 {
-  uint32_t x, y;
+  uint32_t y;
   uint32_t size_x, size_y;
 
-  uint32_t time, time2;
+  uint32_t time1, time2;
   int write_time;
 
   cc3_pixbuf_load();
@@ -147,7 +138,7 @@ void capture_png(FILE *f)
   png_write_info(png_ptr, info_ptr);
 
 
-  time = cc3_timer_get_current_ms();
+  time1 = cc3_timer_get_current_ms();
   for (y = 0; y < size_y; y++) {
     cc3_pixbuf_read_rows(row, 1);
 
@@ -160,7 +151,7 @@ void capture_png(FILE *f)
   png_destroy_write_struct(&png_ptr, &info_ptr);
 
   time2 = cc3_timer_get_current_ms();
-  write_time = time2 - time;
+  write_time = time2 - time1;
 
   free(row);
 
@@ -168,3 +159,5 @@ void capture_png(FILE *f)
           "write_time  %10d\n",
           write_time);
 }
+
+#endif
