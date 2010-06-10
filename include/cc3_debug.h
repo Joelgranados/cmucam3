@@ -20,24 +20,24 @@
 #define CC3_DEBUG_HW 100
 
 #if CC3_DEBUGGING >= CC3_DEBUG_ERR
-#define CC3_ERROR(message) \
-    cc3_debug_error(CC3_DEBUG_ERR, __FILE__, __LINE__, message);
+#define CC3_ERROR(message, ...) \
+    cc3_debug_error(CC3_DEBUG_ERR, __FILE__, __LINE__, message, __VA_ARGS__);
 #else
-#define CC3_ERROR(message) do{}while(0);
+#define CC3_ERROR(message, ...) do{}while(0);
 #endif
 
 #if CC3_DEBUGGING >= CC3_DEBUG_PRO
-#define CC3_PDEBUG(message) \
-    cc3_debug_debug(CC3_DEBUG_PRO, __FILE__, __LINE__, message);
+#define CC3_PDEBUG(message, ...) \
+    cc3_debug_debug(CC3_DEBUG_PRO, __FILE__, __LINE__, message, __VA_ARGS__);
 #else
-#define CC3_PDEBUG(message) do{}while(0);
+#define CC3_PDEBUG(message, ...) do{}while(0);
 #endif
 
 #if CC3_DEBUGGING >= CC3_DEBUG_HW
-#define CC3_HWDEBUG(message) \
-    cc3_debug_debug(CC3_DEBUG_HW, __FILE__, __LINE__, message);
+#define CC3_HWDEBUG(message, ...) \
+    cc3_debug_debug(CC3_DEBUG_HW, __FILE__, __LINE__, message, __VA_ARGS__);
 #else
-#define CC3_HWDEBUG(message) do{}while(0);
+#define CC3_HWDEBUG(message, ...) do{}while(0);
 #endif
 
 bool cc3_debug_initialize(void);
@@ -52,7 +52,7 @@ bool cc3_debug_initialize(void);
  * @param[in] message The debug message.
  */
 void cc3_debug_debug(const int level, const char* file,
-        const int line, const char* message);
+        const int line, const char* message, ...);
 
 /**
  * Handle error messages.
@@ -64,4 +64,4 @@ void cc3_debug_debug(const int level, const char* file,
  * @param[in] message The debug message.
  */
 void cc3_debug_error(const int level, const char* file,
-        const int line, const char* message);
+        const int line, const char* message, ...);

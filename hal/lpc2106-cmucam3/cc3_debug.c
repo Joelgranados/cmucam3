@@ -16,6 +16,7 @@
  */
 
 #include <stdio.h>
+#include <stdarg.h>
 #include "cc3.h"
 #include "cc3_debug.h"
 
@@ -36,16 +37,26 @@ cc3_debug_initialize(void)
 
 void
 cc3_debug_debug ( const int level, const char* file, const int line,
-    const char* message)
+    const char* message, ...)
 {
 #if defined CC3_DEBUGGING
+  va_list arg_list;
+
   if ( !_cc3_debug_initialized )
     cc3_debug_initialize();
 
   //If we don't initialize we just don't write to the serial.
   if ( _cc3_debug_initialized )
   {
-    fprintf(stderr, "%d (%s:%d) - %s \n", level, file, line, message);
+
+    fprintf(stderr, "%d (%s:%d) - ", level, file, line);
+
+    //We output the variable list.
+    va_start(arg_list, message);
+    vfprintf(stderr, message, arg_list);
+    va_end(arg_list);
+
+    fprintf(stderr, "\n");
     fflush(stderr);
   }
 #endif
@@ -55,17 +66,28 @@ cc3_debug_debug ( const int level, const char* file, const int line,
  * Here we should think about centralizing the error handling...
  */
 void cc3_debug_error ( const int level, const char* file, const int line,
-    const char* message)
+    const char* message, ...)
 {
 #if defined CC3_DEBUGGING
+  va_list arg_list;
+
   if ( !_cc3_debug_initialized )
     cc3_debug_initialize();
 
   //If we don't initialize we just don't write to the serial.
   if ( _cc3_debug_initialized )
   {
-    fprintf(stderr, "%d (%s:%d) - %s \n", level, file, line, message);
-    perror(message);
+    fprintf(stderr, "%d (%s:%d) - ", level, file, line);
+
+    //We output the variable list.
+    va_start(arg_list, message);
+    vfprintf(stderr, message, arg_list);
+    va_end(arg_list);
+
+    fprintf(stderr, "\n");
+
+    // FIXME: We should be more informative here.  Not sure how to manage that.
+    perror("");
     fflush(stderr);
   }
 #endif
