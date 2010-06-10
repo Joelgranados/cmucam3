@@ -20,10 +20,24 @@
 #include "cc3.h"
 #include "cc3_debug.h"
 
+
+static const char*
+_debugnum_to_str ( const int debugnum )
+{
+  if ( debugnum == CC3_DEBUG_ERR )
+    return "CC3_ERROR";
+  else if ( debugnum == CC3_DEBUG_PRO )
+    return "CC3_PRO_DEBUG";
+  else if ( debugnum == CC3_DEBUG_HW )
+    return "CC3_HW_DEBUG";
+  else
+    return "CC3_UNKNOWN";
+}
+
 bool _cc3_debug_initialized = false;
 
 bool
-cc3_debug_initialize(void)
+cc3_debug_initialize ( void )
 {
 #if defined CC3_DEBUGGING
   if ( !_cc3_debug_initialized )
@@ -38,7 +52,7 @@ cc3_debug_initialize(void)
 
 void
 cc3_debug_debug ( const int level, const char* file, const int line,
-    const char* message, ...)
+    const char* message, ... )
 {
 #if defined CC3_DEBUGGING
   va_list arg_list;
@@ -47,7 +61,7 @@ cc3_debug_debug ( const int level, const char* file, const int line,
   if ( cc3_debug_initialize() )
   {
 
-    fprintf(stderr, "%d (%s:%d) - ", level, file, line);
+    fprintf(stderr, "%s (%s:%d) - ", _debugnum_to_str(level), file, line);
 
     //We output the variable list.
     va_start(arg_list, message);
@@ -55,35 +69,6 @@ cc3_debug_debug ( const int level, const char* file, const int line,
     va_end(arg_list);
 
     fprintf(stderr, "\n");
-    fflush(stderr);
-  }
-#endif
-}
-
-/*
- * Here we should think about centralizing the error handling...
- */
-void
-cc3_debug_error ( const int level, const char* file, const int line,
-    const char* message, ...)
-{
-#if defined CC3_DEBUGGING
-  va_list arg_list;
-
-  //If we don't initialize we just don't write to the serial.
-  if ( cc3_debug_initialize() )
-  {
-    fprintf(stderr, "%d (%s:%d) - ", level, file, line);
-
-    //We output the variable list.
-    va_start(arg_list, message);
-    vfprintf(stderr, message, arg_list);
-    va_end(arg_list);
-
-    fprintf(stderr, "\n");
-
-    // FIXME: We should be more informative here.  Not sure how to manage that.
-    perror("");
     fflush(stderr);
   }
 #endif
