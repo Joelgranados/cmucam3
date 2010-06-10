@@ -15,13 +15,16 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA
  */
 
+#include <errno.h>
+
 #define CC3_DEBUG_ERR 10
 #define CC3_DEBUG_PRO 50
 #define CC3_DEBUG_HW 100
 
 #if CC3_DEBUGGING >= CC3_DEBUG_ERR
 #define CC3_ERROR(message, ...) \
-    cc3_debug_error(CC3_DEBUG_ERR, __FILE__, __LINE__, message, __VA_ARGS__);
+    cc3_debug_debug(CC3_DEBUG_ERR, __FILE__, __LINE__, message, __VA_ARGS__); \
+    cc3_debug_debug(CC3_DEBUG_ERR, __FILE__, __LINE__, "%s", strerror(errno));
 #else
 #define CC3_ERROR(message, ...) do{}while(0);
 #endif
@@ -52,16 +55,4 @@ bool cc3_debug_initialize(void);
  * @param[in] message The debug message.
  */
 void cc3_debug_debug(const int level, const char* file,
-        const int line, const char* message, ...);
-
-/**
- * Handle error messages.
- *
- * @param[in] level The level of importance of the message. Does not reall do
- *                  anything fancy, just prints a number.
- * @param[in] file The file where the debug message was originated.
- * @param[in] line The line where the debug message was originated.
- * @param[in] message The debug message.
- */
-void cc3_debug_error(const int level, const char* file,
         const int line, const char* message, ...);
