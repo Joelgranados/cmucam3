@@ -43,7 +43,7 @@
 #define CC3_HWDEBUG(message, ...) do{}while(0);
 #endif
 
-bool cc3_debug_initialize(void);
+bool cc3_debug_init(void);
 
 /**
  * Handle debug messages.

@@ -37,7 +37,7 @@ _debugnum_to_str ( const int debugnum )
 bool _cc3_debug_initialized = false;
 
 bool
-cc3_debug_initialize ( void )
+cc3_debug_init ( void )
 {
 #if defined CC3_DEBUGGING
   if ( !_cc3_debug_initialized )
@@ -58,7 +58,7 @@ cc3_debug_debug ( const int level, const char* file, const int line,
   va_list arg_list;
 
   //If we don't initialize we just don't write to the serial.
-  if ( cc3_debug_initialize() )
+  if ( cc3_debug_init() )
   {
 
     fprintf(stderr, "%s (%s:%d) - ", _debugnum_to_str(level), file, line);
