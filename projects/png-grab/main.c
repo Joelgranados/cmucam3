@@ -45,24 +45,24 @@ int main(void) {
 
       f = fopen(filename, "r");
       if (f != NULL) {
-        CC3_PDEBUG("file already exists");
+        CC3_PDEBUG("file already exists %s", filename);
         i++;
         result = fclose(f);
         if (result) {
-          CC3_ERROR("first fclose failed");
+          CC3_ERROR("%s", "first fclose failed");
         }
       }
     } while(f != NULL);
 
     // print file that you are going to write to stderr
-    CC3_PDEBUG(filename);
+    CC3_PDEBUG("%s",filename);
     f = fopen(filename, "w");
 
     if (f == NULL || i > 512) {
       if (f == NULL) {
-        CC3_ERROR("crap");
+        CC3_ERROR("%s", "crap");
       } else {
-        CC3_ERROR("full");
+        CC3_ERROR("%s", "full");
       }
 
       while (true) {
@@ -84,7 +84,7 @@ int main(void) {
 
     result = fclose(f);
     if (result)
-      CC3_PDEBUG("second fclose failed");
+      CC3_PDEBUG("%s", "second fclose failed");
 
     i++;
   }
@@ -109,7 +109,7 @@ void capture_png(FILE *f)
                                                 NULL,
                                                 NULL);
   if (!png_ptr) {
-    CC3_ERROR("png_struct");
+    CC3_ERROR("%s", "png_struct");
     exit(1);
   }
 
@@ -117,7 +117,7 @@ void capture_png(FILE *f)
   if (!info_ptr) {
     png_destroy_write_struct(&png_ptr,
                              (png_infopp)NULL);
-    CC3_ERROR("png_info");
+    CC3_ERROR("%s", "png_info");
     exit(1);
   }
 
@@ -161,7 +161,7 @@ void capture_png(FILE *f)
 
   free(row);
 
-  CC3_PDEBUG("finished");
+  CC3_PDEBUG("%s", "finished");
   //fprintf(stderr, "\n"
   //        "write_time  %10d\n",
   //        write_time);
