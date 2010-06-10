@@ -26,9 +26,10 @@ bool
 cc3_debug_initialize(void)
 {
 #if defined CC3_DEBUGGING
-  _cc3_debug_initialized =
-    cc3_uart_init (0, CC3_UART_RATE_115200, CC3_UART_MODE_8N1,
-        CC3_UART_BINMODE_TEXT);
+  if ( !_cc3_debug_initialized )
+    _cc3_debug_initialized =
+      cc3_uart_init (0, CC3_UART_RATE_115200, CC3_UART_MODE_8N1,
+          CC3_UART_BINMODE_TEXT);
   return _cc3_debug_initialized;
 #else
   return true;
@@ -42,11 +43,8 @@ cc3_debug_debug ( const int level, const char* file, const int line,
 #if defined CC3_DEBUGGING
   va_list arg_list;
 
-  if ( !_cc3_debug_initialized )
-    cc3_debug_initialize();
-
   //If we don't initialize we just don't write to the serial.
-  if ( _cc3_debug_initialized )
+  if ( cc3_debug_initialize() )
   {
 
     fprintf(stderr, "%d (%s:%d) - ", level, file, line);
@@ -65,17 +63,15 @@ cc3_debug_debug ( const int level, const char* file, const int line,
 /*
  * Here we should think about centralizing the error handling...
  */
-void cc3_debug_error ( const int level, const char* file, const int line,
+void
+cc3_debug_error ( const int level, const char* file, const int line,
     const char* message, ...)
 {
 #if defined CC3_DEBUGGING
   va_list arg_list;
 
-  if ( !_cc3_debug_initialized )
-    cc3_debug_initialize();
-
   //If we don't initialize we just don't write to the serial.
-  if ( _cc3_debug_initialized )
+  if ( cc3_debug_initialize() )
   {
     fprintf(stderr, "%d (%s:%d) - ", level, file, line);
 
