@@ -7,6 +7,12 @@
 #include "cc3.h"
 #include "cc3_debug.h"
 
+/* FIXME: This should be defined at compile time.  There is not general way
+ *        of defining vars through the make files.  Comment the line out if
+ *        you want pngcam to act like png-grab
+ */
+#define PNGCAM_MODE_CAM
+
 #ifndef VIRTUAL_CAM
 
 static void capture_png( FILE* );
@@ -18,17 +24,11 @@ int main(void) {
   FILE *f;
   char filename[16];
 
-  // For the new debugging code we don't really need this.  We leave it here
-  // because it might be expected in the called functions.
-  cc3_uart_init (0,
-                 CC3_UART_RATE_115200,
-                 CC3_UART_MODE_8N1,
-                 CC3_UART_BINMODE_TEXT);
+  cc3_debug_init();
 
   cc3_camera_init ();
 
-  // use MMC
-  cc3_filesystem_init();
+  cc3_filesystem_init(); //for the MMC.
 
   cc3_camera_set_resolution(CC3_CAMERA_RESOLUTION_HIGH);
   cc3_timer_wait_ms(1000);
@@ -37,25 +37,26 @@ int main(void) {
   cc3_led_set_state(1, true);
 
   while(true) {
+#ifdef PNGCAM_MODE_CAM
     // Wait until the user pushes the button.
     while(!cc3_button_get_state());
+#endif
 
     get_next_file_name(filename);
 
     f = fopen(filename, "w");
     if (f == NULL){
-      CC3_DEBUG(filename);
-      perror("Could not open file");
+      CC3_ERROR("Could not open %s.", filename);
       continue; // We will try and try again.
     }
 
     // We actually take the pucture.
-    CC3_DEBUG("Capturing png");
+    CC3_PDEBUG("%s", "Capturing png");
     capture_png(f);
 
     // Close the png file
     if (fclose(f))
-      perror("Close failed");
+      CC3_ERROR("Could not close %s", filename);
   }
 
   return 0;
@@ -77,12 +78,12 @@ bool get_next_file_name( char* file )
     if (f != NULL) {
       file_offset++;
       if (fclose(f))
-        perror("Close failed"); //We just continue as if nothing happend
+        CC3_ERROR("Could not close %s", file);
     }
   } while(f != NULL);
 
   // We have found a filename
-  CC3_DEBUG(file); // print the filename to the serial.
+  CC3_PDEBUG("Next file name: %s", file); // print the filename to the serial.
   return true;
 }
 
@@ -102,7 +103,7 @@ void capture_png(FILE *f)
                                                 NULL,
                                                 NULL);
   if (!png_ptr) {
-    fprintf(stderr, "png_struct\n");
+    CC3_ERROR("%s", "Error in png_struct");
     exit(1);
   }
 
@@ -110,7 +111,7 @@ void capture_png(FILE *f)
   if (!info_ptr) {
     png_destroy_write_struct(&png_ptr,
                              (png_infopp)NULL);
-    fprintf(stderr, "png_info\n");
+    CC3_ERROR("%s", "Error in png_info");
     exit(1);
   }
 
@@ -144,8 +145,11 @@ void capture_png(FILE *f)
 
     png_write_row(png_ptr, row);
 
-    fprintf(stderr, ".");
-    fflush(stderr);
+    // FIXME: This is a hack to output periods without a line break.
+    //        We should probably create a special debug level with
+    //        no line break.
+    //fprintf(stderr, ".");
+    //fflush(stderr);
   }
   png_write_end(png_ptr, info_ptr);
   png_destroy_write_struct(&png_ptr, &info_ptr);
@@ -155,9 +159,7 @@ void capture_png(FILE *f)
 
   free(row);
 
-  fprintf(stderr, "\n"
-          "write_time  %10d\n",
-          write_time);
+  CC3_PDEBUG("\n write_time %10d", write_time);
 }
 
 #endif
