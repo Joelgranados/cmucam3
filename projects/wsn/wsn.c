@@ -83,17 +83,13 @@ int main (void)
   /* We wait for a command*/
   wsn_cmd_t command;
   int32_t cmd_res = 0;
+
   while (true)
   {
-    print_prompt ();
-
     cmd_res = wsn_get_command ( & command );
 
     if ( cmd_res == -1 )
-    {
-      print_NCK ();
       continue;
-    }
 
     switch ( command )
     {
@@ -127,13 +123,15 @@ int main (void)
 #else
         print_NCK ();
 #endif
+        break;
+
       case RETURN:
-        print_ACK ();
         break;
 
       default:
         break;
     }
+    print_prompt ();
   }
   return 0;
 }
